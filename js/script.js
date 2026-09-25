@@ -9,7 +9,7 @@
 
 // Ganti dengan nomor WhatsApp Enmax House.
 // Format: 62 + nomor tanpa tanda +, spasi, atau 0 di depan.
-const WHATSAPP_NUMBER = "+628145929947";
+const WHATSAPP_NUMBER = "+6282145929947";
 
 /* =========================================================
    CAMERA DATA

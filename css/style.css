@@ -7,16 +7,15 @@
    01. DESIGN SYSTEM VARIABLES
    -------------------------------------------------------------------------- */
 :root {
-  /* Color Palette */
   --bg-main: #0a0a0c;
   --bg-surface: #121216;
   --bg-surface-elevated: #1a1a22;
   --bg-surface-hover: #22222d;
 
-  --accent-pink: #ff2aa6;
-  --accent-pink-hover: #ff0090;
-  --accent-pink-dim: rgba(255, 42, 209, 0.15);
-  --accent-pink-glow: rgba(255, 42, 198, 0.35);
+  --accent-pink: #ff00a8;
+  --accent-pink-hover: #e60098;
+  --accent-pink-dim: rgba(255, 0, 168, 0.15);
+  --accent-pink-glow: rgba(255, 0, 168, 0.35);
 
   --text-main: #f4f4f6;
   --text-muted: #9393a2;
@@ -24,30 +23,26 @@
 
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-medium: rgba(255, 255, 255, 0.16);
-  --border-accent: rgba(255, 42, 188, 0.4);
+  --border-accent: rgba(255, 0, 168, 0.4);
 
-  /* Typography */
   --font-family:
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
 
-  /* Radii */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  /* Elevation & Shadows */
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.8);
+
   --glow-pink: 0 0 25px var(--accent-pink-glow);
 
-  /* Transitions */
   --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-normal: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Layout */
   --max-width: 1240px;
   --header-height: 80px;
 }
@@ -120,12 +115,14 @@ h4 {
   padding: 100px 24px;
   max-width: var(--max-width);
   margin: 0 auto;
+  position: relative;
 }
 
 .section-heading {
   text-align: center;
   max-width: 640px;
   margin: 0 auto 60px auto;
+  position: relative;
 }
 
 .section-label,
@@ -139,7 +136,7 @@ h4 {
   margin-bottom: 12px;
   padding: 4px 12px;
   background: var(--accent-pink-dim);
-  border: 1px solid rgba(255, 42, 112, 0.25);
+  border: 1px solid rgba(255, 0, 168, 0.25);
   border-radius: var(--radius-full);
 }
 
@@ -189,7 +186,7 @@ h4 {
   background-color: var(--accent-pink-hover);
   border-color: var(--accent-pink-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 42, 112, 0.5);
+  box-shadow: 0 8px 25px var(--accent-pink-glow);
 }
 
 .btn-secondary {
@@ -273,9 +270,23 @@ h4 {
 
 .menu-toggle {
   display: none;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
   font-size: 1.5rem;
   color: var(--text-main);
   cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  position: relative;
+  z-index: 1002;
+}
+
+.menu-toggle:hover {
+  color: var(--accent-pink);
+  border-color: var(--border-accent);
 }
 
 /* --------------------------------------------------------------------------
@@ -291,7 +302,7 @@ h4 {
   position: relative;
   background: radial-gradient(
     circle at 80% 50%,
-    rgba(255, 42, 112, 0.08) 0%,
+    rgba(255, 0, 168, 0.08) 0%,
     transparent 60%
   );
 }
@@ -325,9 +336,9 @@ h4 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 32px;
+  position: relative;
 }
 
-/* Dynamic Card Layout (Rendered via JS or HTML) */
 .camera-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -344,13 +355,14 @@ h4 {
   border-color: var(--border-accent);
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(255, 42, 112, 0.15);
+    0 0 20px rgba(255, 0, 168, 0.15);
 }
 
+/* Camera image ALWAYS square */
 .camera-card-image {
   position: relative;
   width: 100%;
-  height: 240px;
+  aspect-ratio: 1 / 1;
   background: #000;
   overflow: hidden;
 }
@@ -359,6 +371,7 @@ h4 {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -413,6 +426,7 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--border-subtle);
 }
@@ -481,6 +495,7 @@ h4 {
   margin-top: 40px;
   margin-bottom: 80px;
   box-shadow: var(--shadow-lg);
+  position: relative;
 }
 
 .form-section {
@@ -577,7 +592,6 @@ h4 {
   font-size: 0.8rem;
 }
 
-/* Rental Summary Box */
 .rental-summary {
   margin-top: 24px;
   background: var(--bg-main);
@@ -605,7 +619,6 @@ h4 {
   color: var(--accent-pink);
 }
 
-/* Checkboxes */
 .checkbox-list {
   display: flex;
   flex-direction: column;
@@ -728,10 +741,7 @@ h4 {
    -------------------------------------------------------------------------- */
 .camera-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -748,12 +758,10 @@ h4 {
 
 .modal-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .modal-content {
@@ -764,13 +772,14 @@ h4 {
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 1fr 1fr;
   z-index: 10;
   box-shadow: var(--shadow-lg);
 }
 
+/* Close button */
 .modal-close {
   position: absolute;
   top: 16px;
@@ -783,11 +792,11 @@ h4 {
   color: var(--text-main);
   font-size: 1.25rem;
   cursor: pointer;
-  z-index: 2;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .modal-close:hover {
@@ -795,23 +804,128 @@ h4 {
   color: var(--accent-pink);
 }
 
-.modal-image-wrapper {
+/* --------------------------------------------------------------------------
+   CAMERA GALLERY
+   -------------------------------------------------------------------------- */
+
+/*
+   IMPORTANT:
+   - Gallery has fixed height.
+   - Camera/sample images never control modal height.
+   - object-fit: contain keeps the ORIGINAL photo ratio.
+*/
+
+.modal-gallery {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  min-height: 420px;
   background: #000;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.modal-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #000;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  overflow: hidden;
+  padding: 20px;
 }
 
 .modal-image-wrapper img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+
+  object-fit: contain;
+  object-position: center;
+
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
+/* Gallery arrows */
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: var(--radius-full);
+  background: rgba(10, 10, 12, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  color: #fff;
+  font-size: 2rem;
+  line-height: 1;
+
+  cursor: pointer;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all var(--transition-fast);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.gallery-arrow:hover {
+  background: var(--accent-pink);
+  border-color: var(--accent-pink);
+  box-shadow: var(--glow-pink);
+}
+
+.gallery-prev {
+  left: 16px;
+}
+
+.gallery-next {
+  right: 16px;
+}
+
+/* Image counter */
+.gallery-counter {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: rgba(10, 10, 12, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  color: #fff;
+
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  z-index: 5;
+}
+
+/* Modal details */
 .modal-details {
   padding: 40px 32px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .modal-details h2 {
@@ -852,6 +966,8 @@ h4 {
   background: #050507;
   border-top: 1px solid var(--border-subtle);
   padding: 60px 24px 30px 24px;
+  position: relative;
+  overflow: hidden;
 }
 
 .footer-container {
@@ -897,8 +1013,9 @@ h4 {
 }
 
 /* --------------------------------------------------------------------------
-   13. RESPONSIVE DESIGN (MEDIA QUERIES)
+   13. RESPONSIVE DESIGN
    -------------------------------------------------------------------------- */
+
 @media (max-width: 992px) {
   .hero-content h1 {
     font-size: 3rem;
@@ -910,21 +1027,87 @@ h4 {
 
   .modal-content {
     grid-template-columns: 1fr;
+    max-height: 90vh;
+  }
+
+  .modal-gallery {
+    height: 350px;
+    min-height: 350px;
   }
 
   .modal-image-wrapper {
-    height: 250px;
+    height: 350px;
+    min-height: 0;
   }
 }
 
 @media (max-width: 768px) {
+  /* --------------------------------------------------------------
+     MOBILE NAVIGATION
+     -------------------------------------------------------------- */
+
   .nav-menu {
-    display: none; /* Controlled by JS via menu toggle */
+    position: absolute;
+    top: var(--header-height);
+    left: 16px;
+    right: 16px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+
+    padding: 12px;
+
+    background: rgba(18, 18, 22, 0.97);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-lg);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transform: translateY(-10px);
+
+    transition:
+      opacity var(--transition-fast),
+      transform var(--transition-fast),
+      visibility var(--transition-fast);
+
+    z-index: 1001;
+  }
+
+  .nav-menu.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .nav-menu a {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: var(--radius-md);
+  }
+
+  .nav-menu a:hover {
+    background: var(--accent-pink-dim);
+  }
+
+  .nav-menu .nav-cta {
+    text-align: center;
+    margin-top: 6px;
   }
 
   .menu-toggle {
-    display: block;
+    display: flex;
   }
+
+  /* --------------------------------------------------------------
+     MOBILE FORM
+     -------------------------------------------------------------- */
 
   .form-grid {
     grid-template-columns: 1fr;
@@ -938,11 +1121,19 @@ h4 {
     grid-template-columns: 1fr;
   }
 
+  /* --------------------------------------------------------------
+     MOBILE FOOTER
+     -------------------------------------------------------------- */
+
   .footer-container {
     flex-direction: column;
     gap: 32px;
     text-align: center;
   }
+
+  /* --------------------------------------------------------------
+     MOBILE HERO
+     -------------------------------------------------------------- */
 
   .hero-content h1 {
     font-size: 2.5rem;
@@ -954,5 +1145,463 @@ h4 {
 
   .btn {
     width: 100%;
+  }
+
+  /* --------------------------------------------------------------
+     MOBILE CAMERA GALLERY
+     -------------------------------------------------------------- */
+
+  .modal-content {
+    width: calc(100% - 24px);
+    max-height: 92vh;
+    border-radius: var(--radius-lg);
+  }
+
+  .modal-gallery {
+    height: 300px;
+    min-height: 300px;
+    touch-action: pan-y;
+  }
+
+  .modal-image-wrapper {
+    height: 300px;
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .gallery-arrow {
+    width: 38px;
+    height: 38px;
+    font-size: 1.7rem;
+  }
+
+  .gallery-prev {
+    left: 10px;
+  }
+
+  .gallery-next {
+    right: 10px;
+  }
+
+  .modal-details {
+    padding: 28px 22px;
+  }
+
+  .modal-details h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   14. SMALL MOBILE
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+  .section {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .section-heading h2 {
+    font-size: 2.2rem;
+  }
+
+  .hero {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .hero-content h1 {
+    font-size: 2.2rem;
+  }
+
+  .booking-section {
+    padding: 32px 18px;
+  }
+
+  .comment-form {
+    padding: 24px 18px;
+  }
+
+  .modal-gallery {
+    height: 260px;
+    min-height: 260px;
+  }
+
+  .modal-image-wrapper {
+    height: 260px;
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .modal-details {
+    padding: 24px 18px;
+  }
+}
+
+/* ==========================================================================
+   15. SUBTLE CAT ACCENTS
+   ========================================================================== */
+
+/* Hero */
+.hero::after {
+  content: "⌁";
+  position: absolute;
+  right: 7%;
+  bottom: 14%;
+  width: 74px;
+  height: 74px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--accent-pink);
+  font-size: 4.2rem;
+  font-weight: 300;
+  line-height: 1;
+
+  opacity: 0.16;
+
+  filter: drop-shadow(0 0 12px var(--accent-pink-glow));
+  transform: rotate(-8deg);
+
+  pointer-events: none;
+}
+
+/* Camera catalogue tiny accent */
+.camera-grid::before {
+  content: "✦  •  •";
+  position: absolute;
+  top: -34px;
+  right: 12px;
+
+  color: var(--accent-pink);
+  font-size: 0.65rem;
+  letter-spacing: 8px;
+  opacity: 0.28;
+
+  pointer-events: none;
+}
+
+/* Camera card tiny cat-ear accent */
+.camera-card::after {
+  content: "⌃";
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+
+  color: var(--accent-pink);
+  font-size: 0.7rem;
+
+  opacity: 0;
+  transform: translateY(4px);
+
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+
+  pointer-events: none;
+}
+
+.camera-card:hover::after {
+  opacity: 0.65;
+  transform: translateY(0);
+}
+
+/* How it works */
+.how-section {
+  position: relative;
+}
+
+.how-section::after {
+  content: "•  •";
+  position: absolute;
+  right: 8%;
+  top: 70px;
+
+  color: var(--accent-pink);
+  font-size: 0.75rem;
+  letter-spacing: 12px;
+  opacity: 0.22;
+
+  pointer-events: none;
+}
+
+/* Comments */
+.comments-section {
+  position: relative;
+}
+
+.comments-section::after {
+  content: "◦   ◦";
+  position: absolute;
+  top: 74px;
+  left: 7%;
+
+  color: var(--accent-pink);
+  font-size: 0.9rem;
+  letter-spacing: 8px;
+  opacity: 0.2;
+
+  text-shadow: 0 0 12px var(--accent-pink-glow);
+
+  pointer-events: none;
+}
+
+/* Footer */
+.footer::after {
+  content: "⌁";
+  position: absolute;
+  right: 6%;
+  bottom: 20px;
+
+  color: var(--accent-pink);
+  font-size: 3rem;
+  opacity: 0.12;
+
+  transform: rotate(8deg);
+  filter: drop-shadow(0 0 10px var(--accent-pink-glow));
+
+  pointer-events: none;
+}
+
+.hero::after,
+.footer::after {
+  text-shadow:
+    0 0 6px rgba(255, 0, 168, 0.35),
+    0 0 18px rgba(255, 0, 168, 0.18);
+}
+
+/* ==========================================================================
+   16. CAT SECTION DIVIDERS
+   ========================================================================== */
+
+/*
+   Divider dibuat dari garis + wajah kucing kecil.
+   Tidak memakai ::after pada booking-section supaya
+   tidak bentrok dengan dekorasi section lain.
+*/
+
+/* Divider line */
+.section + .section::before,
+.section + .booking-section::before,
+.booking-section + .section::before {
+  content: "";
+
+  position: absolute;
+  left: 50%;
+  top: -1px;
+
+  transform: translateX(-50%);
+
+  width: min(82%, 900px);
+  height: 1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 0, 168, 0.08) 15%,
+    rgba(255, 0, 168, 0.45) 38%,
+    var(--accent-pink) 50%,
+    rgba(255, 0, 168, 0.45) 62%,
+    rgba(255, 0, 168, 0.08) 85%,
+    transparent 100%
+  );
+
+  box-shadow: 0 0 12px rgba(255, 0, 168, 0.18);
+
+  pointer-events: none;
+}
+
+/*
+   Cat face.
+   Menggunakan teks Unicode supaya tidak membutuhkan file tambahan.
+*/
+.section + .section::after,
+.section + .booking-section::after,
+.booking-section + .section::after {
+  content: "◢  • •  ◣";
+
+  position: absolute;
+  top: -15px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: 72px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--accent-pink);
+  background: var(--bg-main);
+
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  line-height: 1;
+
+  text-shadow:
+    0 0 6px rgba(255, 0, 168, 0.5),
+    0 0 16px rgba(255, 0, 168, 0.2);
+
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Cat whiskers */
+.section + .section .section-heading::before,
+.section + .booking-section .section-heading::before,
+.booking-section + .section .section-heading::before {
+  content: "╲  ╲";
+
+  position: absolute;
+  left: calc(50% - 82px);
+  top: -28px;
+
+  color: var(--accent-pink);
+  font-size: 0.6rem;
+  letter-spacing: 5px;
+
+  opacity: 0.45;
+
+  text-shadow:
+    0 0 6px rgba(255, 0, 168, 0.35),
+    0 0 12px rgba(255, 0, 168, 0.15);
+
+  pointer-events: none;
+}
+
+.section + .section .section-heading::after,
+.section + .booking-section .section-heading::after,
+.booking-section + .section .section-heading::after {
+  content: "╱  ╱";
+
+  position: absolute;
+  left: calc(50% + 48px);
+  top: -28px;
+
+  color: var(--accent-pink);
+  font-size: 0.6rem;
+  letter-spacing: 5px;
+
+  opacity: 0.45;
+
+  text-shadow:
+    0 0 6px rgba(255, 0, 168, 0.35),
+    0 0 12px rgba(255, 0, 168, 0.15);
+
+  pointer-events: none;
+}
+
+/* Small nose */
+.section + .section .section-heading > h2::before,
+.section + .booking-section .section-heading > h2::before,
+.booking-section + .section .section-heading > h2::before {
+  content: "•";
+
+  position: absolute;
+  left: 50%;
+  top: -25px;
+
+  transform: translateX(-50%);
+
+  color: var(--accent-pink);
+  font-size: 0.45rem;
+
+  opacity: 0.8;
+
+  text-shadow: 0 0 8px rgba(255, 0, 168, 0.5);
+
+  pointer-events: none;
+}
+
+/* Subtle hover glow */
+.section:hover + .section::after,
+.section:hover + .booking-section::after,
+.booking-section:hover + .section::after {
+  text-shadow:
+    0 0 8px rgba(255, 0, 168, 0.7),
+    0 0 20px rgba(255, 0, 168, 0.3);
+}
+
+/* ==========================================================================
+   17. MOBILE CAT ACCENTS
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .hero::after {
+    right: 4%;
+    bottom: 9%;
+    font-size: 3rem;
+    opacity: 0.11;
+  }
+
+  .camera-grid::before {
+    top: -28px;
+    right: 6px;
+    opacity: 0.2;
+  }
+
+  .how-section::after {
+    right: 5%;
+    top: 55px;
+    opacity: 0.16;
+  }
+
+  .comments-section::after {
+    left: 5%;
+    top: 55px;
+    opacity: 0.14;
+  }
+
+  .footer::after {
+    right: 4%;
+    bottom: 14px;
+    font-size: 2.4rem;
+    opacity: 0.1;
+  }
+
+  /* Divider */
+  .section + .section::before,
+  .section + .booking-section::before,
+  .booking-section + .section::before {
+    width: 76%;
+  }
+
+  .section + .section::after,
+  .section + .booking-section::after,
+  .booking-section + .section::after {
+    width: 62px;
+    height: 28px;
+    top: -14px;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+  }
+
+  .section + .section .section-heading::before,
+  .section + .booking-section .section-heading::before,
+  .booking-section + .section .section-heading::before {
+    left: calc(50% - 68px);
+    top: -25px;
+    font-size: 0.5rem;
+    letter-spacing: 3px;
+  }
+
+  .section + .section .section-heading::after,
+  .section + .booking-section .section-heading::after,
+  .booking-section + .section .section-heading::after {
+    left: calc(50% + 40px);
+    top: -25px;
+    font-size: 0.5rem;
+    letter-spacing: 3px;
+  }
+
+  .section + .section .section-heading > h2::before,
+  .section + .booking-section .section-heading > h2::before,
+  .booking-section + .section .section-heading > h2::before {
+    top: -23px;
   }
 }

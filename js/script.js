@@ -7,9 +7,9 @@
    CONFIGURATION
    ========================================================= */
 
-// Ganti dengan nomor WhatsApp Enmax House.
-// Format: 62 + nomor tanpa tanda +, spasi, atau 0 di depan.
-const WHATSAPP_NUMBER = "+6282145929947";
+// Format WhatsApp:
+// 62 + nomor tanpa +, spasi, atau 0 di depan.
+const WHATSAPP_NUMBER = "6282145929947";
 
 /* =========================================================
    CAMERA DATA
@@ -24,26 +24,47 @@ const cameras = [
       "Compact camera with excellent image quality, perfect for travel, daily content, and casual photography.",
     price: "Rp 220.000 / day",
     image: "assets/cameras/camera-01.jpg",
+
+    gallery: [
+      "assets/cameras/camera-01.jpg",
+      "assets/cameras/camera-01-1.jpg",
+      "assets/cameras/camera-01-2.jpg",
+      "assets/cameras/camera-01-3.jpg",
+    ],
   },
 
   {
     id: "camera-02",
     name: "Canon SX740 HS",
-    category: "Instanly Post Ready",
+    category: "Instantly Post Ready",
     description:
       "Powerful zoom in a compact body, made for travel and everyday moments.",
     price: "Rp 200.000 / day",
     image: "assets/cameras/camera-02.jpg",
+
+    gallery: [
+      "assets/cameras/camera-02.jpg",
+      "assets/cameras/camera-02-1.jpg",
+      "assets/cameras/camera-02-2.jpg",
+      "assets/cameras/camera-02-3.jpg",
+    ],
   },
 
   {
     id: "camera-03",
-    name: "Panasonic Lumix TZ999",
+    name: "Panasonic Lumix TZ99",
     category: "Feel Leica Quality",
     description:
       "Versatile zoom and compact design for travel and everyday shooting.",
     price: "Rp 200.000 / day",
     image: "assets/cameras/camera-03.jpg",
+
+    gallery: [
+      "assets/cameras/camera-03.jpg",
+      "assets/cameras/camera-03-1.jpg",
+      "assets/cameras/camera-03-2.jpg",
+      "assets/cameras/camera-03-3.jpg",
+    ],
   },
 
   {
@@ -54,6 +75,13 @@ const cameras = [
       "Premium compact camera with Leica character for street and lifestyle photography.",
     price: "Rp 140.000 / day",
     image: "assets/cameras/camera-04.jpg",
+
+    gallery: [
+      "assets/cameras/camera-04.jpg",
+      "assets/cameras/camera-04-1.jpg",
+      "assets/cameras/camera-04-2.jpg",
+      "assets/cameras/camera-04-3.jpg",
+    ],
   },
 
   {
@@ -64,6 +92,13 @@ const cameras = [
       "Creator-focused compact camera for vlogs, travel, and social content.",
     price: "Rp 150.000 / day",
     image: "assets/cameras/camera-05.jpg",
+
+    gallery: [
+      "assets/cameras/camera-05.jpg",
+      "assets/cameras/camera-05-1.jpg",
+      "assets/cameras/camera-05-2.jpg",
+      "assets/cameras/camera-05-3.jpg",
+    ],
   },
 ];
 
@@ -83,10 +118,18 @@ const cameraModal = document.getElementById("cameraModal");
 const modalOverlay = document.getElementById("modalOverlay");
 const modalClose = document.getElementById("modalClose");
 
+/*
+  IMPORTANT:
+  Gallery sekarang hanya menggunakan SATU image.
+  JavaScript akan mengganti src image tersebut.
+*/
 const modalCameraImage = document.getElementById("modalCameraImage");
 
-const modalCameraCategory = document.getElementById("modalCameraCategory");
+const galleryPrev = document.getElementById("galleryPrev");
+const galleryNext = document.getElementById("galleryNext");
+const galleryCounter = document.getElementById("galleryCounter");
 
+const modalCameraCategory = document.getElementById("modalCameraCategory");
 const modalCameraName = document.getElementById("modalCameraName");
 
 const modalCameraDescription = document.getElementById(
@@ -100,24 +143,25 @@ const modalBookButton = document.getElementById("modalBookButton");
 const bookingForm = document.getElementById("bookingForm");
 
 const startDate = document.getElementById("startDate");
-
 const endDate = document.getElementById("endDate");
 
 const summaryCamera = document.getElementById("summaryCamera");
-
 const summaryDuration = document.getElementById("summaryDuration");
 
 const agreement = document.getElementById("agreement");
-
 const agreementError = document.getElementById("agreementError");
 
 const commentForm = document.getElementById("commentForm");
-
 const commentsList = document.getElementById("commentsList");
 
 const currentYear = document.getElementById("currentYear");
 
+/* =========================================================
+   GLOBAL STATE
+   ========================================================= */
+
 let selectedCameraId = null;
+let currentGalleryIndex = 0;
 
 /* =========================================================
    INITIALIZATION
@@ -125,16 +169,12 @@ let selectedCameraId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   renderCameraCards();
-
   populateCameraSelect();
-
   setMinimumDates();
-
   loadComments();
-
   updateCurrentYear();
-
   setupNavbar();
+  setupGalleryControls();
 });
 
 /* =========================================================
@@ -152,58 +192,54 @@ function renderCameraCards() {
     card.className = "camera-card";
 
     card.innerHTML = `
-            <div class="camera-image-wrapper">
+      <div class="camera-card-image">
+        <img
+          src="${camera.image}"
+          alt="${escapeHTML(camera.name)}"
+          loading="lazy"
+        >
 
-                <img
-                    src="${camera.image}"
-                    alt="${camera.name}"
-                    class="camera-image"
-                    loading="lazy"
-                >
+        <span class="camera-badge">
+          Available
+        </span>
+      </div>
 
-                <span class="camera-status">
-                    Available
-                </span>
+      <div class="camera-card-content">
 
-            </div>
+        <span class="camera-category">
+          ${escapeHTML(camera.category)}
+        </span>
 
-            <div class="camera-card-content">
+        <h3>
+          ${escapeHTML(camera.name)}
+        </h3>
 
-                <span class="camera-category">
-                    ${camera.category}
-                </span>
+        <p>
+          ${escapeHTML(camera.description)}
+        </p>
 
-                <h3>
-                    ${camera.name}
-                </h3>
+        <div class="camera-card-footer">
 
-                <p>
-                    ${camera.description}
-                </p>
+          <strong class="camera-price">
+            ${escapeHTML(camera.price)}
+          </strong>
 
-                <div class="camera-card-footer">
+          <button
+            type="button"
+            class="camera-view-button"
+            data-camera-id="${camera.id}"
+          >
+            View Camera →
+          </button>
 
-                    <strong>
-                        ${camera.price}
-                    </strong>
+        </div>
 
-                    <button
-                        type="button"
-                        class="camera-view-button"
-                        data-camera-id="${camera.id}"
-                    >
-                        View Camera →
-                    </button>
-
-                </div>
-
-            </div>
-        `;
+      </div>
+    `;
 
     cameraGrid.appendChild(card);
   });
 
-  // Attach event listener after cards are rendered.
   const viewButtons = document.querySelectorAll(".camera-view-button");
 
   viewButtons.forEach((button) => {
@@ -221,6 +257,10 @@ function renderCameraCards() {
 
 function populateCameraSelect() {
   if (!cameraSelect) return;
+
+  cameraSelect.innerHTML = `
+    <option value="">Select a camera</option>
+  `;
 
   cameras.forEach((camera) => {
     const option = document.createElement("option");
@@ -246,34 +286,172 @@ function populateCameraSelect() {
 function openCameraModal(cameraId) {
   const camera = cameras.find((item) => item.id === cameraId);
 
-  if (!camera) return;
+  if (!camera || !cameraModal) return;
 
   selectedCameraId = camera.id;
 
-  modalCameraImage.src = camera.image;
+  currentGalleryIndex = 0;
 
-  modalCameraImage.alt = camera.name;
+  /*
+    Set camera information
+  */
+  if (modalCameraCategory) {
+    modalCameraCategory.textContent = camera.category;
+  }
 
-  modalCameraCategory.textContent = camera.category;
+  if (modalCameraName) {
+    modalCameraName.textContent = camera.name;
+  }
 
-  modalCameraName.textContent = camera.name;
+  if (modalCameraDescription) {
+    modalCameraDescription.textContent = camera.description;
+  }
 
-  modalCameraDescription.textContent = camera.description;
+  if (modalCameraPrice) {
+    modalCameraPrice.textContent = camera.price;
+  }
 
-  modalCameraPrice.textContent = camera.price;
+  if (modalBookButton) {
+    modalBookButton.dataset.cameraId = camera.id;
+  }
 
-  modalBookButton.dataset.cameraId = camera.id;
+  /*
+    Load first gallery image
+  */
+  updateGalleryImage();
 
+  /*
+    Open modal
+  */
   cameraModal.classList.add("active");
 
   cameraModal.setAttribute("aria-hidden", "false");
 
   document.body.classList.add("modal-open");
 
-  // Move keyboard focus to close button.
   setTimeout(() => {
-    modalClose.focus();
+    modalClose?.focus();
   }, 100);
+}
+
+/* =========================================================
+   GET CURRENT GALLERY
+   ========================================================= */
+
+function getCurrentGallery() {
+  const camera = cameras.find((item) => item.id === selectedCameraId);
+
+  if (!camera) {
+    return [];
+  }
+
+  if (Array.isArray(camera.gallery) && camera.gallery.length > 0) {
+    return camera.gallery;
+  }
+
+  return [camera.image];
+}
+
+/* =========================================================
+   UPDATE GALLERY IMAGE
+   ========================================================= */
+
+function updateGalleryImage() {
+  if (!modalCameraImage) return;
+
+  const camera = cameras.find((item) => item.id === selectedCameraId);
+
+  if (!camera) return;
+
+  const gallery = getCurrentGallery();
+
+  if (!gallery.length) return;
+
+  /*
+    Pastikan index selalu valid
+  */
+  if (currentGalleryIndex < 0) {
+    currentGalleryIndex = gallery.length - 1;
+  }
+
+  if (currentGalleryIndex >= gallery.length) {
+    currentGalleryIndex = 0;
+  }
+
+  /*
+    INI INTINYA:
+    Tidak membuat <img> baru.
+    Hanya mengganti src dari satu image.
+  */
+  modalCameraImage.src = gallery[currentGalleryIndex];
+
+  modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
+
+  /*
+    Counter
+  */
+  if (galleryCounter) {
+    galleryCounter.textContent = `${currentGalleryIndex + 1} / ${gallery.length}`;
+  }
+
+  /*
+    Show / hide arrows
+  */
+  const hasMultipleImages = gallery.length > 1;
+
+  if (galleryPrev) {
+    galleryPrev.style.display = hasMultipleImages ? "flex" : "none";
+  }
+
+  if (galleryNext) {
+    galleryNext.style.display = hasMultipleImages ? "flex" : "none";
+  }
+}
+
+/* =========================================================
+   GALLERY CONTROLS
+   ========================================================= */
+
+function setupGalleryControls() {
+  if (galleryPrev) {
+    galleryPrev.addEventListener("click", () => {
+      moveGallery(-1);
+    });
+  }
+
+  if (galleryNext) {
+    galleryNext.addEventListener("click", () => {
+      moveGallery(1);
+    });
+  }
+}
+
+/* =========================================================
+   MOVE GALLERY
+   ========================================================= */
+
+function moveGallery(direction) {
+  const gallery = getCurrentGallery();
+
+  if (!gallery.length) return;
+
+  currentGalleryIndex += direction;
+
+  /*
+    Loop ke foto terakhir
+  */
+  if (currentGalleryIndex < 0) {
+    currentGalleryIndex = gallery.length - 1;
+  }
+
+  /*
+    Loop ke foto pertama
+  */
+  if (currentGalleryIndex >= gallery.length) {
+    currentGalleryIndex = 0;
+  }
+
+  updateGalleryImage();
 }
 
 /* =========================================================
@@ -281,6 +459,8 @@ function openCameraModal(cameraId) {
    ========================================================= */
 
 function closeCameraModal() {
+  if (!cameraModal) return;
+
   cameraModal.classList.remove("active");
 
   cameraModal.setAttribute("aria-hidden", "true");
@@ -288,16 +468,43 @@ function closeCameraModal() {
   document.body.classList.remove("modal-open");
 }
 
-/* Close button */
-modalClose.addEventListener("click", closeCameraModal);
+if (modalClose) {
+  modalClose.addEventListener("click", closeCameraModal);
+}
 
-/* Click overlay */
-modalOverlay.addEventListener("click", closeCameraModal);
+if (modalOverlay) {
+  modalOverlay.addEventListener("click", closeCameraModal);
+}
 
-/* Escape key */
+/* =========================================================
+   ESCAPE KEY
+   ========================================================= */
+
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && cameraModal.classList.contains("active")) {
+  if (event.key === "Escape" && cameraModal?.classList.contains("active")) {
     closeCameraModal();
+  }
+});
+
+/* =========================================================
+   KEYBOARD GALLERY NAVIGATION
+   ========================================================= */
+
+document.addEventListener("keydown", (event) => {
+  if (!cameraModal?.classList.contains("active")) {
+    return;
+  }
+
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+
+    moveGallery(-1);
+  }
+
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+
+    moveGallery(1);
   }
 });
 
@@ -305,26 +512,30 @@ document.addEventListener("keydown", (event) => {
    BOOK THIS CAMERA
    ========================================================= */
 
-modalBookButton.addEventListener("click", () => {
-  const cameraId = modalBookButton.dataset.cameraId;
+if (modalBookButton) {
+  modalBookButton.addEventListener("click", () => {
+    const cameraId = modalBookButton.dataset.cameraId;
 
-  if (!cameraId) return;
+    if (!cameraId || !cameraSelect) {
+      return;
+    }
 
-  selectedCameraId = cameraId;
+    selectedCameraId = cameraId;
 
-  cameraSelect.value = cameraId;
+    cameraSelect.value = cameraId;
 
-  updateBookingSummary();
+    updateBookingSummary();
 
-  closeCameraModal();
+    closeCameraModal();
 
-  const bookingSection = document.getElementById("booking");
+    const bookingSection = document.getElementById("booking");
 
-  bookingSection.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
+    bookingSection?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   });
-});
+}
 
 /* =========================================================
    DATE LOGIC
@@ -343,6 +554,8 @@ function getTodayString() {
 }
 
 function setMinimumDates() {
+  if (!startDate || !endDate) return;
+
   const today = getTodayString();
 
   startDate.min = today;
@@ -350,30 +563,38 @@ function setMinimumDates() {
   endDate.min = today;
 }
 
-/* Start date changed */
-startDate.addEventListener("change", () => {
-  if (!startDate.value) return;
+/* =========================================================
+   START DATE
+   ========================================================= */
 
-  endDate.min = startDate.value;
+if (startDate) {
+  startDate.addEventListener("change", () => {
+    if (!startDate.value) return;
 
-  if (endDate.value && endDate.value < startDate.value) {
-    endDate.value = startDate.value;
-  }
+    endDate.min = startDate.value;
 
-  updateBookingSummary();
-});
+    if (endDate.value && endDate.value < startDate.value) {
+      endDate.value = startDate.value;
+    }
 
-/* End date changed */
-endDate.addEventListener("change", () => {
-  updateBookingSummary();
-});
+    updateBookingSummary();
+  });
+}
+
+/* =========================================================
+   END DATE
+   ========================================================= */
+
+if (endDate) {
+  endDate.addEventListener("change", updateBookingSummary);
+}
 
 /* =========================================================
    RENTAL DURATION
    ========================================================= */
 
 function calculateRentalDays() {
-  if (!startDate.value || !endDate.value) {
+  if (!startDate?.value || !endDate?.value) {
     return null;
   }
 
@@ -383,9 +604,7 @@ function calculateRentalDays() {
 
   const difference = end.getTime() - start.getTime();
 
-  const days = Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
-
-  return days;
+  return Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
 }
 
 /* =========================================================
@@ -393,15 +612,21 @@ function calculateRentalDays() {
    ========================================================= */
 
 function updateBookingSummary() {
+  if (!cameraSelect) return;
+
   const camera = cameras.find((item) => item.id === cameraSelect.value);
 
-  summaryCamera.textContent = camera ? camera.name : "-";
+  if (summaryCamera) {
+    summaryCamera.textContent = camera ? camera.name : "-";
+  }
 
   const duration = calculateRentalDays();
 
-  summaryDuration.textContent = duration
-    ? `${duration} day${duration > 1 ? "s" : ""}`
-    : "-";
+  if (summaryDuration) {
+    summaryDuration.textContent = duration
+      ? `${duration} day${duration > 1 ? "s" : ""}`
+      : "-";
+  }
 }
 
 /* =========================================================
@@ -425,22 +650,26 @@ function formatDateIndonesia(dateString) {
    ========================================================= */
 
 function clearValidation() {
-  const errors = document.querySelectorAll(".error-message");
-
-  errors.forEach((error) => {
+  document.querySelectorAll(".error-message").forEach((error) => {
     error.textContent = "";
   });
 
-  const invalidInputs = document.querySelectorAll(".input-error");
-
-  invalidInputs.forEach((input) => {
+  document.querySelectorAll(".input-error").forEach((input) => {
     input.classList.remove("input-error");
   });
 
-  agreementError.textContent = "";
+  if (agreementError) {
+    agreementError.textContent = "";
+  }
 }
 
+/* =========================================================
+   SHOW FIELD ERROR
+   ========================================================= */
+
 function showFieldError(input, message) {
+  if (!input) return;
+
   input.classList.add("input-error");
 
   const parent = input.closest(".form-group");
@@ -453,6 +682,10 @@ function showFieldError(input, message) {
     error.textContent = message;
   }
 }
+
+/* =========================================================
+   VALIDATE BOOKING FORM
+   ========================================================= */
 
 function validateBookingForm() {
   clearValidation();
@@ -514,15 +747,18 @@ function validateBookingForm() {
   requiredFields.forEach((field) => {
     const input = document.getElementById(field.id);
 
-    if (!input.value.trim()) {
+    if (!input || !input.value.trim()) {
       showFieldError(input, field.message);
 
       isValid = false;
     }
   });
 
-  // Date validation
-  if (startDate.value && endDate.value && endDate.value < startDate.value) {
+  /* =======================================================
+     DATE VALIDATION
+  ======================================================== */
+
+  if (startDate?.value && endDate?.value && endDate.value < startDate.value) {
     showFieldError(
       endDate,
       "Tanggal selesai tidak boleh lebih awal dari tanggal mulai.",
@@ -531,36 +767,49 @@ function validateBookingForm() {
     isValid = false;
   }
 
-  // WhatsApp number validation
+  /* =======================================================
+     WHATSAPP VALIDATION
+  ======================================================== */
+
   const whatsapp = document.getElementById("whatsapp");
 
-  if (whatsapp.value && !/^[0-9+\-\s()]{8,20}$/.test(whatsapp.value)) {
+  if (whatsapp?.value && !/^[0-9+\-\s()]{8,20}$/.test(whatsapp.value)) {
     showFieldError(whatsapp, "Masukkan nomor WhatsApp yang valid.");
 
     isValid = false;
   }
 
-  // Supporting documents
+  /* =======================================================
+     SUPPORTING DOCUMENTS
+  ======================================================== */
+
   const ktpCheck = document.getElementById("ktpCheck");
+
   const hotelCheck = document.getElementById("hotelCheck");
+
   const flightCheck = document.getElementById("flightCheck");
 
   const hasAtLeastOneDocument =
-    ktpCheck.checked || hotelCheck.checked || flightCheck.checked;
+    ktpCheck?.checked || hotelCheck?.checked || flightCheck?.checked;
 
   if (!hasAtLeastOneDocument) {
-    ktpCheck.closest(".checkbox-item")?.classList.add("input-error");
+    ktpCheck?.closest(".checkbox-item")?.classList.add("input-error");
 
-    hotelCheck.closest(".checkbox-item")?.classList.add("input-error");
+    hotelCheck?.closest(".checkbox-item")?.classList.add("input-error");
 
-    flightCheck.closest(".checkbox-item")?.classList.add("input-error");
+    flightCheck?.closest(".checkbox-item")?.classList.add("input-error");
 
     isValid = false;
   }
 
-  // Agreement
-  if (!agreement.checked) {
-    agreementError.textContent = "Kamu harus menyetujui ketentuan booking.";
+  /* =======================================================
+     AGREEMENT
+  ======================================================== */
+
+  if (!agreement?.checked) {
+    if (agreementError) {
+      agreementError.textContent = "Kamu harus menyetujui ketentuan booking.";
+    }
 
     isValid = false;
   }
@@ -572,30 +821,32 @@ function validateBookingForm() {
    BOOKING FORM SUBMIT
    ========================================================= */
 
-bookingForm.addEventListener("submit", (event) => {
-  event.preventDefault();
+if (bookingForm) {
+  bookingForm.addEventListener("submit", (event) => {
+    event.preventDefault();
 
-  const isValid = validateBookingForm();
+    const isValid = validateBookingForm();
 
-  if (!isValid) {
-    const firstError = document.querySelector(".input-error");
+    if (!isValid) {
+      const firstError = document.querySelector(".input-error");
 
-    if (firstError) {
-      firstError.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      if (firstError) {
+        firstError.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
 
-      if (typeof firstError.focus === "function") {
-        firstError.focus();
+        if (typeof firstError.focus === "function") {
+          firstError.focus();
+        }
       }
+
+      return;
     }
 
-    return;
-  }
-
-  createWhatsAppMessage();
-});
+    createWhatsAppMessage();
+  });
+}
 
 /* =========================================================
    WHATSAPP MESSAGE
@@ -624,7 +875,19 @@ function createWhatsAppMessage() {
 
   const comments = document.getElementById("comments").value.trim();
 
+  const ktpCheck = document.getElementById("ktpCheck").checked;
+
+  const hotelCheck = document.getElementById("hotelCheck").checked;
+
+  const flightCheck = document.getElementById("flightCheck").checked;
+
   const duration = calculateRentalDays();
+
+  const documentStatus = `
+KTP / Passport: ${ktpCheck ? "✓" : "-"}
+Bukti Booking Hotel: ${hotelCheck ? "✓" : "-"}
+Detail Penerbangan: ${flightCheck ? "✓" : "-"}
+  `.trim();
 
   const message = `
 Halo Enmax House, saya ingin mengajukan booking kamera.
@@ -646,15 +909,13 @@ Kontak Darurat: ${emergencyContact}
 Instagram: ${instagram || "-"}
 
 DOKUMEN PENDUKUNG
-KTP / Passport: ✓
-Bukti Booking Hotel: ✓
-Detail Penerbangan: ✓
+${documentStatus}
 
 CATATAN TAMBAHAN
 ${comments || "-"}
 
 Saya memahami bahwa booking ini belum confirmed dan masih menunggu pengecekan serta konfirmasi dari Enmax House.
-    `.trim();
+  `.trim();
 
   const encodedMessage = encodeURIComponent(message);
 
@@ -668,7 +929,9 @@ Saya memahami bahwa booking ini belum confirmed dan masih menunggu pengecekan se
    ========================================================= */
 
 function setupNavbar() {
-  if (!navbar) return;
+  if (!navbar || !navMenu || !menuToggle) {
+    return;
+  }
 
   window.addEventListener("scroll", () => {
     if (window.scrollY > 50) {
@@ -681,10 +944,9 @@ function setupNavbar() {
   menuToggle.addEventListener("click", () => {
     const isOpen = navMenu.classList.toggle("active");
 
-    menuToggle.setAttribute("aria-expanded", isOpen);
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
   });
 
-  // Close mobile menu after clicking link.
   navMenu.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
       navMenu.classList.remove("active");
@@ -709,12 +971,12 @@ function loadComments() {
 
   if (!savedComments.length) {
     commentsList.innerHTML = `
-            <div class="empty-comments">
-                <p>
-                    Belum ada komentar. Jadilah yang pertama.
-                </p>
-            </div>
-        `;
+      <div class="empty-comments">
+        <p>
+          Belum ada komentar. Jadilah yang pertama.
+        </p>
+      </div>
+    `;
 
     return;
   }
@@ -724,6 +986,10 @@ function loadComments() {
   });
 }
 
+/* =========================================================
+   RENDER COMMENT
+   ========================================================= */
+
 function renderComment(comment) {
   const article = document.createElement("article");
 
@@ -732,28 +998,30 @@ function renderComment(comment) {
   const stars = "★".repeat(comment.rating) + "☆".repeat(5 - comment.rating);
 
   article.innerHTML = `
-        <div class="comment-header">
+    <div class="comment-header">
 
-            <div>
-                <strong>
-                    ${escapeHTML(comment.name)}
-                </strong>
+      <div>
 
-                <div class="comment-rating">
-                    ${stars}
-                </div>
-            </div>
+        <strong class="comment-author">
+          ${escapeHTML(comment.name)}
+        </strong>
 
-            <span class="comment-date">
-                ${escapeHTML(comment.date)}
-            </span>
-
+        <div class="comment-rating">
+          ${stars}
         </div>
 
-        <p>
-            ${escapeHTML(comment.text)}
-        </p>
-    `;
+      </div>
+
+      <span class="comment-date">
+        ${escapeHTML(comment.date)}
+      </span>
+
+    </div>
+
+    <p>
+      ${escapeHTML(comment.text)}
+    </p>
+  `;
 
   commentsList.prepend(article);
 }
@@ -762,43 +1030,43 @@ function renderComment(comment) {
    COMMENT FORM
    ========================================================= */
 
-commentForm.addEventListener("submit", (event) => {
-  event.preventDefault();
+if (commentForm) {
+  commentForm.addEventListener("submit", (event) => {
+    event.preventDefault();
 
-  const name = document.getElementById("commentName").value.trim();
+    const name = document.getElementById("commentName").value.trim();
 
-  const rating = Number(document.getElementById("commentRating").value);
+    const rating = Number(document.getElementById("commentRating").value);
 
-  const text = document.getElementById("commentText").value.trim();
+    const text = document.getElementById("commentText").value.trim();
 
-  if (!name || !text) {
-    return;
-  }
+    if (!name || !text) {
+      return;
+    }
 
-  const comment = {
-    name,
+    const comment = {
+      name,
+      rating,
+      text,
 
-    rating,
+      date: new Date().toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+    };
 
-    text,
+    const comments = JSON.parse(localStorage.getItem("enmaxComments") || "[]");
 
-    date: new Date().toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-  };
+    comments.push(comment);
 
-  const comments = JSON.parse(localStorage.getItem("enmaxComments") || "[]");
+    localStorage.setItem("enmaxComments", JSON.stringify(comments));
 
-  comments.push(comment);
+    commentForm.reset();
 
-  localStorage.setItem("enmaxComments", JSON.stringify(comments));
-
-  commentForm.reset();
-
-  loadComments();
-});
+    loadComments();
+  });
+}
 
 /* =========================================================
    HTML ESCAPE

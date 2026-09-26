@@ -357,7 +357,7 @@ h4 {
   align-items: center;
   justify-content: center;
 
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hero-cat video {
@@ -367,12 +367,6 @@ h4 {
   height: 100%;
 
   object-fit: contain;
-
-  /*
-    Background hitam video akan menyatu
-    dengan background gelap website.
-  */
-  mix-blend-mode: screen;
 
   filter: drop-shadow(0 0 18px rgba(255, 0, 168, 0.12))
     drop-shadow(0 0 35px rgba(255, 0, 168, 0.06));
@@ -393,25 +387,28 @@ h4 {
 @media (max-width: 768px) {
   .hero-cat {
     top: auto;
-    right: -15px;
-    bottom: 5px;
+    right: -10px;
+    bottom: 10px;
 
     transform: none;
 
-    width: 210px;
+    width: 190px;
+    height: 190px;
 
-    opacity: 0.6;
+    opacity: 0.7;
+    z-index: 1;
   }
 }
 
 @media (max-width: 480px) {
   .hero-cat {
-    right: -25px;
-    bottom: 0;
+    right: -5px;
+    bottom: 5px;
 
-    width: 175px;
+    width: 165px;
+    height: 165px;
 
-    opacity: 0.5;
+    opacity: 0.6;
   }
 }
 
@@ -1325,35 +1322,12 @@ h4 {
   }
 }
 
-/* ==========================================================================
+/* ========================================================================== 
    15. SUBTLE CAT ACCENTS
    ========================================================================== */
 
-/* Hero */
-.hero::after {
-  content: "⌁";
-  position: absolute;
-  right: 7%;
-  bottom: 14%;
-  width: 74px;
-  height: 74px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: var(--accent-pink);
-  font-size: 4.2rem;
-  font-weight: 300;
-  line-height: 1;
-
-  opacity: 0.16;
-
-  filter: drop-shadow(0 0 12px var(--accent-pink-glow));
-  transform: rotate(-8deg);
-
-  pointer-events: none;
-}
+/* Hero cat decoration intentionally removed.
+   The actual animated cat video is now used in .hero-cat. */
 
 /* Camera catalogue tiny accent */
 .camera-grid::before {
@@ -1452,14 +1426,13 @@ h4 {
   pointer-events: none;
 }
 
-.hero::after,
 .footer::after {
   text-shadow:
     0 0 6px rgba(255, 0, 168, 0.35),
     0 0 18px rgba(255, 0, 168, 0.18);
 }
 
-/* ==========================================================================
+/* ========================================================================== 
    16. CAT SECTION DIVIDERS
    ========================================================================== */
 
@@ -1613,17 +1586,12 @@ h4 {
     0 0 20px rgba(255, 0, 168, 0.3);
 }
 
-/* ==========================================================================
+/* ========================================================================== 
    17. MOBILE CAT ACCENTS
    ========================================================================== */
 
 @media (max-width: 768px) {
-  .hero::after {
-    right: 4%;
-    bottom: 9%;
-    font-size: 3rem;
-    opacity: 0.11;
-  }
+  /* Hero text decoration removed because actual cat video is used. */
 
   .camera-grid::before {
     top: -28px;

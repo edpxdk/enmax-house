@@ -80,8 +80,8 @@
     ========================================================== -->
     <main>
       <!-- =======================================================
-     HERO
-======================================================== -->
+           HERO
+      ======================================================== -->
       <section class="hero" id="home">
         <!-- Floating Cat -->
         <div class="hero-cat" aria-hidden="true">
@@ -110,6 +110,7 @@
           </div>
         </div>
       </section>
+
       <!-- =======================================================
            CAMERAS
       ======================================================== -->
@@ -188,8 +189,8 @@
 
         <form id="bookingForm" novalidate>
           <!-- ===================================================
-     RENTAL INFORMATION
-==================================================== -->
+               RENTER INFORMATION
+          ==================================================== -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>01</span>
@@ -290,8 +291,8 @@
           </div>
 
           <!-- ===================================================
-     RENTAL DETAILS
-==================================================== -->
+               RENTAL DETAILS
+          ==================================================== -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>02</span>
@@ -377,8 +378,8 @@
           </div>
 
           <!-- ===================================================
-     SUPPORTING DOCUMENTS
-==================================================== -->
+               SUPPORTING DOCUMENTS
+          ==================================================== -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>03</span>
@@ -423,8 +424,8 @@
           </div>
 
           <!-- ===================================================
-     ADDITIONAL COMMENTS
-==================================================== -->
+               ADDITIONAL COMMENTS
+          ==================================================== -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>04</span>
@@ -451,8 +452,8 @@
           </div>
 
           <!-- ===================================================
-     AGREEMENT
-==================================================== -->
+               AGREEMENT
+          ==================================================== -->
           <div class="agreement-section">
             <label class="checkbox-item agreement">
               <input type="checkbox" id="agreement" name="agreement" />
@@ -473,8 +474,8 @@
           </div>
 
           <!-- ===================================================
-     SUBMIT
-==================================================== -->
+               SUBMIT
+          ==================================================== -->
           <div class="submit-section">
             <button
               type="submit"
@@ -494,8 +495,8 @@
       </section>
 
       <!-- =======================================================
-     COMMENTS
-======================================================== -->
+           COMMENTS
+      ======================================================== -->
       <section class="section comments-section" id="comments-section">
         <div class="section-heading">
           <span class="section-label"> CUSTOMER NOTES </span>
@@ -514,6 +515,7 @@
                 type="text"
                 id="commentName"
                 placeholder="Your name"
+                maxlength="50"
                 required
               />
             </div>
@@ -521,15 +523,11 @@
             <div class="form-group">
               <label for="commentRating"> Rating </label>
 
-              <select id="commentRating">
+              <select id="commentRating" required>
                 <option value="5">★★★★★</option>
-
                 <option value="4">★★★★☆</option>
-
                 <option value="3">★★★☆☆</option>
-
                 <option value="2">★★☆☆☆</option>
-
                 <option value="1">★☆☆☆☆</option>
               </select>
             </div>
@@ -541,6 +539,7 @@
             <textarea
               id="commentText"
               rows="4"
+              maxlength="500"
               placeholder="Tell us about your experience..."
               required
             ></textarea>
@@ -556,8 +555,8 @@
     </main>
 
     <!-- =========================================================
-     CAMERA MODAL
-========================================================== -->
+         CAMERA MODAL
+    ========================================================== -->
     <div class="camera-modal" id="cameraModal" aria-hidden="true">
       <!-- Overlay -->
       <div class="modal-overlay" id="modalOverlay"></div>
@@ -580,8 +579,8 @@
         </button>
 
         <!-- =====================================================
-         CAMERA GALLERY
-    ====================================================== -->
+             CAMERA GALLERY
+        ====================================================== -->
         <div class="modal-gallery">
           <!-- Image -->
           <div class="modal-image-wrapper">
@@ -613,8 +612,8 @@
         </div>
 
         <!-- =====================================================
-         CAMERA DETAILS
-    ====================================================== -->
+             CAMERA DETAILS
+        ====================================================== -->
         <div class="modal-details">
           <span class="camera-category" id="modalCameraCategory"></span>
 
@@ -640,8 +639,8 @@
     </div>
 
     <!-- =========================================================
-     FOOTER
-========================================================== -->
+         FOOTER
+    ========================================================== -->
     <footer class="footer">
       <div class="footer-container">
         <div class="footer-brand">
@@ -669,6 +668,9 @@
         </p>
       </div>
     </footer>
+
+    <!-- ================= SUPABASE ================= -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- ================= JAVASCRIPT ================= -->
     <script src="js/script.js"></script>

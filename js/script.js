@@ -4,6 +4,18 @@
    ========================================================= */
 
 /* =========================================================
+   SUPABASE CONFIGURATION
+   ========================================================= */
+
+// GANTI DENGAN PROJECT URL SUPABASE KAMU
+const SUPABASE_URL = "https://edpxdk.github.io/enmax-house/";
+
+// GANTI DENGAN PUBLISHABLE KEY / ANON PUBLIC KEY KAMU
+const SUPABASE_KEY = "sb_publishable_TWiZEW8hb8rI91I4cu3Law_H9NCykz6";
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* =========================================================
    CONFIGURATION
    ========================================================= */
 
@@ -292,9 +304,6 @@ function openCameraModal(cameraId) {
 
   currentGalleryIndex = 0;
 
-  /*
-    Set camera information
-  */
   if (modalCameraCategory) {
     modalCameraCategory.textContent = camera.category;
   }
@@ -315,14 +324,8 @@ function openCameraModal(cameraId) {
     modalBookButton.dataset.cameraId = camera.id;
   }
 
-  /*
-    Load first gallery image
-  */
   updateGalleryImage();
 
-  /*
-    Open modal
-  */
   cameraModal.classList.add("active");
 
   cameraModal.setAttribute("aria-hidden", "false");
@@ -367,9 +370,6 @@ function updateGalleryImage() {
 
   if (!gallery.length) return;
 
-  /*
-    Pastikan index selalu valid
-  */
   if (currentGalleryIndex < 0) {
     currentGalleryIndex = gallery.length - 1;
   }
@@ -378,25 +378,14 @@ function updateGalleryImage() {
     currentGalleryIndex = 0;
   }
 
-  /*
-    INI INTINYA:
-    Tidak membuat <img> baru.
-    Hanya mengganti src dari satu image.
-  */
   modalCameraImage.src = gallery[currentGalleryIndex];
 
   modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
 
-  /*
-    Counter
-  */
   if (galleryCounter) {
     galleryCounter.textContent = `${currentGalleryIndex + 1} / ${gallery.length}`;
   }
 
-  /*
-    Show / hide arrows
-  */
   const hasMultipleImages = gallery.length > 1;
 
   if (galleryPrev) {
@@ -437,16 +426,10 @@ function moveGallery(direction) {
 
   currentGalleryIndex += direction;
 
-  /*
-    Loop ke foto terakhir
-  */
   if (currentGalleryIndex < 0) {
     currentGalleryIndex = gallery.length - 1;
   }
 
-  /*
-    Loop ke foto pertama
-  */
   if (currentGalleryIndex >= gallery.length) {
     currentGalleryIndex = 0;
   }
@@ -960,16 +943,48 @@ function setupNavbar() {
    CUSTOMER COMMENTS
    ========================================================= */
 
-function loadComments() {
+/*
+  COMMENTS SEKARANG MENGGUNAKAN SUPABASE.
+
+  Sebelumnya:
+  localStorage → hanya tersimpan di browser masing-masing.
+
+  Sekarang:
+  Supabase → tersimpan di database dan bisa dilihat
+  oleh semua pengunjung website.
+*/
+
+async function loadComments() {
   if (!commentsList) return;
 
-  const savedComments = JSON.parse(
-    localStorage.getItem("enmaxComments") || "[]",
-  );
+  commentsList.innerHTML = `
+    <div class="empty-comments">
+      <p>Loading comments...</p>
+    </div>
+  `;
+
+  const { data, error } = await supabaseClient
+    .from("reviews")
+    .select("*")
+    .order("created_at", {
+      ascending: false,
+    });
+
+  if (error) {
+    console.error("Supabase error:", error);
+
+    commentsList.innerHTML = `
+      <div class="empty-comments">
+        <p>Unable to load comments.</p>
+      </div>
+    `;
+
+    return;
+  }
 
   commentsList.innerHTML = "";
 
-  if (!savedComments.length) {
+  if (!data || data.length === 0) {
     commentsList.innerHTML = `
       <div class="empty-comments">
         <p>
@@ -981,7 +996,7 @@ function loadComments() {
     return;
   }
 
-  savedComments.forEach((comment) => {
+  data.forEach((comment) => {
     renderComment(comment);
   });
 }
@@ -991,11 +1006,23 @@ function loadComments() {
    ========================================================= */
 
 function renderComment(comment) {
+  if (!commentsList) return;
+
   const article = document.createElement("article");
 
   article.className = "comment-card";
 
-  const stars = "★".repeat(comment.rating) + "☆".repeat(5 - comment.rating);
+  const rating = Number(comment.rating);
+
+  const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+
+  const date = comment.created_at
+    ? new Date(comment.created_at).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "-";
 
   article.innerHTML = `
     <div class="comment-header">
@@ -1013,17 +1040,17 @@ function renderComment(comment) {
       </div>
 
       <span class="comment-date">
-        ${escapeHTML(comment.date)}
+        ${escapeHTML(date)}
       </span>
 
     </div>
 
     <p>
-      ${escapeHTML(comment.text)}
+      ${escapeHTML(comment.comment || "")}
     </p>
   `;
 
-  commentsList.prepend(article);
+  commentsList.appendChild(article);
 }
 
 /* =========================================================
@@ -1031,40 +1058,106 @@ function renderComment(comment) {
    ========================================================= */
 
 if (commentForm) {
-  commentForm.addEventListener("submit", (event) => {
+  commentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const name = document.getElementById("commentName").value.trim();
+    const nameInput = document.getElementById("commentName");
 
-    const rating = Number(document.getElementById("commentRating").value);
+    const ratingInput = document.getElementById("commentRating");
 
-    const text = document.getElementById("commentText").value.trim();
+    const textInput = document.getElementById("commentText");
 
-    if (!name || !text) {
+    const name = nameInput.value.trim();
+
+    const rating = Number(ratingInput.value);
+
+    const text = textInput.value.trim();
+
+    /* =======================================================
+       VALIDATION
+    ======================================================== */
+
+    if (!name) {
+      alert("Please enter your name.");
+
+      nameInput.focus();
+
       return;
     }
 
-    const comment = {
-      name,
-      rating,
-      text,
+    if (rating < 1 || rating > 5) {
+      alert("Please select a valid rating.");
 
-      date: new Date().toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-    };
+      ratingInput.focus();
 
-    const comments = JSON.parse(localStorage.getItem("enmaxComments") || "[]");
+      return;
+    }
 
-    comments.push(comment);
+    if (!text) {
+      alert("Please write your comment.");
 
-    localStorage.setItem("enmaxComments", JSON.stringify(comments));
+      textInput.focus();
+
+      return;
+    }
+
+    /* =======================================================
+       DISABLE BUTTON
+    ======================================================== */
+
+    const submitButton = commentForm.querySelector('button[type="submit"]');
+
+    if (submitButton) {
+      submitButton.disabled = true;
+
+      submitButton.textContent = "Submitting...";
+    }
+
+    /* =======================================================
+       INSERT TO SUPABASE
+    ======================================================== */
+
+    const { error } = await supabaseClient.from("reviews").insert([
+      {
+        name: name,
+        rating: rating,
+        comment: text,
+      },
+    ]);
+
+    /* =======================================================
+       ERROR
+    ======================================================== */
+
+    if (error) {
+      console.error("Supabase error:", error);
+
+      alert("Failed to submit your comment. Please try again.");
+
+      if (submitButton) {
+        submitButton.disabled = false;
+
+        submitButton.textContent = "Submit Comment";
+      }
+
+      return;
+    }
+
+    /* =======================================================
+       SUCCESS
+    ======================================================== */
+
+    alert("Thank you for your comment!");
 
     commentForm.reset();
 
-    loadComments();
+    await loadComments();
+
+    if (submitButton) {
+      submitButton.disabled = false;
+
+      submitButton.textContent = "Submit Comment";
+    }
   });
 }
 

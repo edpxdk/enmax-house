@@ -8,7 +8,7 @@
    ========================================================= */
 
 // GANTI DENGAN PROJECT URL SUPABASE KAMU
-const SUPABASE_URL = "https://edpxdk.github.io/enmax-house/";
+const SUPABASE_URL = "https://egfuemmimojqzdqjsofg.supabase.co";
 
 // GANTI DENGAN PUBLISHABLE KEY / ANON PUBLIC KEY KAMU
 const SUPABASE_KEY = "sb_publishable_TWiZEW8hb8rI91I4cu3Law_H9NCykz6";

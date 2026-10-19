@@ -159,11 +159,14 @@ let photoLightbox = null;
 let lightboxImage = null;
 let previousBodyOverflow = "";
 
-/* INITIALIZATION */
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
   renderCameraCards();
   populateCameraSelect();
+  setupRentalDurationOptions();
   setMinimumDates();
   setupNavbar();
   setupGalleryControls();
@@ -176,7 +179,9 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCurrentYear();
 });
 
-/* CAMERA CARDS */
+/* =========================================================
+   CAMERA CARDS
+   ========================================================= */
 
 function renderCameraCards() {
   if (!cameraGrid) return;
@@ -185,6 +190,7 @@ function renderCameraCards() {
 
   cameras.forEach((camera) => {
     const card = document.createElement("article");
+
     card.className = "camera-card";
 
     card.innerHTML = `
@@ -227,19 +233,23 @@ function renderCameraCards() {
     cameraGrid.appendChild(card);
   });
 
-  document.querySelectorAll(".camera-view-button").forEach((button) => {
+  cameraGrid.querySelectorAll(".camera-view-button").forEach((button) => {
     button.addEventListener("click", () => {
       openCameraModal(button.dataset.cameraId);
     });
   });
 }
 
-/* CAMERA SELECT */
+/* =========================================================
+   CAMERA SELECT
+   ========================================================= */
 
 function populateCameraSelect() {
   if (!cameraSelect) return;
 
-  cameraSelect.innerHTML = '<option value="">Select a camera</option>';
+  cameraSelect.innerHTML = `
+    <option value="">Select a camera</option>
+  `;
 
   cameras.forEach((camera) => {
     const option = document.createElement("option");
@@ -253,64 +263,138 @@ function populateCameraSelect() {
   cameraSelect.addEventListener("change", () => {
     selectedCameraId = cameraSelect.value || null;
 
-    if (selectedCameraId) {
-      updateDurationOptions(
-        rentalDuration,
-        selectedCameraId,
-        Number(rentalDuration?.value) || 24,
-      );
+    setupRentalDurationOptions();
 
-      // Update modal duration only if it shows the same camera.
-      if (
-        modalRentalDuration &&
-        modalBookButton?.dataset.cameraId === selectedCameraId
-      ) {
-        updateDurationOptions(
-          modalRentalDuration,
-          selectedCameraId,
-          Number(rentalDuration?.value) || 24,
-        );
-      }
-    }
-
+    syncReturnDateTime();
     updateBookingSummary();
   });
 }
 
-/* DURATION OPTIONS PER CAMERA */
+/* =========================================================
+   RENTAL DURATION SYSTEM
+   Options:
+   - 6 Hours
+   - 12 Hours
+   - Daily Rental
 
-function getAvailableDurations(cameraId) {
-  const camera = cameras.find((item) => item.id === cameraId);
+   Daily rental:
+   Chargeable days = ceiling(actual hours / 24).
 
-  if (!camera) return [6, 12, 24];
+   Examples:
+   19 Oct 10:00 -> 20 Oct 09:00 = 1 day
+   19 Oct 10:00 -> 20 Oct 10:00 = 1 day
+   19 Oct 10:00 -> 20 Oct 11:00 = 2 days
+   ========================================================= */
 
-  return camera.durations || [6, 12, 24];
+const RENTAL_MODE = {
+  SIX_HOURS: "6",
+  TWELVE_HOURS: "12",
+  DAILY: "daily",
+};
+
+function createDailyReturnMessage() {
+  return "Select your return date and time.";
 }
 
-function updateDurationOptions(select, cameraId, preferredDuration = 24) {
+function setupRentalDurationOptions() {
+  setupOneDurationSelect(rentalDuration);
+  setupOneDurationSelect(modalRentalDuration);
+}
+
+function setupOneDurationSelect(select) {
   if (!select) return;
 
-  const durations = getAvailableDurations(cameraId);
+  const previousValue = select.value;
 
-  select.innerHTML = "";
+  select.innerHTML = `
+    <option value="6">6 Hours</option>
+    <option value="12">12 Hours</option>
+    <option value="daily">Daily Rental</option>
+  `;
 
-  durations.forEach((hours) => {
-    const option = document.createElement("option");
+  // Default to daily rental.
+  if (
+    previousValue === RENTAL_MODE.SIX_HOURS ||
+    previousValue === RENTAL_MODE.TWELVE_HOURS ||
+    previousValue === RENTAL_MODE.DAILY
+  ) {
+    select.value = previousValue;
+  } else {
+    select.value = RENTAL_MODE.DAILY;
+  }
 
-    option.value = String(hours);
-    option.textContent = `${hours} hours`;
-
-    select.appendChild(option);
-  });
-
-  const selectedDuration = durations.includes(Number(preferredDuration))
-    ? Number(preferredDuration)
-    : durations[durations.length - 1];
-
-  select.value = String(selectedDuration);
+  updateDurationFieldState(select);
 }
 
-/* CAMERA MODAL */
+function updateDurationFieldState(select) {
+  if (!select) return;
+
+  const isDaily = select.value === RENTAL_MODE.DAILY;
+
+  // The main booking form allows manual return date/time
+  // only for Daily Rental.
+  if (select === rentalDuration) {
+    if (endDate) {
+      endDate.readOnly = !isDaily;
+      endDate.title = isDaily
+        ? "Choose your return date"
+        : "Automatically calculated from pickup and duration";
+    }
+
+    if (endTime) {
+      endTime.readOnly = !isDaily;
+      endTime.title = isDaily
+        ? "Choose your return time"
+        : "Automatically calculated from pickup and duration";
+    }
+  }
+
+  syncReturnDateTime();
+}
+
+/* GET SELECTED RENTAL MODE */
+
+function getSelectedRentalMode() {
+  return rentalDuration?.value || RENTAL_MODE.DAILY;
+}
+
+function getSelectedDurationHours() {
+  const mode = getSelectedRentalMode();
+
+  if (mode === RENTAL_MODE.SIX_HOURS) return 6;
+  if (mode === RENTAL_MODE.TWELVE_HOURS) return 12;
+
+  if (mode === RENTAL_MODE.DAILY) {
+    return getRentalDurationDifference();
+  }
+
+  return null;
+}
+
+function formatDuration(hours) {
+  if (!Number.isFinite(hours) || hours <= 0) {
+    return "-";
+  }
+
+  if (hours === 6) return "6 Hours";
+  if (hours === 12) return "12 Hours";
+
+  const days = Math.ceil(hours / 24);
+
+  return `${days} ${days === 1 ? "Day" : "Days"}`;
+}
+
+function getChargeableDays(hours) {
+  if (!Number.isFinite(hours) || hours <= 0) {
+    return null;
+  }
+
+  return Math.ceil(hours / 24);
+}
+
+/* =========================================================
+   CAMERA MODAL
+   ========================================================= */
 
 function openCameraModal(cameraId) {
   const camera = cameras.find((item) => item.id === cameraId);
@@ -340,23 +424,26 @@ function openCameraModal(cameraId) {
     modalBookButton.dataset.cameraId = camera.id;
   }
 
-  // Set modal options independently of the booking form.
-  updateDurationOptions(
-    modalRentalDuration,
-    camera.id,
-    Number(rentalDuration?.value) || 24,
-  );
+  setupOneDurationSelect(modalRentalDuration);
 
+  if (rentalDuration && modalRentalDuration) {
+    modalRentalDuration.value = rentalDuration.value;
+  }
+
+  updateDurationFieldState(modalRentalDuration);
   updateGalleryImage();
 
   cameraModal.classList.add("active");
   cameraModal.setAttribute("aria-hidden", "false");
+
   document.body.classList.add("modal-open");
 
   window.setTimeout(() => modalClose?.focus(), 100);
 }
 
-/* GALLERY */
+/* =========================================================
+   GALLERY
+   ========================================================= */
 
 function getCurrentGallery() {
   const camera = cameras.find((item) => item.id === selectedCameraId);
@@ -380,6 +467,7 @@ function updateGalleryImage() {
     ((currentGalleryIndex % gallery.length) + gallery.length) % gallery.length;
 
   modalCameraImage.src = gallery[currentGalleryIndex];
+
   modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
 
   if (galleryCounter) {
@@ -403,6 +491,7 @@ function moveGallery(direction) {
   if (!gallery.length) return;
 
   currentGalleryIndex += direction;
+
   updateGalleryImage();
 }
 
@@ -412,14 +501,14 @@ function setupGalleryControls() {
 }
 
 /* =========================================================
-   PHOTO LIGHTBOX — CLICK TO ENLARGE
+   PHOTO LIGHTBOX
    ========================================================= */
 
 function setupPhotoLightbox() {
   if (photoLightbox) return;
 
-  // Create the lightbox dynamically without editing HTML.
   photoLightbox = document.createElement("div");
+
   photoLightbox.id = "photoLightbox";
   photoLightbox.setAttribute("aria-hidden", "true");
   photoLightbox.setAttribute("role", "dialog");
@@ -433,11 +522,7 @@ function setupPhotoLightbox() {
       aria-label="Close enlarged photo"
     >×</button>
 
-    <img
-      class="lightbox-image"
-      src=""
-      alt=""
-    >
+    <img class="lightbox-image" src="" alt="">
   `;
 
   document.body.appendChild(photoLightbox);
@@ -446,8 +531,8 @@ function setupPhotoLightbox() {
 
   const closeButton = photoLightbox.querySelector(".lightbox-close");
 
-  // Add lightbox styling dynamically.
   const style = document.createElement("style");
+
   style.id = "photoLightboxStyles";
 
   style.textContent = `
@@ -464,9 +549,7 @@ function setupPhotoLightbox() {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition:
-        opacity 0.25s ease,
-        visibility 0.25s ease;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
       cursor: zoom-out;
     }
 
@@ -494,9 +577,6 @@ function setupPhotoLightbox() {
       top: 12px;
       right: 22px;
       z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       width: 46px;
       height: 46px;
       padding: 0;
@@ -508,19 +588,12 @@ function setupPhotoLightbox() {
       font-weight: 300;
       line-height: 1;
       cursor: pointer;
-      transition: color 0.2s ease;
     }
 
     #photoLightbox .lightbox-close:hover {
       color: #ff2aa6;
     }
 
-    #photoLightbox .lightbox-close:focus-visible {
-      outline: 2px solid #ff2aa6;
-      outline-offset: 3px;
-    }
-
-    /* Indicate that camera photos are clickable. */
     .camera-card-image img,
     #modalCameraImage {
       cursor: zoom-in;
@@ -544,9 +617,10 @@ function setupPhotoLightbox() {
     }
   `;
 
-  document.head.appendChild(style);
+  if (!$("photoLightboxStyles")) {
+    document.head.appendChild(style);
+  }
 
-  // Click a camera card photo to enlarge it.
   cameraGrid?.addEventListener("click", (event) => {
     const image = event.target.closest(".camera-card-image img");
 
@@ -558,7 +632,6 @@ function setupPhotoLightbox() {
     openPhotoLightbox(image.src, image.alt);
   });
 
-  // Click the current gallery photo inside the camera modal.
   modalCameraImage?.addEventListener("click", () => {
     if (!modalCameraImage.src) return;
 
@@ -568,22 +641,18 @@ function setupPhotoLightbox() {
     );
   });
 
-  // Close using the × button.
   closeButton.addEventListener("click", closePhotoLightbox);
 
-  // Close by clicking the dark area outside the image.
   photoLightbox.addEventListener("click", (event) => {
     if (event.target === photoLightbox) {
       closePhotoLightbox();
     }
   });
 
-  // Prevent clicks on the image itself from closing the lightbox.
   lightboxImage.addEventListener("click", (event) => {
     event.stopPropagation();
   });
 
-  // Close with Escape, independently of the camera modal.
   document.addEventListener(
     "keydown",
     (event) => {
@@ -602,7 +671,6 @@ function setupPhotoLightbox() {
 function openPhotoLightbox(src, alt = "Camera sample photo") {
   if (!photoLightbox || !lightboxImage || !src) return;
 
-  // Remember the previous page scroll setting.
   previousBodyOverflow = document.body.style.overflow;
 
   lightboxImage.src = src;
@@ -611,7 +679,6 @@ function openPhotoLightbox(src, alt = "Camera sample photo") {
   photoLightbox.classList.add("active");
   photoLightbox.setAttribute("aria-hidden", "false");
 
-  // Prevent the page from scrolling behind the enlarged photo.
   document.body.style.overflow = "hidden";
 
   photoLightbox.querySelector(".lightbox-close")?.focus();
@@ -628,17 +695,19 @@ function closePhotoLightbox() {
     lightboxImage.alt = "";
   }
 
-  // Restore the page scroll setting.
   document.body.style.overflow = previousBodyOverflow;
 }
 
-/* CLOSE MODAL */
+/* =========================================================
+   CLOSE CAMERA MODAL
+   ========================================================= */
 
 function closeCameraModal() {
   if (!cameraModal) return;
 
   cameraModal.classList.remove("active");
   cameraModal.setAttribute("aria-hidden", "true");
+
   document.body.classList.remove("modal-open");
 }
 
@@ -646,7 +715,6 @@ modalClose?.addEventListener("click", closeCameraModal);
 modalOverlay?.addEventListener("click", closeCameraModal);
 
 document.addEventListener("keydown", (event) => {
-  // The lightbox has its own Escape handler above.
   if (photoLightbox?.classList.contains("active")) return;
 
   if (event.key === "Escape" && cameraModal?.classList.contains("active")) {
@@ -666,23 +734,30 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-/* BOOK THIS CAMERA */
+/* =========================================================
+   BOOK THIS CAMERA
+   ========================================================= */
 
 modalBookButton?.addEventListener("click", () => {
   const cameraId = modalBookButton.dataset.cameraId;
 
   if (!cameraId || !cameraSelect) return;
 
+  const selectedMode = modalRentalDuration?.value || RENTAL_MODE.DAILY;
+
   cameraSelect.value = cameraId;
   selectedCameraId = cameraId;
 
-  updateDurationOptions(
-    rentalDuration,
-    cameraId,
-    Number(modalRentalDuration?.value) || 24,
-  );
+  setupRentalDurationOptions();
 
+  if (rentalDuration) {
+    rentalDuration.value = selectedMode;
+  }
+
+  updateDurationFieldState(rentalDuration);
+  syncReturnDateTime();
   updateBookingSummary();
+
   closeCameraModal();
 
   $("booking")?.scrollIntoView({
@@ -691,48 +766,192 @@ modalBookButton?.addEventListener("click", () => {
   });
 });
 
-/* RENTAL DURATION */
+/* =========================================================
+   DATE AND TIME HELPERS
+   ========================================================= */
 
-function getSelectedDurationHours() {
-  const cameraId = cameraSelect?.value;
+function getTodayString() {
+  const today = new Date();
 
-  if (!cameraId || !rentalDuration) return null;
-
-  const availableDurations = getAvailableDurations(cameraId);
-  const selectedHours = Number(rentalDuration.value);
-
-  return availableDurations.includes(selectedHours) ? selectedHours : null;
+  return toLocalDateString(today);
 }
 
-function formatDuration(hours) {
-  if (!hours) return "-";
+function setMinimumDates() {
+  const today = getTodayString();
 
-  return `${hours} hours`;
+  if (startDate) {
+    startDate.min = today;
+  }
+
+  if (endDate) {
+    endDate.min = startDate?.value || today;
+  }
 }
 
-function setupDurationSynchronization() {
-  modalRentalDuration?.addEventListener("change", () => {
-    // Modal duration stays independent until the user clicks Book.
-    // This prevents changing a different camera's booking duration.
+function toLocalDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function toLocalTimeString(date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+}
+
+function getPickupDateTime() {
+  if (!startDate?.value || !startTime?.value) return null;
+
+  const date = new Date(`${startDate.value}T${startTime.value}:00`);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date;
+}
+
+function getReturnDateTime() {
+  if (!endDate?.value || !endTime?.value) return null;
+
+  const date = new Date(`${endDate.value}T${endTime.value}:00`);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date;
+}
+
+function formatDateIndonesia(dateString) {
+  if (!dateString) return "-";
+
+  const date = new Date(`${dateString}T00:00:00`);
+
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
   });
+}
 
-  rentalDuration?.addEventListener("change", () => {
-    if (
-      modalRentalDuration &&
-      modalBookButton?.dataset.cameraId === cameraSelect?.value
-    ) {
-      updateDurationOptions(
-        modalRentalDuration,
-        cameraSelect.value,
-        Number(rentalDuration.value),
-      );
+function formatDateTimeIndonesia(date) {
+  if (!date || Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+/* =========================================================
+   AUTOMATIC RETURN DATE AND TIME
+   ========================================================= */
+
+function syncReturnDateTime() {
+  const pickup = getPickupDateTime();
+
+  if (!pickup) {
+    updateBookingSummary();
+    return;
+  }
+
+  const mode = getSelectedRentalMode();
+
+  // 6-hour and 12-hour rentals:
+  // return is automatically calculated.
+  if (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS) {
+    const hours = Number(mode);
+
+    const returned = new Date(pickup.getTime() + hours * 60 * 60 * 1000);
+
+    if (endDate) {
+      endDate.value = toLocalDateString(returned);
+      endDate.min = startDate?.value || getTodayString();
+    }
+
+    if (endTime) {
+      endTime.value = toLocalTimeString(returned);
     }
 
     updateBookingSummary();
+    return;
+  }
+
+  // Daily rental:
+  // customer selects return date and time manually.
+  // Do not overwrite their selection.
+  if (mode === RENTAL_MODE.DAILY) {
+    if (endDate) {
+      endDate.min = startDate?.value || getTodayString();
+
+      // If return date is before pickup date,
+      // clear the invalid date.
+      if (
+        endDate.value &&
+        startDate?.value &&
+        endDate.value < startDate.value
+      ) {
+        endDate.value = "";
+      }
+    }
+
+    updateBookingSummary();
+  }
+}
+
+/* =========================================================
+   DURATION SYNCHRONIZATION
+   ========================================================= */
+
+function setupDurationSynchronization() {
+  rentalDuration?.addEventListener("change", () => {
+    updateDurationFieldState(rentalDuration);
+    syncReturnDateTime();
+    updateBookingSummary();
+  });
+
+  modalRentalDuration?.addEventListener("change", () => {
+    updateDurationFieldState(modalRentalDuration);
   });
 }
 
-/* INTERNATIONAL PHONE INPUTS */
+/* =========================================================
+   BOOKING LISTENERS
+   ========================================================= */
+
+function setupBookingListeners() {
+  [startDate, startTime].forEach((input) => {
+    input?.addEventListener("change", () => {
+      syncReturnDateTime();
+      updateBookingSummary();
+    });
+
+    input?.addEventListener("input", () => {
+      syncReturnDateTime();
+      updateBookingSummary();
+    });
+  });
+
+  [endDate, endTime].forEach((input) => {
+    input?.addEventListener("change", updateBookingSummary);
+    input?.addEventListener("input", updateBookingSummary);
+  });
+
+  cameraQuantity?.addEventListener("change", updateBookingSummary);
+
+  cameraQuantity?.addEventListener("input", updateBookingSummary);
+
+  setMinimumDates();
+}
+
+/* =========================================================
+   INTERNATIONAL PHONE INPUTS
+   ========================================================= */
 
 function setupPhoneInputs() {
   if (typeof window.intlTelInput !== "function") {
@@ -795,98 +1014,9 @@ function isValidPhoneNumber(id) {
   return /^[0-9+\-\s()]{8,25}$/.test(input.value.trim());
 }
 
-/* DATE AND TIME */
-
-function getTodayString() {
-  const today = new Date();
-
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function setMinimumDates() {
-  const today = getTodayString();
-
-  if (startDate) startDate.min = today;
-  if (endDate) endDate.min = today;
-}
-
-function getPickupDateTime() {
-  if (!startDate?.value || !startTime?.value) return null;
-
-  return new Date(`${startDate.value}T${startTime.value}:00`);
-}
-
-function getReturnDateTime() {
-  if (!endDate?.value || !endTime?.value) return null;
-
-  return new Date(`${endDate.value}T${endTime.value}:00`);
-}
-
-function getRentalDurationDifference() {
-  const pickup = getPickupDateTime();
-  const returned = getReturnDateTime();
-
-  if (!pickup || !returned || returned <= pickup) return null;
-
-  return (returned.getTime() - pickup.getTime()) / 3600000;
-}
-
-function formatDateIndonesia(dateString) {
-  if (!dateString) return "-";
-
-  const date = new Date(`${dateString}T00:00:00`);
-
-  return date.toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function formatDateTimeIndonesia(date) {
-  if (!date || Number.isNaN(date.getTime())) return "-";
-
-  return date.toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
-
-/* BOOKING LISTENERS */
-
-function setupBookingListeners() {
-  [startDate, endDate, startTime, endTime, cameraQuantity].forEach((input) => {
-    input?.addEventListener("change", () => {
-      if (startDate?.value && endDate) {
-        endDate.min = startDate.value;
-
-        if (endDate.value && endDate.value < startDate.value) {
-          endDate.value = startDate.value;
-        }
-      }
-
-      updateBookingSummary();
-    });
-
-    input?.addEventListener("input", updateBookingSummary);
-  });
-
-  startDate?.addEventListener("change", () => {
-    if (endDate && startDate.value) {
-      endDate.min = startDate.value;
-    }
-  });
-}
-
-/* BOOKING SUMMARY */
+/* =========================================================
+   BOOKING SUMMARY
+   ========================================================= */
 
 function updateBookingSummary() {
   if (summaryCamera && cameraSelect) {
@@ -896,7 +1026,22 @@ function updateBookingSummary() {
   }
 
   if (summaryDuration) {
-    summaryDuration.textContent = formatDuration(getSelectedDurationHours());
+    const mode = getSelectedRentalMode();
+
+    if (mode === RENTAL_MODE.SIX_HOURS) {
+      summaryDuration.textContent = "6 Hours";
+    } else if (mode === RENTAL_MODE.TWELVE_HOURS) {
+      summaryDuration.textContent = "12 Hours";
+    } else {
+      const hours = getRentalDurationDifference();
+      const days = getChargeableDays(hours);
+
+      if (!hours || !days) {
+        summaryDuration.textContent = "Daily Rental — select return time";
+      } else {
+        summaryDuration.textContent = `${formatDuration(hours)} (${hours.toFixed(2)} hours actual)`;
+      }
+    }
   }
 
   if (summaryQuantity) {
@@ -906,7 +1051,24 @@ function updateBookingSummary() {
   }
 }
 
-/* FORM VALIDATION */
+/* =========================================================
+   ACTUAL RENTAL DURATION CALCULATION
+   ========================================================= */
+
+function getRentalDurationDifference() {
+  const pickup = getPickupDateTime();
+  const returned = getReturnDateTime();
+
+  if (!pickup || !returned || returned <= pickup) {
+    return null;
+  }
+
+  return (returned.getTime() - pickup.getTime()) / (60 * 60 * 1000);
+}
+
+/* =========================================================
+   FORM VALIDATION
+   ========================================================= */
 
 function clearValidation() {
   document.querySelectorAll(".error-message").forEach((error) => {
@@ -966,25 +1128,30 @@ function validateBookingForm() {
     }
   });
 
-  /* DURATION VALIDATION */
+  /* CAMERA VALIDATION */
 
-  const selectedHours = getSelectedDurationHours();
+  const selectedCamera = cameras.find(
+    (item) => item.id === cameraSelect?.value,
+  );
 
-  if (!selectedHours) {
-    showFieldError(
-      rentalDuration,
-      "Please choose a valid rental duration for this camera.",
-    );
-
+  if (!selectedCamera) {
+    showFieldError(cameraSelect, "Please select a valid camera.");
     isValid = false;
   }
 
-  /* DATE AND TIME VALIDATION */
+  /* PICKUP VALIDATION */
 
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
 
-  if (pickup && pickup.getTime() < Date.now()) {
+  if (!pickup) {
+    showFieldError(
+      startDate || startTime,
+      "Please enter a valid pickup date and time.",
+    );
+
+    isValid = false;
+  } else if (pickup.getTime() < Date.now()) {
     showFieldError(
       startTime || startDate,
       "Pickup time cannot be in the past.",
@@ -993,30 +1160,61 @@ function validateBookingForm() {
     isValid = false;
   }
 
-  if (pickup && returned && returned <= pickup) {
+  /* RETURN VALIDATION */
+
+  if (!returned) {
     showFieldError(
-      endTime || endDate,
-      "Return time must be after pickup time.",
+      endDate || endTime,
+      "Please enter a valid return date and time.",
     );
 
     isValid = false;
   }
 
-  /*
-    The selected rental duration must match the interval
-    between pickup and return.
-  */
-
-  if (pickup && returned && returned > pickup && selectedHours) {
-    const actualHours = getRentalDurationDifference();
-
-    if (Math.abs(actualHours - selectedHours) > 0.001) {
+  if (pickup && returned) {
+    if (returned <= pickup) {
       showFieldError(
         endTime || endDate,
-        `Return time must be exactly ${selectedHours} hours after pickup.`,
+        "Return time must be after pickup time.",
       );
 
       isValid = false;
+    }
+
+    // Fixed-duration rentals must match exactly.
+    const mode = getSelectedRentalMode();
+
+    if (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS) {
+      const expectedHours = Number(mode);
+
+      const actualHours =
+        (returned.getTime() - pickup.getTime()) / (60 * 60 * 1000);
+
+      if (Math.abs(actualHours - expectedHours) > 0.001) {
+        showFieldError(
+          endTime || endDate,
+          "Return time does not match the selected duration.",
+        );
+
+        isValid = false;
+      }
+    }
+
+    // Daily rental is charged in 24-hour blocks.
+    if (mode === RENTAL_MODE.DAILY && returned > pickup) {
+      const actualHours =
+        (returned.getTime() - pickup.getTime()) / (60 * 60 * 1000);
+
+      const days = getChargeableDays(actualHours);
+
+      if (!days || days < 1) {
+        showFieldError(
+          endTime || endDate,
+          "Please choose a valid daily rental period.",
+        );
+
+        isValid = false;
+      }
     }
   }
 
@@ -1066,11 +1264,15 @@ function validateBookingForm() {
   return isValid;
 }
 
-/* BOOKING FORM SUBMIT */
+/* =========================================================
+   BOOKING FORM SUBMIT
+   ========================================================= */
 
 if (bookingForm) {
   bookingForm.addEventListener("submit", (event) => {
     event.preventDefault();
+
+    syncReturnDateTime();
 
     const isValid = validateBookingForm();
 
@@ -1087,7 +1289,9 @@ if (bookingForm) {
   });
 }
 
-/* WHATSAPP MESSAGE */
+/* =========================================================
+   WHATSAPP MESSAGE
+   ========================================================= */
 
 function createWhatsAppMessage() {
   const camera = cameras.find((item) => item.id === cameraSelect?.value);
@@ -1100,15 +1304,36 @@ function createWhatsAppMessage() {
   const emergencyContact = getInternationalNumber("emergencyContact");
 
   const instagram = $("instagram")?.value.trim() || "";
+
   const pickupLocation = $("pickupLocation")?.value.trim() || "";
+
   const returnLocation = $("returnLocation")?.value.trim() || "";
+
   const comments = $("comments")?.value.trim() || "";
 
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
 
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
-  const selectedHours = getSelectedDurationHours();
+
+  const mode = getSelectedRentalMode();
+
+  const actualHours = getRentalDurationDifference();
+
+  let rentalDurationText = "-";
+  let chargeableDaysText = "-";
+
+  if (mode === RENTAL_MODE.SIX_HOURS) {
+    rentalDurationText = "6 Hours";
+  } else if (mode === RENTAL_MODE.TWELVE_HOURS) {
+    rentalDurationText = "12 Hours";
+  } else if (actualHours && actualHours > 0) {
+    const days = getChargeableDays(actualHours);
+
+    rentalDurationText = `${days} ${days === 1 ? "Day" : "Days"}`;
+
+    chargeableDaysText = `${days} ${days === 1 ? "day" : "days"}`;
+  }
 
   const ktpCheck = $("ktpCheck")?.checked;
   const hotelCheck = $("hotelCheck")?.checked;
@@ -1131,7 +1356,12 @@ RENTAL DETAILS
 Camera: ${camera ? camera.name : "-"}
 Starting Price: ${camera ? camera.price : "-"}
 Number of Units: ${quantity}
-Rental Duration: ${selectedHours ? `${selectedHours} hours` : "-"}
+Rental Type: ${mode === RENTAL_MODE.DAILY ? "Daily Rental" : rentalDurationText}
+Rental Duration: ${rentalDurationText}
+Actual Rental Time: ${
+    actualHours && actualHours > 0 ? `${actualHours.toFixed(2)} hours` : "-"
+  }
+Chargeable Days: ${mode === RENTAL_MODE.DAILY ? chargeableDaysText : "-"}
 Pickup: ${formatDateTimeIndonesia(pickup)}
 Return: ${formatDateTimeIndonesia(returned)}
 Pickup Location: ${pickupLocation}
@@ -1163,7 +1393,9 @@ I understand that this is a booking request, not a confirmed reservation. I will
   }
 }
 
-/* NAVBAR */
+/* =========================================================
+   NAVBAR
+   ========================================================= */
 
 function setupNavbar() {
   if (!navbar || !navMenu || !menuToggle) return;
@@ -1186,7 +1418,9 @@ function setupNavbar() {
   });
 }
 
-/* CUSTOMER COMMENTS — SUPABASE */
+/* =========================================================
+   CUSTOMER COMMENTS — SUPABASE
+   ========================================================= */
 
 async function loadComments() {
   if (!commentsList) return;
@@ -1235,6 +1469,7 @@ function renderComment(comment) {
   if (!commentsList) return;
 
   const article = document.createElement("article");
+
   article.className = "comment-card";
 
   const rating = Math.max(0, Math.min(5, Number(comment.rating) || 0));
@@ -1268,7 +1503,9 @@ function renderComment(comment) {
   commentsList.appendChild(article);
 }
 
-/* COMMENT FORM */
+/* =========================================================
+   COMMENT FORM
+   ========================================================= */
 
 if (commentForm) {
   commentForm.addEventListener("submit", async (event) => {
@@ -1317,6 +1554,7 @@ if (commentForm) {
       alert("Thank you for your comment!");
 
       commentForm.reset();
+
       await loadComments();
     } catch (error) {
       console.error("Supabase error:", error);
@@ -1331,7 +1569,9 @@ if (commentForm) {
   });
 }
 
-/* HTML ESCAPE */
+/* =========================================================
+   HTML ESCAPE
+   ========================================================= */
 
 function escapeHTML(value) {
   return String(value ?? "")
@@ -1342,7 +1582,9 @@ function escapeHTML(value) {
     .replace(/'/g, "&#039;");
 }
 
-/* FOOTER YEAR */
+/* =========================================================
+   FOOTER YEAR
+   ========================================================= */
 
 function updateCurrentYear() {
   if (currentYear) {

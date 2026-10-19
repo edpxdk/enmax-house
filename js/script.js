@@ -828,7 +828,7 @@ function formatDateIndonesia(dateString) {
 
   const date = new Date(`${dateString}T00:00:00`);
 
-  return date.toLocaleDateString("id-ID", {
+  return date.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -838,7 +838,7 @@ function formatDateIndonesia(dateString) {
 function formatDateTimeIndonesia(date) {
   if (!date || Number.isNaN(date.getTime())) return "-";
 
-  return date.toLocaleString("id-ID", {
+  return date.toLocaleString("en-GB", {
     day: "2-digit",
     month: "long",
     year: "numeric",

@@ -23,7 +23,8 @@ const cameras = [
     category: "Effortless Aesthetic Short",
     description:
       "Compact camera with excellent image quality, perfect for travel, daily content, and casual photography.",
-    price: "Rp 220.000 / day",
+    price: "Rp 200.000",
+    durations: [24],
     image: "assets/cameras/camera-01.jpg",
     gallery: [
       "assets/cameras/camera-01.jpg",
@@ -38,7 +39,8 @@ const cameras = [
     category: "Instantly Post Ready",
     description:
       "Powerful zoom in a compact body, made for travel and everyday moments.",
-    price: "Rp 200.000 / day",
+    price: "Rp 125.000",
+    durations: [6, 12, 24],
     image: "assets/cameras/camera-02.jpg",
     gallery: [
       "assets/cameras/camera-02.jpg",
@@ -53,7 +55,8 @@ const cameras = [
     category: "Feel Leica Quality",
     description:
       "Versatile zoom and compact design for travel and everyday shooting.",
-    price: "Rp 200.000 / day",
+    price: "Rp 125.000",
+    durations: [6, 12, 24],
     image: "assets/cameras/camera-03.jpg",
     gallery: [
       "assets/cameras/camera-03.jpg",
@@ -68,7 +71,8 @@ const cameras = [
     category: "Luxury In Every Shot",
     description:
       "Premium compact camera with Leica character for street and lifestyle photography.",
-    price: "Rp 140.000 / day",
+    price: "Rp 125.000",
+    durations: [24],
     image: "assets/cameras/camera-04.jpg",
     gallery: [
       "assets/cameras/camera-04.jpg",
@@ -83,7 +87,8 @@ const cameras = [
     category: "Your Moment Your Content",
     description:
       "Creator-focused compact camera for vlogs, travel, and social content.",
-    price: "Rp 150.000 / day",
+    price: "Rp 180.000",
+    durations: [6, 12, 24],
     image: "assets/cameras/camera-05.jpg",
     gallery: [
       "assets/cameras/camera-05.jpg",
@@ -118,10 +123,12 @@ const modalCameraCategory = $("modalCameraCategory");
 const modalCameraName = $("modalCameraName");
 const modalCameraDescription = $("modalCameraDescription");
 const modalCameraPrice = $("modalCameraPrice");
+const modalRentalDuration = $("modalRentalDuration");
 const modalBookButton = $("modalBookButton");
 
 const bookingForm = $("bookingForm");
 
+const rentalDuration = $("rentalDuration");
 const startDate = $("startDate");
 const endDate = $("endDate");
 const startTime = $("startTime");
@@ -143,7 +150,14 @@ const currentYear = $("currentYear");
 
 let selectedCameraId = null;
 let currentGalleryIndex = 0;
+
 const phoneInputs = {};
+
+/* PHOTO LIGHTBOX STATE */
+
+let photoLightbox = null;
+let lightboxImage = null;
+let previousBodyOverflow = "";
 
 /* INITIALIZATION */
 
@@ -153,8 +167,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setMinimumDates();
   setupNavbar();
   setupGalleryControls();
+  setupPhotoLightbox();
   setupPhoneInputs();
   setupBookingListeners();
+  setupDurationSynchronization();
   updateBookingSummary();
   loadComments();
   updateCurrentYear();
@@ -178,7 +194,6 @@ function renderCameraCards() {
           alt="${escapeHTML(camera.name)}"
           loading="lazy"
         >
-        <span class="camera-badge">Available</span>
       </div>
 
       <div class="camera-card-content">
@@ -191,9 +206,12 @@ function renderCameraCards() {
         <p>${escapeHTML(camera.description)}</p>
 
         <div class="camera-card-footer">
-          <strong class="camera-price">
-            ${escapeHTML(camera.price)}
-          </strong>
+          <div class="camera-price-block">
+            <span class="camera-price-label">Starting from</span>
+            <strong class="camera-price">
+              ${escapeHTML(camera.price)}
+            </strong>
+          </div>
 
           <button
             type="button"
@@ -225,15 +243,71 @@ function populateCameraSelect() {
 
   cameras.forEach((camera) => {
     const option = document.createElement("option");
+
     option.value = camera.id;
-    option.textContent = `${camera.name} — ${camera.price}`;
+    option.textContent = `${camera.name} — Starting from ${camera.price}`;
+
     cameraSelect.appendChild(option);
   });
 
   cameraSelect.addEventListener("change", () => {
     selectedCameraId = cameraSelect.value || null;
+
+    if (selectedCameraId) {
+      updateDurationOptions(
+        rentalDuration,
+        selectedCameraId,
+        Number(rentalDuration?.value) || 24,
+      );
+
+      // Update modal duration only if it shows the same camera.
+      if (
+        modalRentalDuration &&
+        modalBookButton?.dataset.cameraId === selectedCameraId
+      ) {
+        updateDurationOptions(
+          modalRentalDuration,
+          selectedCameraId,
+          Number(rentalDuration?.value) || 24,
+        );
+      }
+    }
+
     updateBookingSummary();
   });
+}
+
+/* DURATION OPTIONS PER CAMERA */
+
+function getAvailableDurations(cameraId) {
+  const camera = cameras.find((item) => item.id === cameraId);
+
+  if (!camera) return [6, 12, 24];
+
+  return camera.durations || [6, 12, 24];
+}
+
+function updateDurationOptions(select, cameraId, preferredDuration = 24) {
+  if (!select) return;
+
+  const durations = getAvailableDurations(cameraId);
+
+  select.innerHTML = "";
+
+  durations.forEach((hours) => {
+    const option = document.createElement("option");
+
+    option.value = String(hours);
+    option.textContent = `${hours} hours`;
+
+    select.appendChild(option);
+  });
+
+  const selectedDuration = durations.includes(Number(preferredDuration))
+    ? Number(preferredDuration)
+    : durations[durations.length - 1];
+
+  select.value = String(selectedDuration);
 }
 
 /* CAMERA MODAL */
@@ -266,6 +340,13 @@ function openCameraModal(cameraId) {
     modalBookButton.dataset.cameraId = camera.id;
   }
 
+  // Set modal options independently of the booking form.
+  updateDurationOptions(
+    modalRentalDuration,
+    camera.id,
+    Number(rentalDuration?.value) || 24,
+  );
+
   updateGalleryImage();
 
   cameraModal.classList.add("active");
@@ -291,12 +372,12 @@ function updateGalleryImage() {
   if (!modalCameraImage) return;
 
   const camera = cameras.find((item) => item.id === selectedCameraId);
-
   const gallery = getCurrentGallery();
 
   if (!camera || !gallery.length) return;
 
-  currentGalleryIndex = (currentGalleryIndex + gallery.length) % gallery.length;
+  currentGalleryIndex =
+    ((currentGalleryIndex % gallery.length) + gallery.length) % gallery.length;
 
   modalCameraImage.src = gallery[currentGalleryIndex];
   modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
@@ -330,6 +411,227 @@ function setupGalleryControls() {
   galleryNext?.addEventListener("click", () => moveGallery(1));
 }
 
+/* =========================================================
+   PHOTO LIGHTBOX — CLICK TO ENLARGE
+   ========================================================= */
+
+function setupPhotoLightbox() {
+  if (photoLightbox) return;
+
+  // Create the lightbox dynamically without editing HTML.
+  photoLightbox = document.createElement("div");
+  photoLightbox.id = "photoLightbox";
+  photoLightbox.setAttribute("aria-hidden", "true");
+  photoLightbox.setAttribute("role", "dialog");
+  photoLightbox.setAttribute("aria-modal", "true");
+  photoLightbox.setAttribute("aria-label", "Enlarged camera photo");
+
+  photoLightbox.innerHTML = `
+    <button
+      type="button"
+      class="lightbox-close"
+      aria-label="Close enlarged photo"
+    >×</button>
+
+    <img
+      class="lightbox-image"
+      src=""
+      alt=""
+    >
+  `;
+
+  document.body.appendChild(photoLightbox);
+
+  lightboxImage = photoLightbox.querySelector(".lightbox-image");
+
+  const closeButton = photoLightbox.querySelector(".lightbox-close");
+
+  // Add lightbox styling dynamically.
+  const style = document.createElement("style");
+  style.id = "photoLightboxStyles";
+
+  style.textContent = `
+    #photoLightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 60px 24px 24px;
+      background: rgba(0, 0, 0, 0.94);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+      cursor: zoom-out;
+    }
+
+    #photoLightbox.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #photoLightbox .lightbox-image {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+      cursor: default;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    #photoLightbox .lightbox-close {
+      position: absolute;
+      top: 12px;
+      right: 22px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      font-size: 40px;
+      font-weight: 300;
+      line-height: 1;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    #photoLightbox .lightbox-close:hover {
+      color: #ff2aa6;
+    }
+
+    #photoLightbox .lightbox-close:focus-visible {
+      outline: 2px solid #ff2aa6;
+      outline-offset: 3px;
+    }
+
+    /* Indicate that camera photos are clickable. */
+    .camera-card-image img,
+    #modalCameraImage {
+      cursor: zoom-in;
+    }
+
+    @media (max-width: 600px) {
+      #photoLightbox {
+        padding: 58px 10px 16px;
+      }
+
+      #photoLightbox .lightbox-close {
+        top: 8px;
+        right: 12px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #photoLightbox {
+        transition: none;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  // Click a camera card photo to enlarge it.
+  cameraGrid?.addEventListener("click", (event) => {
+    const image = event.target.closest(".camera-card-image img");
+
+    if (!image || !cameraGrid.contains(image)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    openPhotoLightbox(image.src, image.alt);
+  });
+
+  // Click the current gallery photo inside the camera modal.
+  modalCameraImage?.addEventListener("click", () => {
+    if (!modalCameraImage.src) return;
+
+    openPhotoLightbox(
+      modalCameraImage.src,
+      modalCameraImage.alt || "Camera sample photo",
+    );
+  });
+
+  // Close using the × button.
+  closeButton.addEventListener("click", closePhotoLightbox);
+
+  // Close by clicking the dark area outside the image.
+  photoLightbox.addEventListener("click", (event) => {
+    if (event.target === photoLightbox) {
+      closePhotoLightbox();
+    }
+  });
+
+  // Prevent clicks on the image itself from closing the lightbox.
+  lightboxImage.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  // Close with Escape, independently of the camera modal.
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key === "Escape" &&
+        photoLightbox?.classList.contains("active")
+      ) {
+        event.stopPropagation();
+        closePhotoLightbox();
+      }
+    },
+    true,
+  );
+}
+
+function openPhotoLightbox(src, alt = "Camera sample photo") {
+  if (!photoLightbox || !lightboxImage || !src) return;
+
+  // Remember the previous page scroll setting.
+  previousBodyOverflow = document.body.style.overflow;
+
+  lightboxImage.src = src;
+  lightboxImage.alt = alt;
+
+  photoLightbox.classList.add("active");
+  photoLightbox.setAttribute("aria-hidden", "false");
+
+  // Prevent the page from scrolling behind the enlarged photo.
+  document.body.style.overflow = "hidden";
+
+  photoLightbox.querySelector(".lightbox-close")?.focus();
+}
+
+function closePhotoLightbox() {
+  if (!photoLightbox) return;
+
+  photoLightbox.classList.remove("active");
+  photoLightbox.setAttribute("aria-hidden", "true");
+
+  if (lightboxImage) {
+    lightboxImage.src = "";
+    lightboxImage.alt = "";
+  }
+
+  // Restore the page scroll setting.
+  document.body.style.overflow = previousBodyOverflow;
+}
+
 /* CLOSE MODAL */
 
 function closeCameraModal() {
@@ -344,6 +646,9 @@ modalClose?.addEventListener("click", closeCameraModal);
 modalOverlay?.addEventListener("click", closeCameraModal);
 
 document.addEventListener("keydown", (event) => {
+  // The lightbox has its own Escape handler above.
+  if (photoLightbox?.classList.contains("active")) return;
+
   if (event.key === "Escape" && cameraModal?.classList.contains("active")) {
     closeCameraModal();
   }
@@ -371,6 +676,12 @@ modalBookButton?.addEventListener("click", () => {
   cameraSelect.value = cameraId;
   selectedCameraId = cameraId;
 
+  updateDurationOptions(
+    rentalDuration,
+    cameraId,
+    Number(modalRentalDuration?.value) || 24,
+  );
+
   updateBookingSummary();
   closeCameraModal();
 
@@ -380,15 +691,55 @@ modalBookButton?.addEventListener("click", () => {
   });
 });
 
-/* INTERNATIONAL PHONE INPUTS
-   Load intl-tel-input CSS and JS in index.html
-   before js/script.js. */
+/* RENTAL DURATION */
+
+function getSelectedDurationHours() {
+  const cameraId = cameraSelect?.value;
+
+  if (!cameraId || !rentalDuration) return null;
+
+  const availableDurations = getAvailableDurations(cameraId);
+  const selectedHours = Number(rentalDuration.value);
+
+  return availableDurations.includes(selectedHours) ? selectedHours : null;
+}
+
+function formatDuration(hours) {
+  if (!hours) return "-";
+
+  return `${hours} hours`;
+}
+
+function setupDurationSynchronization() {
+  modalRentalDuration?.addEventListener("change", () => {
+    // Modal duration stays independent until the user clicks Book.
+    // This prevents changing a different camera's booking duration.
+  });
+
+  rentalDuration?.addEventListener("change", () => {
+    if (
+      modalRentalDuration &&
+      modalBookButton?.dataset.cameraId === cameraSelect?.value
+    ) {
+      updateDurationOptions(
+        modalRentalDuration,
+        cameraSelect.value,
+        Number(rentalDuration.value),
+      );
+    }
+
+    updateBookingSummary();
+  });
+}
+
+/* INTERNATIONAL PHONE INPUTS */
 
 function setupPhoneInputs() {
   if (typeof window.intlTelInput !== "function") {
     console.warn(
       "intl-tel-input belum dimuat. Country code selector tidak aktif.",
     );
+
     return;
   }
 
@@ -475,16 +826,13 @@ function getReturnDateTime() {
   return new Date(`${endDate.value}T${endTime.value}:00`);
 }
 
-function calculateRentalDays() {
+function getRentalDurationDifference() {
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
 
   if (!pickup || !returned || returned <= pickup) return null;
 
-  return Math.max(
-    1,
-    Math.ceil((returned.getTime() - pickup.getTime()) / 86400000),
-  );
+  return (returned.getTime() - pickup.getTime()) / 3600000;
 }
 
 function formatDateIndonesia(dateString) {
@@ -541,26 +889,20 @@ function setupBookingListeners() {
 /* BOOKING SUMMARY */
 
 function updateBookingSummary() {
-  if (!cameraSelect) return;
+  if (summaryCamera && cameraSelect) {
+    const camera = cameras.find((item) => item.id === cameraSelect.value);
 
-  const camera = cameras.find((item) => item.id === cameraSelect.value);
-
-  if (summaryCamera) {
     summaryCamera.textContent = camera ? camera.name : "-";
   }
 
-  const duration = calculateRentalDays();
-
   if (summaryDuration) {
-    summaryDuration.textContent = duration
-      ? `${duration} day${duration > 1 ? "s" : ""}`
-      : "-";
+    summaryDuration.textContent = formatDuration(getSelectedDurationHours());
   }
 
   if (summaryQuantity) {
     const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
 
-    summaryQuantity.textContent = String(quantity);
+    summaryQuantity.textContent = `${quantity} ${quantity === 1 ? "unit" : "units"}`;
   }
 }
 
@@ -599,18 +941,20 @@ function validateBookingForm() {
   let isValid = true;
 
   const requiredFields = [
-    ["fullName", "Nama lengkap wajib diisi."],
-    ["occupation", "Pekerjaan wajib diisi."],
-    ["workplace", "Tempat kerja wajib diisi."],
-    ["whatsapp", "Nomor WhatsApp wajib diisi."],
-    ["emergencyContact", "Kontak darurat wajib diisi."],
-    ["cameraSelect", "Silakan pilih kamera."],
-    ["startDate", "Tanggal pickup wajib dipilih."],
-    ["startTime", "Jam pickup wajib dipilih."],
-    ["endDate", "Tanggal return wajib dipilih."],
-    ["endTime", "Jam return wajib dipilih."],
-    ["pickupLocation", "Tempat pengambilan wajib diisi."],
-    ["returnLocation", "Tempat pengembalian wajib diisi."],
+    ["fullName", "Full name is required."],
+    ["occupation", "Occupation is required."],
+    ["workplace", "Workplace is required."],
+    ["whatsapp", "WhatsApp number is required."],
+    ["emergencyContact", "Emergency contact is required."],
+    ["instagram", "Instagram username is required."],
+    ["cameraSelect", "Please select a camera."],
+    ["rentalDuration", "Please select a rental duration."],
+    ["startDate", "Pickup date is required."],
+    ["startTime", "Pickup time is required."],
+    ["endDate", "Return date is required."],
+    ["endTime", "Return time is required."],
+    ["pickupLocation", "Pickup location is required."],
+    ["returnLocation", "Return location is required."],
   ];
 
   requiredFields.forEach(([id, message]) => {
@@ -622,6 +966,19 @@ function validateBookingForm() {
     }
   });
 
+  /* DURATION VALIDATION */
+
+  const selectedHours = getSelectedDurationHours();
+
+  if (!selectedHours) {
+    showFieldError(
+      rentalDuration,
+      "Please choose a valid rental duration for this camera.",
+    );
+
+    isValid = false;
+  }
+
   /* DATE AND TIME VALIDATION */
 
   const pickup = getPickupDateTime();
@@ -630,7 +987,7 @@ function validateBookingForm() {
   if (pickup && pickup.getTime() < Date.now()) {
     showFieldError(
       startTime || startDate,
-      "Waktu pickup tidak boleh di masa lalu.",
+      "Pickup time cannot be in the past.",
     );
 
     isValid = false;
@@ -639,10 +996,28 @@ function validateBookingForm() {
   if (pickup && returned && returned <= pickup) {
     showFieldError(
       endTime || endDate,
-      "Waktu return harus setelah waktu pickup.",
+      "Return time must be after pickup time.",
     );
 
     isValid = false;
+  }
+
+  /*
+    The selected rental duration must match the interval
+    between pickup and return.
+  */
+
+  if (pickup && returned && returned > pickup && selectedHours) {
+    const actualHours = getRentalDurationDifference();
+
+    if (Math.abs(actualHours - selectedHours) > 0.001) {
+      showFieldError(
+        endTime || endDate,
+        `Return time must be exactly ${selectedHours} hours after pickup.`,
+      );
+
+      isValid = false;
+    }
   }
 
   /* PHONE VALIDATION */
@@ -651,7 +1026,7 @@ function validateBookingForm() {
     const input = $(id);
 
     if (input?.value.trim() && !isValidPhoneNumber(id)) {
-      showFieldError(input, "Masukkan nomor telepon yang valid.");
+      showFieldError(input, "Please enter a valid phone number.");
       isValid = false;
     }
   });
@@ -662,7 +1037,7 @@ function validateBookingForm() {
     const quantity = Number(cameraQuantity.value);
 
     if (!Number.isInteger(quantity) || quantity < 1) {
-      showFieldError(cameraQuantity, "Jumlah kamera minimal 1 unit.");
+      showFieldError(cameraQuantity, "Number of units must be at least 1.");
 
       isValid = false;
     }
@@ -673,7 +1048,7 @@ function validateBookingForm() {
   const ktpCheck = $("ktpCheck");
 
   if (ktpCheck && !ktpCheck.checked) {
-    showFieldError(ktpCheck, "KTP / Passport wajib disiapkan.");
+    showFieldError(ktpCheck, "A valid ID card or passport is required.");
 
     isValid = false;
   }
@@ -682,7 +1057,7 @@ function validateBookingForm() {
 
   if (!agreement?.checked) {
     if (agreementError) {
-      agreementError.textContent = "Kamu harus menyetujui ketentuan booking.";
+      agreementError.textContent = "You must agree to the booking terms.";
     }
 
     isValid = false;
@@ -733,45 +1108,50 @@ function createWhatsAppMessage() {
 
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
-  const duration = calculateRentalDays();
+  const selectedHours = getSelectedDurationHours();
 
   const ktpCheck = $("ktpCheck")?.checked;
   const hotelCheck = $("hotelCheck")?.checked;
   const flightCheck = $("flightCheck")?.checked;
 
   const documentStatus = `
-KTP / Passport: ${ktpCheck ? "Wajib disiapkan dan dikirim via WhatsApp" : "Belum disiapkan"}
-Bukti Booking Hotel: ${hotelCheck ? "Akan dikirim" : "-"}
-Detail Penerbangan: ${flightCheck ? "Akan dikirim" : "-"}
+ID Card / Passport: ${
+    ktpCheck
+      ? "Required — to be presented or sent via WhatsApp"
+      : "Not prepared"
+  }
+Hotel Booking Confirmation: ${hotelCheck ? "Will be provided" : "Not specified"}
+Flight Details: ${flightCheck ? "Will be provided" : "Not specified"}
   `.trim();
 
   const message = `
-Halo Enmax House, saya ingin mengajukan booking kamera.
+Hello Enmax House, I would like to submit a camera booking request.
 
-DETAIL RENTAL
+RENTAL DETAILS
 Camera: ${camera ? camera.name : "-"}
-Jumlah Unit: ${quantity}
-Durasi: ${duration ? `${duration} hari` : "-"}
+Starting Price: ${camera ? camera.price : "-"}
+Number of Units: ${quantity}
+Rental Duration: ${selectedHours ? `${selectedHours} hours` : "-"}
 Pickup: ${formatDateTimeIndonesia(pickup)}
 Return: ${formatDateTimeIndonesia(returned)}
-Tempat Pengambilan: ${pickupLocation}
-Tempat Pengembalian: ${returnLocation}
+Pickup Location: ${pickupLocation}
+Return Location: ${returnLocation}
 
-DATA PENYEWA
-Nama: ${fullName}
-Pekerjaan: ${occupation}
-Tempat Kerja: ${workplace}
+RENTER INFORMATION
+Full Name: ${fullName}
+Occupation: ${occupation}
+Workplace: ${workplace}
 WhatsApp: ${whatsapp}
-Kontak Darurat: ${emergencyContact}
+Emergency Contact: ${emergencyContact}
 Instagram: ${instagram || "-"}
 
-DOKUMEN PENDUKUNG
+SUPPORTING DOCUMENTS
 ${documentStatus}
 
-CATATAN TAMBAHAN
+ADDITIONAL NOTES
 ${comments || "-"}
 
-Saya memahami bahwa booking ini belum confirmed dan masih menunggu pengecekan serta konfirmasi dari Enmax House. Saya akan mengirim dokumen pendukung melalui WhatsApp.
+I understand that this is a booking request, not a confirmed reservation. I will wait for Enmax House to review and confirm my booking.
   `.trim();
 
   const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -817,12 +1197,28 @@ async function loadComments() {
     </div>
   `;
 
-  const { data, error } = await supabaseClient
-    .from("reviews")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabaseClient
+      .from("reviews")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
+    if (error) throw error;
+
+    commentsList.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      commentsList.innerHTML = `
+        <div class="empty-comments">
+          <p>Belum ada komentar. Jadilah yang pertama.</p>
+        </div>
+      `;
+
+      return;
+    }
+
+    data.forEach(renderComment);
+  } catch (error) {
     console.error("Supabase error:", error);
 
     commentsList.innerHTML = `
@@ -830,23 +1226,7 @@ async function loadComments() {
         <p>Unable to load comments.</p>
       </div>
     `;
-
-    return;
   }
-
-  commentsList.innerHTML = "";
-
-  if (!data || data.length === 0) {
-    commentsList.innerHTML = `
-      <div class="empty-comments">
-        <p>Belum ada komentar. Jadilah yang pertama.</p>
-      </div>
-    `;
-
-    return;
-  }
-
-  data.forEach(renderComment);
 }
 
 /* RENDER COMMENT */
@@ -875,8 +1255,10 @@ function renderComment(comment) {
         <strong class="comment-author">
           ${escapeHTML(comment.name)}
         </strong>
+
         <div class="comment-rating">${stars}</div>
       </div>
+
       <span class="comment-date">${escapeHTML(date)}</span>
     </div>
 
@@ -938,6 +1320,7 @@ if (commentForm) {
       await loadComments();
     } catch (error) {
       console.error("Supabase error:", error);
+
       alert("Failed to submit your comment. Please try again.");
     } finally {
       if (submitButton) {

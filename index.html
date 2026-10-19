@@ -54,12 +54,10 @@
     ========================================================== -->
     <header class="navbar" id="navbar">
       <div class="nav-container">
-        <!-- Logo -->
         <a href="#home" class="logo">
           <img src="assets/logo.webp" alt="Enmax House" />
         </a>
 
-        <!-- Navigation -->
         <nav class="nav-menu" id="navMenu">
           <a href="#home">Home</a>
           <a href="#cameras">Cameras</a>
@@ -68,7 +66,6 @@
           <a href="#booking" class="nav-cta">Book Now</a>
         </nav>
 
-        <!-- Mobile Menu Button -->
         <button
           type="button"
           class="menu-toggle"
@@ -85,11 +82,8 @@
          MAIN CONTENT
     ========================================================== -->
     <main>
-      <!-- =======================================================
-           HERO
-      ======================================================== -->
+      <!-- HERO -->
       <section class="hero" id="home">
-        <!-- Floating Cat -->
         <div class="hero-cat" aria-hidden="true">
           <video autoplay muted loop playsinline>
             <source src="assets/cat-video.mp4" type="video/mp4" />
@@ -97,7 +91,7 @@
         </div>
 
         <div class="hero-content">
-          <span class="hero-label"> CAMERA RENTAL • BALI </span>
+          <span class="hero-label">CAMERA RENTAL • BALI</span>
 
           <h1>
             Capture the moment.<br />
@@ -122,7 +116,7 @@
       ======================================================== -->
       <section class="section cameras-section" id="cameras">
         <div class="section-heading">
-          <span class="section-label"> OUR COLLECTION </span>
+          <span class="section-label">OUR COLLECTION</span>
 
           <h2>Pick your <span>camera.</span></h2>
 
@@ -138,7 +132,7 @@
       ======================================================== -->
       <section class="section how-section" id="how-it-works">
         <div class="section-heading">
-          <span class="section-label"> SIMPLE PROCESS </span>
+          <span class="section-label">SIMPLE PROCESS</span>
 
           <h2>How it <span>works.</span></h2>
         </div>
@@ -155,17 +149,17 @@
           <div class="step-card">
             <span class="step-number">02</span>
 
-            <h3>Fill The Booking Form</h3>
+            <h3>Select Rental Duration</h3>
 
-            <p>Enter your personal information and rental details.</p>
+            <p>Choose a 6-hour, 12-hour, or 24-hour rental period.</p>
           </div>
 
           <div class="step-card">
             <span class="step-number">03</span>
 
-            <h3>Continue to WhatsApp</h3>
+            <h3>Fill The Booking Form</h3>
 
-            <p>Your booking information will be prepared automatically.</p>
+            <p>Enter your personal information and rental details.</p>
           </div>
 
           <div class="step-card">
@@ -173,7 +167,10 @@
 
             <h3>Confirm Your Rental</h3>
 
-            <p>Our admin will check availability and confirm your rental.</p>
+            <p>
+              Continue to WhatsApp so our team can review and confirm your
+              booking request.
+            </p>
           </div>
         </div>
       </section>
@@ -183,7 +180,7 @@
       ======================================================== -->
       <section class="section booking-section" id="booking">
         <div class="section-heading">
-          <span class="section-label"> BOOKING REQUEST </span>
+          <span class="section-label">BOOKING REQUEST</span>
 
           <h2>Reserve your <span>camera.</span></h2>
 
@@ -194,9 +191,7 @@
         </div>
 
         <form id="bookingForm" novalidate>
-          <!-- ===================================================
-               RENTER INFORMATION
-          ==================================================== -->
+          <!-- RENTER INFORMATION -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>01</span>
@@ -224,7 +219,9 @@
               </div>
 
               <div class="form-group">
-                <label for="occupation">Occupation / Job <span>*</span></label>
+                <label for="occupation">
+                  Occupation / Job <span>*</span>
+                </label>
 
                 <input
                   type="text"
@@ -251,7 +248,6 @@
                 <small class="error-message"></small>
               </div>
 
-              <!-- International WhatsApp Number -->
               <div class="form-group">
                 <label for="whatsapp"> WhatsApp Number <span>*</span> </label>
 
@@ -267,7 +263,6 @@
                 <small class="error-message"></small>
               </div>
 
-              <!-- International Emergency Contact -->
               <div class="form-group">
                 <label for="emergencyContact">
                   Emergency Contact <span>*</span>
@@ -301,9 +296,7 @@
             </div>
           </div>
 
-          <!-- ===================================================
-               RENTAL DETAILS
-          ==================================================== -->
+          <!-- RENTAL DETAILS -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>02</span>
@@ -325,7 +318,28 @@
                 <small class="error-message"></small>
               </div>
 
-              <!-- NEW: Quantity -->
+              <!-- RENTAL DURATION -->
+              <div class="form-group">
+                <label for="rentalDuration">
+                  Rental Duration <span>*</span>
+                </label>
+
+                <select id="rentalDuration" name="rentalDuration" required>
+                  <option value="">Select duration</option>
+                  <option value="6">6 hours</option>
+                  <option value="12">12 hours</option>
+                  <option value="24">24 hours</option>
+                </select>
+
+                <small class="error-message"></small>
+
+                <small class="form-note">
+                  Final pricing for your selected duration will be confirmed by
+                  Enmax House through WhatsApp.
+                </small>
+              </div>
+
+              <!-- NUMBER OF UNITS -->
               <div class="form-group">
                 <label for="cameraQuantity">
                   Number of Units <span>*</span>
@@ -344,19 +358,7 @@
                 <small class="error-message"></small>
               </div>
 
-              <!-- NEW: Availability -->
-              <div class="form-group full-width">
-                <div
-                  id="availabilityStatus"
-                  class="availability-status"
-                  role="status"
-                  aria-live="polite"
-                >
-                  Select a camera and rental dates to check availability.
-                </div>
-              </div>
-
-              <!-- Pickup Date -->
+              <!-- PICKUP DATE -->
               <div class="form-group">
                 <label for="startDate"> Pickup Date <span>*</span> </label>
 
@@ -365,7 +367,7 @@
                 <small class="error-message"></small>
               </div>
 
-              <!-- NEW: Pickup Time -->
+              <!-- PICKUP TIME -->
               <div class="form-group">
                 <label for="startTime"> Pickup Time <span>*</span> </label>
 
@@ -374,7 +376,7 @@
                 <small class="error-message"></small>
               </div>
 
-              <!-- Return Date -->
+              <!-- RETURN DATE -->
               <div class="form-group">
                 <label for="endDate"> Return Date <span>*</span> </label>
 
@@ -383,7 +385,7 @@
                 <small class="error-message"></small>
               </div>
 
-              <!-- NEW: Return Time -->
+              <!-- RETURN TIME -->
               <div class="form-group">
                 <label for="endTime"> Return Time <span>*</span> </label>
 
@@ -425,7 +427,7 @@
               </div>
             </div>
 
-            <!-- Rental Summary -->
+            <!-- RENTAL SUMMARY -->
             <div class="rental-summary" id="rentalSummary">
               <div>
                 <span>Selected Camera</span>
@@ -437,7 +439,6 @@
                 <strong id="summaryDuration">-</strong>
               </div>
 
-              <!-- NEW: Quantity Summary -->
               <div>
                 <span>Number of Units</span>
                 <strong id="summaryQuantity">1 unit</strong>
@@ -445,9 +446,7 @@
             </div>
           </div>
 
-          <!-- ===================================================
-               SUPPORTING DOCUMENTS
-          ==================================================== -->
+          <!-- SUPPORTING DOCUMENTS -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>03</span>
@@ -459,7 +458,6 @@
             </div>
 
             <div class="checkbox-list">
-              <!-- ID is automatically checked and cannot be unchecked -->
               <label class="checkbox-item">
                 <input
                   type="checkbox"
@@ -504,9 +502,7 @@
             </p>
           </div>
 
-          <!-- ===================================================
-               ADDITIONAL COMMENTS
-          ==================================================== -->
+          <!-- ADDITIONAL COMMENTS -->
           <div class="form-section">
             <div class="form-section-heading">
               <span>04</span>
@@ -532,9 +528,7 @@
             </div>
           </div>
 
-          <!-- ===================================================
-               AGREEMENT
-          ==================================================== -->
+          <!-- AGREEMENT -->
           <div class="agreement-section">
             <label class="checkbox-item agreement">
               <input type="checkbox" id="agreement" name="agreement" required />
@@ -554,9 +548,7 @@
             ></small>
           </div>
 
-          <!-- ===================================================
-               SUBMIT
-          ==================================================== -->
+          <!-- SUBMIT -->
           <div class="submit-section">
             <button
               type="submit"
@@ -576,11 +568,11 @@
       </section>
 
       <!-- =======================================================
-           COMMENTS
+           CUSTOMER COMMENTS
       ======================================================== -->
       <section class="section comments-section" id="comments-section">
         <div class="section-heading">
-          <span class="section-label"> CUSTOMER NOTES </span>
+          <span class="section-label">CUSTOMER NOTES</span>
 
           <h2>What customers <span>say.</span></h2>
 
@@ -639,17 +631,14 @@
          CAMERA MODAL
     ========================================================== -->
     <div class="camera-modal" id="cameraModal" aria-hidden="true">
-      <!-- Overlay -->
       <div class="modal-overlay" id="modalOverlay"></div>
 
-      <!-- Modal -->
       <div
         class="modal-content"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modalCameraName"
       >
-        <!-- Close -->
         <button
           type="button"
           class="modal-close"
@@ -695,9 +684,23 @@
           <p id="modalCameraDescription"></p>
 
           <div class="modal-price">
-            <span>Rental</span>
-
+            <span>Starting from</span>
             <strong id="modalCameraPrice"></strong>
+          </div>
+
+          <div class="form-group modal-duration-group">
+            <label for="modalRentalDuration">Rental Duration</label>
+
+            <select id="modalRentalDuration">
+              <option value="6">6 hours</option>
+              <option value="12">12 hours</option>
+              <option value="24" selected>24 hours</option>
+            </select>
+
+            <small class="form-note">
+              Final pricing for the selected duration will be confirmed by Enmax
+              House.
+            </small>
           </div>
 
           <button

@@ -3,29 +3,18 @@
    Camera Rental Website
    ========================================================= */
 
-/* =========================================================
-   SUPABASE CONFIGURATION
-   ========================================================= */
+/* SUPABASE CONFIGURATION */
 
-// GANTI DENGAN PROJECT URL SUPABASE KAMU
 const SUPABASE_URL = "https://egfuemmimojqzdqjsofg.supabase.co";
-
-// GANTI DENGAN PUBLISHABLE KEY / ANON PUBLIC KEY KAMU
 const SUPABASE_KEY = "sb_publishable_TWiZEW8hb8rI91I4cu3Law_H9NCykz6";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* =========================================================
-   CONFIGURATION
-   ========================================================= */
+/* CONFIGURATION */
 
-// Format WhatsApp:
-// 62 + nomor tanpa +, spasi, atau 0 di depan.
 const WHATSAPP_NUMBER = "6282145929947";
 
-/* =========================================================
-   CAMERA DATA
-   ========================================================= */
+/* CAMERA DATA */
 
 const cameras = [
   {
@@ -36,7 +25,6 @@ const cameras = [
       "Compact camera with excellent image quality, perfect for travel, daily content, and casual photography.",
     price: "Rp 220.000 / day",
     image: "assets/cameras/camera-01.jpg",
-
     gallery: [
       "assets/cameras/camera-01.jpg",
       "assets/cameras/camera-01-1.jpg",
@@ -44,7 +32,6 @@ const cameras = [
       "assets/cameras/camera-01-3.jpg",
     ],
   },
-
   {
     id: "camera-02",
     name: "Canon SX740 HS",
@@ -53,7 +40,6 @@ const cameras = [
       "Powerful zoom in a compact body, made for travel and everyday moments.",
     price: "Rp 200.000 / day",
     image: "assets/cameras/camera-02.jpg",
-
     gallery: [
       "assets/cameras/camera-02.jpg",
       "assets/cameras/camera-02-1.jpg",
@@ -61,7 +47,6 @@ const cameras = [
       "assets/cameras/camera-02-3.jpg",
     ],
   },
-
   {
     id: "camera-03",
     name: "Panasonic Lumix TZ99",
@@ -70,7 +55,6 @@ const cameras = [
       "Versatile zoom and compact design for travel and everyday shooting.",
     price: "Rp 200.000 / day",
     image: "assets/cameras/camera-03.jpg",
-
     gallery: [
       "assets/cameras/camera-03.jpg",
       "assets/cameras/camera-03-1.jpg",
@@ -78,7 +62,6 @@ const cameras = [
       "assets/cameras/camera-03-3.jpg",
     ],
   },
-
   {
     id: "camera-04",
     name: "Leica D-Lux 6",
@@ -87,7 +70,6 @@ const cameras = [
       "Premium compact camera with Leica character for street and lifestyle photography.",
     price: "Rp 140.000 / day",
     image: "assets/cameras/camera-04.jpg",
-
     gallery: [
       "assets/cameras/camera-04.jpg",
       "assets/cameras/camera-04-1.jpg",
@@ -95,7 +77,6 @@ const cameras = [
       "assets/cameras/camera-04-3.jpg",
     ],
   },
-
   {
     id: "camera-05",
     name: "Sony ZV-1",
@@ -104,7 +85,6 @@ const cameras = [
       "Creator-focused compact camera for vlogs, travel, and social content.",
     price: "Rp 150.000 / day",
     image: "assets/cameras/camera-05.jpg",
-
     gallery: [
       "assets/cameras/camera-05.jpg",
       "assets/cameras/camera-05-1.jpg",
@@ -114,84 +94,73 @@ const cameras = [
   },
 ];
 
-/* =========================================================
-   DOM ELEMENTS
-   ========================================================= */
+/* DOM ELEMENTS */
 
-const navbar = document.getElementById("navbar");
+const $ = (id) => document.getElementById(id);
 
-const navMenu = document.getElementById("navMenu");
-const menuToggle = document.getElementById("menuToggle");
+const navbar = $("navbar");
+const navMenu = $("navMenu");
+const menuToggle = $("menuToggle");
 
-const cameraGrid = document.getElementById("cameraGrid");
-const cameraSelect = document.getElementById("cameraSelect");
+const cameraGrid = $("cameraGrid");
+const cameraSelect = $("cameraSelect");
 
-const cameraModal = document.getElementById("cameraModal");
-const modalOverlay = document.getElementById("modalOverlay");
-const modalClose = document.getElementById("modalClose");
+const cameraModal = $("cameraModal");
+const modalOverlay = $("modalOverlay");
+const modalClose = $("modalClose");
 
-/*
-  IMPORTANT:
-  Gallery sekarang hanya menggunakan SATU image.
-  JavaScript akan mengganti src image tersebut.
-*/
-const modalCameraImage = document.getElementById("modalCameraImage");
+const modalCameraImage = $("modalCameraImage");
+const galleryPrev = $("galleryPrev");
+const galleryNext = $("galleryNext");
+const galleryCounter = $("galleryCounter");
 
-const galleryPrev = document.getElementById("galleryPrev");
-const galleryNext = document.getElementById("galleryNext");
-const galleryCounter = document.getElementById("galleryCounter");
+const modalCameraCategory = $("modalCameraCategory");
+const modalCameraName = $("modalCameraName");
+const modalCameraDescription = $("modalCameraDescription");
+const modalCameraPrice = $("modalCameraPrice");
+const modalBookButton = $("modalBookButton");
 
-const modalCameraCategory = document.getElementById("modalCameraCategory");
-const modalCameraName = document.getElementById("modalCameraName");
+const bookingForm = $("bookingForm");
 
-const modalCameraDescription = document.getElementById(
-  "modalCameraDescription",
-);
+const startDate = $("startDate");
+const endDate = $("endDate");
+const startTime = $("startTime");
+const endTime = $("endTime");
+const cameraQuantity = $("cameraQuantity");
 
-const modalCameraPrice = document.getElementById("modalCameraPrice");
+const summaryCamera = $("summaryCamera");
+const summaryDuration = $("summaryDuration");
+const summaryQuantity = $("summaryQuantity");
 
-const modalBookButton = document.getElementById("modalBookButton");
+const agreement = $("agreement");
+const agreementError = $("agreementError");
 
-const bookingForm = document.getElementById("bookingForm");
+const commentForm = $("commentForm");
+const commentsList = $("commentsList");
+const currentYear = $("currentYear");
 
-const startDate = document.getElementById("startDate");
-const endDate = document.getElementById("endDate");
-
-const summaryCamera = document.getElementById("summaryCamera");
-const summaryDuration = document.getElementById("summaryDuration");
-
-const agreement = document.getElementById("agreement");
-const agreementError = document.getElementById("agreementError");
-
-const commentForm = document.getElementById("commentForm");
-const commentsList = document.getElementById("commentsList");
-
-const currentYear = document.getElementById("currentYear");
-
-/* =========================================================
-   GLOBAL STATE
-   ========================================================= */
+/* GLOBAL STATE */
 
 let selectedCameraId = null;
 let currentGalleryIndex = 0;
+const phoneInputs = {};
 
-/* =========================================================
-   INITIALIZATION
-   ========================================================= */
+/* INITIALIZATION */
 
 document.addEventListener("DOMContentLoaded", () => {
   renderCameraCards();
   populateCameraSelect();
   setMinimumDates();
-  loadComments();
-  updateCurrentYear();
   setupNavbar();
   setupGalleryControls();
+  setupPhoneInputs();
+  setupBookingListeners();
+  updateBookingSummary();
+  loadComments();
+  updateCurrentYear();
 });
 
-/* =========================================================
-   CAMERA CARDS
-   ========================================================= */
+/* CAMERA CARDS */
 
 function renderCameraCards() {
   if (!cameraGrid) return;
@@ -200,7 +169,6 @@ function renderCameraCards() {
 
   cameras.forEach((camera) => {
     const card = document.createElement("article");
-
     card.className = "camera-card";
 
     card.innerHTML = `
@@ -210,28 +178,19 @@ function renderCameraCards() {
           alt="${escapeHTML(camera.name)}"
           loading="lazy"
         >
-
-        <span class="camera-badge">
-          Available
-        </span>
+        <span class="camera-badge">Available</span>
       </div>
 
       <div class="camera-card-content">
-
         <span class="camera-category">
           ${escapeHTML(camera.category)}
         </span>
 
-        <h3>
-          ${escapeHTML(camera.name)}
-        </h3>
+        <h3>${escapeHTML(camera.name)}</h3>
 
-        <p>
-          ${escapeHTML(camera.description)}
-        </p>
+        <p>${escapeHTML(camera.description)}</p>
 
         <div class="camera-card-footer">
-
           <strong class="camera-price">
             ${escapeHTML(camera.price)}
           </strong>
@@ -243,57 +202,41 @@ function renderCameraCards() {
           >
             View Camera →
           </button>
-
         </div>
-
       </div>
     `;
 
     cameraGrid.appendChild(card);
   });
 
-  const viewButtons = document.querySelectorAll(".camera-view-button");
-
-  viewButtons.forEach((button) => {
+  document.querySelectorAll(".camera-view-button").forEach((button) => {
     button.addEventListener("click", () => {
-      const cameraId = button.dataset.cameraId;
-
-      openCameraModal(cameraId);
+      openCameraModal(button.dataset.cameraId);
     });
   });
 }
 
-/* =========================================================
-   CAMERA SELECT
-   ========================================================= */
+/* CAMERA SELECT */
 
 function populateCameraSelect() {
   if (!cameraSelect) return;
 
-  cameraSelect.innerHTML = `
-    <option value="">Select a camera</option>
-  `;
+  cameraSelect.innerHTML = '<option value="">Select a camera</option>';
 
   cameras.forEach((camera) => {
     const option = document.createElement("option");
-
     option.value = camera.id;
-
     option.textContent = `${camera.name} — ${camera.price}`;
-
     cameraSelect.appendChild(option);
   });
 
   cameraSelect.addEventListener("change", () => {
     selectedCameraId = cameraSelect.value || null;
-
     updateBookingSummary();
   });
 }
 
-/* =========================================================
-   CAMERA MODAL
-   ========================================================= */
+/* CAMERA MODAL */
 
 function openCameraModal(cameraId) {
   const camera = cameras.find((item) => item.id === cameraId);
@@ -301,7 +244,6 @@ function openCameraModal(cameraId) {
   if (!camera || !cameraModal) return;
 
   selectedCameraId = camera.id;
-
   currentGalleryIndex = 0;
 
   if (modalCameraCategory) {
@@ -327,97 +269,52 @@ function openCameraModal(cameraId) {
   updateGalleryImage();
 
   cameraModal.classList.add("active");
-
   cameraModal.setAttribute("aria-hidden", "false");
-
   document.body.classList.add("modal-open");
 
-  setTimeout(() => {
-    modalClose?.focus();
-  }, 100);
+  window.setTimeout(() => modalClose?.focus(), 100);
 }
 
-/* =========================================================
-   GET CURRENT GALLERY
-   ========================================================= */
+/* GALLERY */
 
 function getCurrentGallery() {
   const camera = cameras.find((item) => item.id === selectedCameraId);
 
-  if (!camera) {
-    return [];
-  }
+  if (!camera) return [];
 
-  if (Array.isArray(camera.gallery) && camera.gallery.length > 0) {
-    return camera.gallery;
-  }
-
-  return [camera.image];
+  return Array.isArray(camera.gallery) && camera.gallery.length
+    ? camera.gallery
+    : [camera.image];
 }
-
-/* =========================================================
-   UPDATE GALLERY IMAGE
-   ========================================================= */
 
 function updateGalleryImage() {
   if (!modalCameraImage) return;
 
   const camera = cameras.find((item) => item.id === selectedCameraId);
 
-  if (!camera) return;
-
   const gallery = getCurrentGallery();
 
-  if (!gallery.length) return;
+  if (!camera || !gallery.length) return;
 
-  if (currentGalleryIndex < 0) {
-    currentGalleryIndex = gallery.length - 1;
-  }
-
-  if (currentGalleryIndex >= gallery.length) {
-    currentGalleryIndex = 0;
-  }
+  currentGalleryIndex = (currentGalleryIndex + gallery.length) % gallery.length;
 
   modalCameraImage.src = gallery[currentGalleryIndex];
-
   modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
 
   if (galleryCounter) {
     galleryCounter.textContent = `${currentGalleryIndex + 1} / ${gallery.length}`;
   }
 
-  const hasMultipleImages = gallery.length > 1;
+  const multipleImages = gallery.length > 1;
 
   if (galleryPrev) {
-    galleryPrev.style.display = hasMultipleImages ? "flex" : "none";
+    galleryPrev.style.display = multipleImages ? "flex" : "none";
   }
 
   if (galleryNext) {
-    galleryNext.style.display = hasMultipleImages ? "flex" : "none";
+    galleryNext.style.display = multipleImages ? "flex" : "none";
   }
 }
-
-/* =========================================================
-   GALLERY CONTROLS
-   ========================================================= */
-
-function setupGalleryControls() {
-  if (galleryPrev) {
-    galleryPrev.addEventListener("click", () => {
-      moveGallery(-1);
-    });
-  }
-
-  if (galleryNext) {
-    galleryNext.addEventListener("click", () => {
-      moveGallery(1);
-    });
-  }
-}
-
-/* =========================================================
-   MOVE GALLERY
-   ========================================================= */
 
 function moveGallery(direction) {
   const gallery = getCurrentGallery();
@@ -425,174 +322,223 @@ function moveGallery(direction) {
   if (!gallery.length) return;
 
   currentGalleryIndex += direction;
-
-  if (currentGalleryIndex < 0) {
-    currentGalleryIndex = gallery.length - 1;
-  }
-
-  if (currentGalleryIndex >= gallery.length) {
-    currentGalleryIndex = 0;
-  }
-
   updateGalleryImage();
 }
 
-/* =========================================================
-   CLOSE MODAL
-   ========================================================= */
+function setupGalleryControls() {
+  galleryPrev?.addEventListener("click", () => moveGallery(-1));
+  galleryNext?.addEventListener("click", () => moveGallery(1));
+}
+
+/* CLOSE MODAL */
 
 function closeCameraModal() {
   if (!cameraModal) return;
 
   cameraModal.classList.remove("active");
-
   cameraModal.setAttribute("aria-hidden", "true");
-
   document.body.classList.remove("modal-open");
 }
 
-if (modalClose) {
-  modalClose.addEventListener("click", closeCameraModal);
-}
-
-if (modalOverlay) {
-  modalOverlay.addEventListener("click", closeCameraModal);
-}
-
-/* =========================================================
-   ESCAPE KEY
-   ========================================================= */
+modalClose?.addEventListener("click", closeCameraModal);
+modalOverlay?.addEventListener("click", closeCameraModal);
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && cameraModal?.classList.contains("active")) {
     closeCameraModal();
   }
-});
 
-/* =========================================================
-   KEYBOARD GALLERY NAVIGATION
-   ========================================================= */
-
-document.addEventListener("keydown", (event) => {
-  if (!cameraModal?.classList.contains("active")) {
-    return;
-  }
+  if (!cameraModal?.classList.contains("active")) return;
 
   if (event.key === "ArrowLeft") {
     event.preventDefault();
-
     moveGallery(-1);
   }
 
   if (event.key === "ArrowRight") {
     event.preventDefault();
-
     moveGallery(1);
   }
 });
 
-/* =========================================================
-   BOOK THIS CAMERA
-   ========================================================= */
+/* BOOK THIS CAMERA */
 
-if (modalBookButton) {
-  modalBookButton.addEventListener("click", () => {
-    const cameraId = modalBookButton.dataset.cameraId;
+modalBookButton?.addEventListener("click", () => {
+  const cameraId = modalBookButton.dataset.cameraId;
 
-    if (!cameraId || !cameraSelect) {
-      return;
-    }
+  if (!cameraId || !cameraSelect) return;
 
-    selectedCameraId = cameraId;
+  cameraSelect.value = cameraId;
+  selectedCameraId = cameraId;
 
-    cameraSelect.value = cameraId;
+  updateBookingSummary();
+  closeCameraModal();
 
-    updateBookingSummary();
+  $("booking")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+});
 
-    closeCameraModal();
+/* INTERNATIONAL PHONE INPUTS
+   Load intl-tel-input CSS and JS in index.html
+   before js/script.js. */
 
-    const bookingSection = document.getElementById("booking");
+function setupPhoneInputs() {
+  if (typeof window.intlTelInput !== "function") {
+    console.warn(
+      "intl-tel-input belum dimuat. Country code selector tidak aktif.",
+    );
+    return;
+  }
 
-    bookingSection?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
+  ["whatsapp", "emergencyContact"].forEach((id) => {
+    const input = $(id);
+
+    if (!input) return;
+
+    phoneInputs[id] = window.intlTelInput(input, {
+      initialCountry: "id",
+      separateDialCode: true,
+      nationalMode: true,
+      formatOnDisplay: true,
+      autoPlaceholder: "polite",
+      utilsScript:
+        "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
     });
   });
 }
 
-/* =========================================================
-   DATE LOGIC
-   ========================================================= */
+function getInternationalNumber(id) {
+  const input = $(id);
+  const phoneInput = phoneInputs[id];
+
+  if (!input) return "";
+
+  if (phoneInput && input.value.trim()) {
+    try {
+      return phoneInput.getNumber();
+    } catch (error) {
+      console.warn("Phone formatting failed:", error);
+    }
+  }
+
+  return input.value.trim();
+}
+
+function isValidPhoneNumber(id) {
+  const input = $(id);
+
+  if (!input || !input.value.trim()) return false;
+
+  const phoneInput = phoneInputs[id];
+
+  if (phoneInput) {
+    try {
+      return phoneInput.isValidNumber();
+    } catch (error) {
+      console.warn("Phone validation failed:", error);
+    }
+  }
+
+  return /^[0-9+\-\s()]{8,25}$/.test(input.value.trim());
+}
+
+/* DATE AND TIME */
 
 function getTodayString() {
   const today = new Date();
 
   const year = today.getFullYear();
-
   const month = String(today.getMonth() + 1).padStart(2, "0");
-
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
 function setMinimumDates() {
-  if (!startDate || !endDate) return;
-
   const today = getTodayString();
 
-  startDate.min = today;
-
-  endDate.min = today;
+  if (startDate) startDate.min = today;
+  if (endDate) endDate.min = today;
 }
 
-/* =========================================================
-   START DATE
-   ========================================================= */
+function getPickupDateTime() {
+  if (!startDate?.value || !startTime?.value) return null;
 
-if (startDate) {
-  startDate.addEventListener("change", () => {
-    if (!startDate.value) return;
+  return new Date(`${startDate.value}T${startTime.value}:00`);
+}
 
-    endDate.min = startDate.value;
+function getReturnDateTime() {
+  if (!endDate?.value || !endTime?.value) return null;
 
-    if (endDate.value && endDate.value < startDate.value) {
-      endDate.value = startDate.value;
-    }
+  return new Date(`${endDate.value}T${endTime.value}:00`);
+}
 
-    updateBookingSummary();
+function calculateRentalDays() {
+  const pickup = getPickupDateTime();
+  const returned = getReturnDateTime();
+
+  if (!pickup || !returned || returned <= pickup) return null;
+
+  return Math.max(
+    1,
+    Math.ceil((returned.getTime() - pickup.getTime()) / 86400000),
+  );
+}
+
+function formatDateIndonesia(dateString) {
+  if (!dateString) return "-";
+
+  const date = new Date(`${dateString}T00:00:00`);
+
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
   });
 }
 
-/* =========================================================
-   END DATE
-   ========================================================= */
+function formatDateTimeIndonesia(date) {
+  if (!date || Number.isNaN(date.getTime())) return "-";
 
-if (endDate) {
-  endDate.addEventListener("change", updateBookingSummary);
+  return date.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
-/* =========================================================
-   RENTAL DURATION
-   ========================================================= */
+/* BOOKING LISTENERS */
 
-function calculateRentalDays() {
-  if (!startDate?.value || !endDate?.value) {
-    return null;
-  }
+function setupBookingListeners() {
+  [startDate, endDate, startTime, endTime, cameraQuantity].forEach((input) => {
+    input?.addEventListener("change", () => {
+      if (startDate?.value && endDate) {
+        endDate.min = startDate.value;
 
-  const start = new Date(`${startDate.value}T00:00:00`);
+        if (endDate.value && endDate.value < startDate.value) {
+          endDate.value = startDate.value;
+        }
+      }
 
-  const end = new Date(`${endDate.value}T00:00:00`);
+      updateBookingSummary();
+    });
 
-  const difference = end.getTime() - start.getTime();
+    input?.addEventListener("input", updateBookingSummary);
+  });
 
-  return Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
+  startDate?.addEventListener("change", () => {
+    if (endDate && startDate.value) {
+      endDate.min = startDate.value;
+    }
+  });
 }
 
-/* =========================================================
-   BOOKING SUMMARY
-   ========================================================= */
+/* BOOKING SUMMARY */
 
 function updateBookingSummary() {
   if (!cameraSelect) return;
@@ -610,27 +556,15 @@ function updateBookingSummary() {
       ? `${duration} day${duration > 1 ? "s" : ""}`
       : "-";
   }
+
+  if (summaryQuantity) {
+    const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
+
+    summaryQuantity.textContent = String(quantity);
+  }
 }
 
-/* =========================================================
-   DATE FORMAT
-   ========================================================= */
-
-function formatDateIndonesia(dateString) {
-  if (!dateString) return "-";
-
-  const date = new Date(`${dateString}T00:00:00`);
-
-  return date.toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-/* =========================================================
-   FORM VALIDATION
-   ========================================================= */
+/* FORM VALIDATION */
 
 function clearValidation() {
   document.querySelectorAll(".error-message").forEach((error) => {
@@ -646,29 +580,18 @@ function clearValidation() {
   }
 }
 
-/* =========================================================
-   SHOW FIELD ERROR
-   ========================================================= */
-
 function showFieldError(input, message) {
   if (!input) return;
 
   input.classList.add("input-error");
 
   const parent = input.closest(".form-group");
-
-  if (!parent) return;
-
-  const error = parent.querySelector(".error-message");
+  const error = parent?.querySelector(".error-message");
 
   if (error) {
     error.textContent = message;
   }
 }
-
-/* =========================================================
-   VALIDATE BOOKING FORM
-   ========================================================= */
 
 function validateBookingForm() {
   clearValidation();
@@ -676,118 +599,86 @@ function validateBookingForm() {
   let isValid = true;
 
   const requiredFields = [
-    {
-      id: "fullName",
-      message: "Nama lengkap wajib diisi.",
-    },
-
-    {
-      id: "occupation",
-      message: "Pekerjaan wajib diisi.",
-    },
-
-    {
-      id: "workplace",
-      message: "Tempat kerja wajib diisi.",
-    },
-
-    {
-      id: "whatsapp",
-      message: "Nomor WhatsApp wajib diisi.",
-    },
-
-    {
-      id: "emergencyContact",
-      message: "Kontak darurat wajib diisi.",
-    },
-
-    {
-      id: "cameraSelect",
-      message: "Silakan pilih kamera.",
-    },
-
-    {
-      id: "startDate",
-      message: "Tanggal mulai wajib dipilih.",
-    },
-
-    {
-      id: "endDate",
-      message: "Tanggal selesai wajib dipilih.",
-    },
-
-    {
-      id: "pickupLocation",
-      message: "Tempat pengambilan wajib diisi.",
-    },
-
-    {
-      id: "returnLocation",
-      message: "Tempat pengembalian wajib diisi.",
-    },
+    ["fullName", "Nama lengkap wajib diisi."],
+    ["occupation", "Pekerjaan wajib diisi."],
+    ["workplace", "Tempat kerja wajib diisi."],
+    ["whatsapp", "Nomor WhatsApp wajib diisi."],
+    ["emergencyContact", "Kontak darurat wajib diisi."],
+    ["cameraSelect", "Silakan pilih kamera."],
+    ["startDate", "Tanggal pickup wajib dipilih."],
+    ["startTime", "Jam pickup wajib dipilih."],
+    ["endDate", "Tanggal return wajib dipilih."],
+    ["endTime", "Jam return wajib dipilih."],
+    ["pickupLocation", "Tempat pengambilan wajib diisi."],
+    ["returnLocation", "Tempat pengembalian wajib diisi."],
   ];
 
-  requiredFields.forEach((field) => {
-    const input = document.getElementById(field.id);
+  requiredFields.forEach(([id, message]) => {
+    const input = $(id);
 
-    if (!input || !input.value.trim()) {
-      showFieldError(input, field.message);
-
+    if (!input || !String(input.value || "").trim()) {
+      showFieldError(input, message);
       isValid = false;
     }
   });
 
-  /* =======================================================
-     DATE VALIDATION
-  ======================================================== */
+  /* DATE AND TIME VALIDATION */
 
-  if (startDate?.value && endDate?.value && endDate.value < startDate.value) {
+  const pickup = getPickupDateTime();
+  const returned = getReturnDateTime();
+
+  if (pickup && pickup.getTime() < Date.now()) {
     showFieldError(
-      endDate,
-      "Tanggal selesai tidak boleh lebih awal dari tanggal mulai.",
+      startTime || startDate,
+      "Waktu pickup tidak boleh di masa lalu.",
     );
 
     isValid = false;
   }
 
-  /* =======================================================
-     WHATSAPP VALIDATION
-  ======================================================== */
-
-  const whatsapp = document.getElementById("whatsapp");
-
-  if (whatsapp?.value && !/^[0-9+\-\s()]{8,20}$/.test(whatsapp.value)) {
-    showFieldError(whatsapp, "Masukkan nomor WhatsApp yang valid.");
+  if (pickup && returned && returned <= pickup) {
+    showFieldError(
+      endTime || endDate,
+      "Waktu return harus setelah waktu pickup.",
+    );
 
     isValid = false;
   }
 
-  /* =======================================================
-     SUPPORTING DOCUMENTS
-  ======================================================== */
+  /* PHONE VALIDATION */
 
-  const ktpCheck = document.getElementById("ktpCheck");
+  ["whatsapp", "emergencyContact"].forEach((id) => {
+    const input = $(id);
 
-  const hotelCheck = document.getElementById("hotelCheck");
+    if (input?.value.trim() && !isValidPhoneNumber(id)) {
+      showFieldError(input, "Masukkan nomor telepon yang valid.");
+      isValid = false;
+    }
+  });
 
-  const flightCheck = document.getElementById("flightCheck");
+  /* QUANTITY VALIDATION */
 
-  const hasAtLeastOneDocument =
-    ktpCheck?.checked || hotelCheck?.checked || flightCheck?.checked;
+  if (cameraQuantity) {
+    const quantity = Number(cameraQuantity.value);
 
-  if (!hasAtLeastOneDocument) {
-    ktpCheck?.closest(".checkbox-item")?.classList.add("input-error");
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      showFieldError(cameraQuantity, "Jumlah kamera minimal 1 unit.");
 
-    hotelCheck?.closest(".checkbox-item")?.classList.add("input-error");
+      isValid = false;
+    }
+  }
 
-    flightCheck?.closest(".checkbox-item")?.classList.add("input-error");
+  /* REQUIRED ID / PASSPORT */
+
+  const ktpCheck = $("ktpCheck");
+
+  if (ktpCheck && !ktpCheck.checked) {
+    showFieldError(ktpCheck, "KTP / Passport wajib disiapkan.");
 
     isValid = false;
   }
 
-  /* =======================================================
-     AGREEMENT
-  ======================================================== */
+  /* AGREEMENT */
 
   if (!agreement?.checked) {
     if (agreementError) {
@@ -800,9 +691,7 @@ function validateBookingForm() {
   return isValid;
 }
 
-/* =========================================================
-   BOOKING FORM SUBMIT
-   ========================================================= */
+/* BOOKING FORM SUBMIT */
 
 if (bookingForm) {
   bookingForm.addEventListener("submit", (event) => {
@@ -811,18 +700,10 @@ if (bookingForm) {
     const isValid = validateBookingForm();
 
     if (!isValid) {
-      const firstError = document.querySelector(".input-error");
-
-      if (firstError) {
-        firstError.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-
-        if (typeof firstError.focus === "function") {
-          firstError.focus();
-        }
-      }
+      document.querySelector(".input-error")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
 
       return;
     }
@@ -831,45 +712,37 @@ if (bookingForm) {
   });
 }
 
-/* =========================================================
-   WHATSAPP MESSAGE
-   ========================================================= */
+/* WHATSAPP MESSAGE */
 
 function createWhatsAppMessage() {
-  const camera = cameras.find((item) => item.id === cameraSelect.value);
+  const camera = cameras.find((item) => item.id === cameraSelect?.value);
 
-  const fullName = document.getElementById("fullName").value.trim();
+  const fullName = $("fullName")?.value.trim() || "";
+  const occupation = $("occupation")?.value.trim() || "";
+  const workplace = $("workplace")?.value.trim() || "";
 
-  const occupation = document.getElementById("occupation").value.trim();
+  const whatsapp = getInternationalNumber("whatsapp");
+  const emergencyContact = getInternationalNumber("emergencyContact");
 
-  const workplace = document.getElementById("workplace").value.trim();
+  const instagram = $("instagram")?.value.trim() || "";
+  const pickupLocation = $("pickupLocation")?.value.trim() || "";
+  const returnLocation = $("returnLocation")?.value.trim() || "";
+  const comments = $("comments")?.value.trim() || "";
 
-  const whatsapp = document.getElementById("whatsapp").value.trim();
+  const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
 
-  const emergencyContact = document
-    .getElementById("emergencyContact")
-    .value.trim();
-
-  const instagram = document.getElementById("instagram").value.trim();
-
-  const pickupLocation = document.getElementById("pickupLocation").value.trim();
-
-  const returnLocation = document.getElementById("returnLocation").value.trim();
-
-  const comments = document.getElementById("comments").value.trim();
-
-  const ktpCheck = document.getElementById("ktpCheck").checked;
-
-  const hotelCheck = document.getElementById("hotelCheck").checked;
-
-  const flightCheck = document.getElementById("flightCheck").checked;
-
+  const pickup = getPickupDateTime();
+  const returned = getReturnDateTime();
   const duration = calculateRentalDays();
 
+  const ktpCheck = $("ktpCheck")?.checked;
+  const hotelCheck = $("hotelCheck")?.checked;
+  const flightCheck = $("flightCheck")?.checked;
+
   const documentStatus = `
-KTP / Passport: ${ktpCheck ? "✓" : "-"}
-Bukti Booking Hotel: ${hotelCheck ? "✓" : "-"}
-Detail Penerbangan: ${flightCheck ? "✓" : "-"}
+KTP / Passport: ${ktpCheck ? "Wajib disiapkan dan dikirim via WhatsApp" : "Belum disiapkan"}
+Bukti Booking Hotel: ${hotelCheck ? "Akan dikirim" : "-"}
+Detail Penerbangan: ${flightCheck ? "Akan dikirim" : "-"}
   `.trim();
 
   const message = `
@@ -877,9 +750,10 @@ Halo Enmax House, saya ingin mengajukan booking kamera.
 
 DETAIL RENTAL
 Camera: ${camera ? camera.name : "-"}
+Jumlah Unit: ${quantity}
 Durasi: ${duration ? `${duration} hari` : "-"}
-Tanggal Mulai: ${formatDateIndonesia(startDate.value)}
-Tanggal Selesai: ${formatDateIndonesia(endDate.value)}
+Pickup: ${formatDateTimeIndonesia(pickup)}
+Return: ${formatDateTimeIndonesia(returned)}
 Tempat Pengambilan: ${pickupLocation}
 Tempat Pengembalian: ${returnLocation}
 
@@ -897,31 +771,25 @@ ${documentStatus}
 CATATAN TAMBAHAN
 ${comments || "-"}
 
-Saya memahami bahwa booking ini belum confirmed dan masih menunggu pengecekan serta konfirmasi dari Enmax House.
+Saya memahami bahwa booking ini belum confirmed dan masih menunggu pengecekan serta konfirmasi dari Enmax House. Saya akan mengirim dokumen pendukung melalui WhatsApp.
   `.trim();
 
-  const encodedMessage = encodeURIComponent(message);
+  const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
-  const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+  const newWindow = window.open(whatsappURL, "_blank", "noopener,noreferrer");
 
-  window.open(whatsappURL, "_blank");
+  if (!newWindow) {
+    window.location.href = whatsappURL;
+  }
 }
 
-/* =========================================================
-   NAVBAR
-   ========================================================= */
+/* NAVBAR */
 
 function setupNavbar() {
-  if (!navbar || !navMenu || !menuToggle) {
-    return;
-  }
+  if (!navbar || !navMenu || !menuToggle) return;
 
   window.addEventListener("scroll", () => {
-    if (window.scrollY > 50) {
-      navbar.classList.add("scrolled");
-    } else {
-      navbar.classList.remove("scrolled");
-    }
+    navbar.classList.toggle("scrolled", window.scrollY > 50);
   });
 
   menuToggle.addEventListener("click", () => {
@@ -933,26 +801,12 @@ function setupNavbar() {
   navMenu.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
       navMenu.classList.remove("active");
-
       menuToggle.setAttribute("aria-expanded", "false");
     });
   });
 }
 
-/* =========================================================
-   CUSTOMER COMMENTS
-   ========================================================= */
-
-/*
-  COMMENTS SEKARANG MENGGUNAKAN SUPABASE.
-
-  Sebelumnya:
-  localStorage → hanya tersimpan di browser masing-masing.
-
-  Sekarang:
-  Supabase → tersimpan di database dan bisa dilihat
-  oleh semua pengunjung website.
-*/
+/* CUSTOMER COMMENTS — SUPABASE */
 
 async function loadComments() {
   if (!commentsList) return;
@@ -966,9 +820,7 @@ async function loadComments() {
   const { data, error } = await supabaseClient
     .from("reviews")
     .select("*")
-    .order("created_at", {
-      ascending: false,
-    });
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Supabase error:", error);
@@ -987,32 +839,25 @@ async function loadComments() {
   if (!data || data.length === 0) {
     commentsList.innerHTML = `
       <div class="empty-comments">
-        <p>
-          Belum ada komentar. Jadilah yang pertama.
-        </p>
+        <p>Belum ada komentar. Jadilah yang pertama.</p>
       </div>
     `;
 
     return;
   }
 
-  data.forEach((comment) => {
-    renderComment(comment);
-  });
+  data.forEach(renderComment);
 }
 
-/* =========================================================
-   RENDER COMMENT
-   ========================================================= */
+/* RENDER COMMENT */
 
 function renderComment(comment) {
   if (!commentsList) return;
 
   const article = document.createElement("article");
-
   article.className = "comment-card";
 
-  const rating = Number(comment.rating);
+  const rating = Math.max(0, Math.min(5, Number(comment.rating) || 0));
 
   const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
 
@@ -1026,147 +871,87 @@ function renderComment(comment) {
 
   article.innerHTML = `
     <div class="comment-header">
-
       <div>
-
         <strong class="comment-author">
           ${escapeHTML(comment.name)}
         </strong>
-
-        <div class="comment-rating">
-          ${stars}
-        </div>
-
+        <div class="comment-rating">${stars}</div>
       </div>
-
-      <span class="comment-date">
-        ${escapeHTML(date)}
-      </span>
-
+      <span class="comment-date">${escapeHTML(date)}</span>
     </div>
 
-    <p>
-      ${escapeHTML(comment.comment || "")}
-    </p>
+    <p>${escapeHTML(comment.comment || "")}</p>
   `;
 
   commentsList.appendChild(article);
 }
 
-/* =========================================================
-   COMMENT FORM
-   ========================================================= */
+/* COMMENT FORM */
 
 if (commentForm) {
   commentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const nameInput = document.getElementById("commentName");
+    const nameInput = $("commentName");
+    const ratingInput = $("commentRating");
+    const textInput = $("commentText");
 
-    const ratingInput = document.getElementById("commentRating");
-
-    const textInput = document.getElementById("commentText");
-
-    const name = nameInput.value.trim();
-
-    const rating = Number(ratingInput.value);
-
-    const text = textInput.value.trim();
-
-    /* =======================================================
-       VALIDATION
-    ======================================================== */
+    const name = nameInput?.value.trim() || "";
+    const rating = Number(ratingInput?.value);
+    const comment = textInput?.value.trim() || "";
 
     if (!name) {
       alert("Please enter your name.");
-
-      nameInput.focus();
-
+      nameInput?.focus();
       return;
     }
 
-    if (rating < 1 || rating > 5) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       alert("Please select a valid rating.");
-
-      ratingInput.focus();
-
+      ratingInput?.focus();
       return;
     }
 
-    if (!text) {
+    if (!comment) {
       alert("Please write your comment.");
-
-      textInput.focus();
-
+      textInput?.focus();
       return;
     }
-
-    /* =======================================================
-       DISABLE BUTTON
-    ======================================================== */
 
     const submitButton = commentForm.querySelector('button[type="submit"]');
 
     if (submitButton) {
       submitButton.disabled = true;
-
       submitButton.textContent = "Submitting...";
     }
 
-    /* =======================================================
-       INSERT TO SUPABASE
-    ======================================================== */
+    try {
+      const { error } = await supabaseClient
+        .from("reviews")
+        .insert([{ name, rating, comment }]);
 
-    const { error } = await supabaseClient.from("reviews").insert([
-      {
-        name: name,
-        rating: rating,
-        comment: text,
-      },
-    ]);
+      if (error) throw error;
 
-    /* =======================================================
-       ERROR
-    ======================================================== */
+      alert("Thank you for your comment!");
 
-    if (error) {
+      commentForm.reset();
+      await loadComments();
+    } catch (error) {
       console.error("Supabase error:", error);
-
       alert("Failed to submit your comment. Please try again.");
-
+    } finally {
       if (submitButton) {
         submitButton.disabled = false;
-
         submitButton.textContent = "Submit Comment";
       }
-
-      return;
-    }
-
-    /* =======================================================
-       SUCCESS
-    ======================================================== */
-
-    alert("Thank you for your comment!");
-
-    commentForm.reset();
-
-    await loadComments();
-
-    if (submitButton) {
-      submitButton.disabled = false;
-
-      submitButton.textContent = "Submit Comment";
     }
   });
 }
 
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
+/* HTML ESCAPE */
 
 function escapeHTML(value) {
-  return String(value)
+  return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -1174,12 +959,10 @@ function escapeHTML(value) {
     .replace(/'/g, "&#039;");
 }
 
-/* =========================================================
-   FOOTER YEAR
-   ========================================================= */
+/* FOOTER YEAR */
 
 function updateCurrentYear() {
-  if (!currentYear) return;
-
-  currentYear.textContent = new Date().getFullYear();
+  if (currentYear) {
+    currentYear.textContent = new Date().getFullYear();
+  }
 }

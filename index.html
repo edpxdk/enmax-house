@@ -40,6 +40,12 @@
 
     <!-- ================= CSS ================= -->
     <link rel="stylesheet" href="css/style.css" />
+
+    <!-- ================= INTERNATIONAL PHONE INPUT ================= -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css"
+    />
   </head>
 
   <body>
@@ -50,7 +56,7 @@
       <div class="nav-container">
         <!-- Logo -->
         <a href="#home" class="logo">
-          <img src="assets/og-logo.jpg" alt="Enmax House" />
+          <img src="assets/logo.webp" alt="Enmax House" />
         </a>
 
         <!-- Navigation -->
@@ -203,7 +209,7 @@
 
             <div class="form-grid">
               <div class="form-group">
-                <label for="fullName"> Full Name <span>*</span> </label>
+                <label for="fullName">Full Name <span>*</span></label>
 
                 <input
                   type="text"
@@ -218,7 +224,7 @@
               </div>
 
               <div class="form-group">
-                <label for="occupation"> Occupation <span>*</span> </label>
+                <label for="occupation">Occupation / Job <span>*</span></label>
 
                 <input
                   type="text"
@@ -232,7 +238,7 @@
               </div>
 
               <div class="form-group">
-                <label for="workplace"> Workplace <span>*</span> </label>
+                <label for="workplace">Workplace <span>*</span></label>
 
                 <input
                   type="text"
@@ -245,6 +251,7 @@
                 <small class="error-message"></small>
               </div>
 
+              <!-- International WhatsApp Number -->
               <div class="form-group">
                 <label for="whatsapp"> WhatsApp Number <span>*</span> </label>
 
@@ -252,7 +259,7 @@
                   type="tel"
                   id="whatsapp"
                   name="whatsapp"
-                  placeholder="08xxxxxxxxxx"
+                  placeholder="Enter phone number"
                   autocomplete="tel"
                   required
                 />
@@ -260,6 +267,7 @@
                 <small class="error-message"></small>
               </div>
 
+              <!-- International Emergency Contact -->
               <div class="form-group">
                 <label for="emergencyContact">
                   Emergency Contact <span>*</span>
@@ -269,7 +277,8 @@
                   type="tel"
                   id="emergencyContact"
                   name="emergencyContact"
-                  placeholder="WhatsApp number"
+                  placeholder="Enter emergency contact number"
+                  autocomplete="tel"
                   required
                 />
 
@@ -277,7 +286,7 @@
               </div>
 
               <div class="form-group">
-                <label for="instagram"> Instagram <span>*</span> </label>
+                <label for="instagram">Instagram <span>*</span></label>
 
                 <input
                   type="text"
@@ -286,6 +295,8 @@
                   placeholder="@username"
                   required
                 />
+
+                <small class="error-message"></small>
               </div>
             </div>
           </div>
@@ -305,7 +316,7 @@
 
             <div class="form-grid">
               <div class="form-group full-width">
-                <label for="cameraSelect"> Camera <span>*</span> </label>
+                <label for="cameraSelect">Camera <span>*</span></label>
 
                 <select id="cameraSelect" name="camera" required>
                   <option value="">Select a camera</option>
@@ -314,18 +325,69 @@
                 <small class="error-message"></small>
               </div>
 
+              <!-- NEW: Quantity -->
               <div class="form-group">
-                <label for="startDate"> Start Date <span>*</span> </label>
+                <label for="cameraQuantity">
+                  Number of Units <span>*</span>
+                </label>
+
+                <input
+                  type="number"
+                  id="cameraQuantity"
+                  name="cameraQuantity"
+                  value="1"
+                  min="1"
+                  step="1"
+                  required
+                />
+
+                <small class="error-message"></small>
+              </div>
+
+              <!-- NEW: Availability -->
+              <div class="form-group full-width">
+                <div
+                  id="availabilityStatus"
+                  class="availability-status"
+                  role="status"
+                  aria-live="polite"
+                >
+                  Select a camera and rental dates to check availability.
+                </div>
+              </div>
+
+              <!-- Pickup Date -->
+              <div class="form-group">
+                <label for="startDate"> Pickup Date <span>*</span> </label>
 
                 <input type="date" id="startDate" name="startDate" required />
 
                 <small class="error-message"></small>
               </div>
 
+              <!-- NEW: Pickup Time -->
               <div class="form-group">
-                <label for="endDate"> End Date <span>*</span> </label>
+                <label for="startTime"> Pickup Time <span>*</span> </label>
+
+                <input type="time" id="startTime" name="startTime" required />
+
+                <small class="error-message"></small>
+              </div>
+
+              <!-- Return Date -->
+              <div class="form-group">
+                <label for="endDate"> Return Date <span>*</span> </label>
 
                 <input type="date" id="endDate" name="endDate" required />
+
+                <small class="error-message"></small>
+              </div>
+
+              <!-- NEW: Return Time -->
+              <div class="form-group">
+                <label for="endTime"> Return Time <span>*</span> </label>
+
+                <input type="time" id="endTime" name="endTime" required />
 
                 <small class="error-message"></small>
               </div>
@@ -374,6 +436,12 @@
                 <span>Rental Duration</span>
                 <strong id="summaryDuration">-</strong>
               </div>
+
+              <!-- NEW: Quantity Summary -->
+              <div>
+                <span>Number of Units</span>
+                <strong id="summaryQuantity">1 unit</strong>
+              </div>
             </div>
           </div>
 
@@ -391,20 +459,33 @@
             </div>
 
             <div class="checkbox-list">
+              <!-- ID is automatically checked and cannot be unchecked -->
               <label class="checkbox-item">
-                <input type="checkbox" id="ktpCheck" name="ktpCheck" />
+                <input
+                  type="checkbox"
+                  id="ktpCheck"
+                  name="ktpCheck"
+                  checked
+                  disabled
+                  aria-describedby="idDocumentNote"
+                />
 
                 <span class="custom-checkbox"></span>
 
-                <span> ID Card / Passport </span>
+                <span> ID Card / Passport <strong>(Required)</strong> </span>
               </label>
+
+              <p class="form-note" id="idDocumentNote">
+                A valid ID card or passport is mandatory and must be presented
+                for verification.
+              </p>
 
               <label class="checkbox-item">
                 <input type="checkbox" id="hotelCheck" name="hotelCheck" />
 
                 <span class="custom-checkbox"></span>
 
-                <span> Hotel Booking Confirmation </span>
+                <span>Hotel Booking Confirmation</span>
               </label>
 
               <label class="checkbox-item">
@@ -412,7 +493,7 @@
 
                 <span class="custom-checkbox"></span>
 
-                <span> Flight Details </span>
+                <span>Flight Details</span>
               </label>
             </div>
 
@@ -456,7 +537,7 @@
           ==================================================== -->
           <div class="agreement-section">
             <label class="checkbox-item agreement">
-              <input type="checkbox" id="agreement" name="agreement" />
+              <input type="checkbox" id="agreement" name="agreement" required />
 
               <span class="custom-checkbox"></span>
 
@@ -509,7 +590,7 @@
         <form id="commentForm" class="comment-form">
           <div class="form-grid">
             <div class="form-group">
-              <label for="commentName"> Name </label>
+              <label for="commentName">Name</label>
 
               <input
                 type="text"
@@ -521,7 +602,7 @@
             </div>
 
             <div class="form-group">
-              <label for="commentRating"> Rating </label>
+              <label for="commentRating">Rating</label>
 
               <select id="commentRating" required>
                 <option value="5">★★★★★</option>
@@ -534,7 +615,7 @@
           </div>
 
           <div class="form-group">
-            <label for="commentText"> Comment </label>
+            <label for="commentText">Comment</label>
 
             <textarea
               id="commentText"
@@ -578,16 +659,12 @@
           ×
         </button>
 
-        <!-- =====================================================
-             CAMERA GALLERY
-        ====================================================== -->
+        <!-- CAMERA GALLERY -->
         <div class="modal-gallery">
-          <!-- Image -->
           <div class="modal-image-wrapper">
             <img id="modalCameraImage" src="" alt="" />
           </div>
 
-          <!-- Previous -->
           <button
             type="button"
             class="gallery-arrow gallery-prev"
@@ -597,7 +674,6 @@
             ←
           </button>
 
-          <!-- Next -->
           <button
             type="button"
             class="gallery-arrow gallery-next"
@@ -607,13 +683,10 @@
             →
           </button>
 
-          <!-- Counter -->
           <div class="gallery-counter" id="galleryCounter">1 / 1</div>
         </div>
 
-        <!-- =====================================================
-             CAMERA DETAILS
-        ====================================================== -->
+        <!-- CAMERA DETAILS -->
         <div class="modal-details">
           <span class="camera-category" id="modalCameraCategory"></span>
 
@@ -622,7 +695,7 @@
           <p id="modalCameraDescription"></p>
 
           <div class="modal-price">
-            <span> Rental </span>
+            <span>Rental</span>
 
             <strong id="modalCameraPrice"></strong>
           </div>
@@ -644,19 +717,16 @@
     <footer class="footer">
       <div class="footer-container">
         <div class="footer-brand">
-          <img src="assets/logo.png" alt="Enmax House" />
+          <img src="assets/logo.webp" alt="Enmax House" />
 
           <p>Camera rental for your next story.</p>
         </div>
 
         <div class="footer-links">
-          <a href="#home"> Home </a>
-
-          <a href="#cameras"> Cameras </a>
-
-          <a href="#how-it-works"> How It Works </a>
-
-          <a href="#booking"> Booking </a>
+          <a href="#home">Home</a>
+          <a href="#cameras">Cameras</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#booking">Booking</a>
         </div>
       </div>
 
@@ -672,7 +742,9 @@
     <!-- ================= SUPABASE ================= -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- ================= JAVASCRIPT ================= -->
+    <!-- ================= INTERNATIONAL PHONE INPUT ================= -->
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
+
     <script src="js/script.js"></script>
   </body>
 </html>

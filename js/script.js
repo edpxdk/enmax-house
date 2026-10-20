@@ -3,9 +3,12 @@
    Camera Rental Website
    ========================================================= */
 
-/* SUPABASE CONFIGURATION */
+/* =========================================================
+   SUPABASE CONFIGURATION
+   ========================================================= */
 
 const SUPABASE_URL = "https://egfuemmimojqzdqjsofg.supabase.co";
+
 const SUPABASE_KEY = "sb_publishable_TWiZEW8hb8rI91I4cu3Law_H9NCykz6";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -15,10 +18,22 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const WHATSAPP_NUMBER = "6282145929947";
 
 /* =========================================================
-   CAMERA DATA
+   CAMERA DATA — LOCAL METADATA / FALLBACK
    ========================================================= */
 
-const cameras = [
+/*
+ * Data lokal tetap dipertahankan untuk:
+ * - Foto kamera
+ * - Galeri foto
+ * - Kategori
+ * - Deskripsi
+ * - Tarif rental 6 dan 12 jam
+ *
+ * Nama, harga harian, jumlah unit, dan status aktif
+ * akan disinkronkan dengan tabel Supabase "cameras".
+ */
+
+let cameras = [
   {
     id: "camera-01",
     name: "Canon G7X Mark II",
@@ -165,7 +180,9 @@ const commentForm = $("commentForm");
 const commentsList = $("commentsList");
 const currentYear = $("currentYear");
 
-/* GLOBAL STATE */
+/* =========================================================
+   GLOBAL STATE
+   ========================================================= */
 
 let selectedCameraId = null;
 let currentGalleryIndex = 0;
@@ -182,7 +199,14 @@ let previousBodyOverflow = "";
    INITIALIZATION
    ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  /*
+   * Load camera data before rendering the website.
+   * If Supabase is unavailable, local data remains usable.
+   */
+
+  await loadCamerasFromSupabase();
+
   renderCameraCards();
   populateCameraSelect();
   setupRentalDurationOptions();
@@ -237,28 +261,14 @@ function getPriceForRental(camera, mode, actualHours = null) {
     };
   }
 
-  const hours =
-    actualHours ??
-    (mode === RENTAL_MODE.SIX_HOURS
-      ? 6
-      : mode === RENTAL_MODE.TWELVE_HOURS
-        ? 12
-        : null);
-
   /*
-   * SX740 HS and Lumix TZ99:
-   * 6 hours  = Rp100.000
-   * 12 hours = Rp150.000
-   * 24 hours = Rp180.000
-   *
-   * For daily rentals longer than 24 hours,
-   * each started 24-hour block is charged Rp180.000.
+   * Fixed-duration rentals.
    */
 
   if (isFlexiblePriceCamera(camera)) {
     if (mode === RENTAL_MODE.SIX_HOURS) {
       return {
-        amount: camera.rentalRates[6],
+        amount: Number(camera.rentalRates[6]) || 0,
         description: "6 Hours",
         days: 0,
       };
@@ -266,34 +276,17 @@ function getPriceForRental(camera, mode, actualHours = null) {
 
     if (mode === RENTAL_MODE.TWELVE_HOURS) {
       return {
-        amount: camera.rentalRates[12],
+        amount: Number(camera.rentalRates[12]) || 0,
         description: "12 Hours",
         days: 0,
-      };
-    }
-
-    if (mode === RENTAL_MODE.DAILY) {
-      const days = getChargeableDays(actualHours);
-
-      if (!days) {
-        return {
-          amount: 0,
-          description: "Daily Rental",
-          days: 0,
-        };
-      }
-
-      return {
-        amount: days * camera.dailyPrice,
-        description: `${days} ${days === 1 ? "Day" : "Days"}`,
-        days,
       };
     }
   }
 
   /*
-   * Other cameras remain daily-only.
-   * Their existing daily prices are unchanged.
+   * Daily rental:
+   * Each started 24-hour block is charged as one day.
+   * Daily price comes from Supabase when available.
    */
 
   if (mode === RENTAL_MODE.DAILY) {
@@ -307,8 +300,10 @@ function getPriceForRental(camera, mode, actualHours = null) {
       };
     }
 
+    const dailyPrice = getCameraDailyPrice(camera);
+
     return {
-      amount: days * getCameraDailyPrice(camera),
+      amount: days * dailyPrice,
       description: `${days} ${days === 1 ? "Day" : "Days"}`,
       days,
     };
@@ -336,6 +331,97 @@ function getCameraPriceLabel(camera) {
 }
 
 /* =========================================================
+   LOAD CAMERA CATALOG FROM SUPABASE
+   ========================================================= */
+
+async function loadCamerasFromSupabase() {
+  /*
+   * Keep a local copy as a fallback.
+   * This also preserves images, gallery, category,
+   * descriptions, and the 6/12-hour rates.
+   */
+
+  const localCameras = cameras.map((camera) => ({
+    ...camera,
+    gallery: [...(camera.gallery || [])],
+    rentalRates: camera.rentalRates ? { ...camera.rentalRates } : undefined,
+  }));
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("cameras")
+      .select("id, name, quantity, daily_price, active")
+      .eq("active", true)
+      .order("id", { ascending: true });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      console.warn("No active cameras found in Supabase. Using local catalog.");
+
+      cameras = localCameras;
+      return;
+    }
+
+    cameras = data.map((row) => {
+      /*
+       * Match the database record with local metadata
+       * using the camera name, not its ID.
+       *
+       * Database IDs are numeric, while the old local
+       * IDs use values such as "camera-01".
+       */
+
+      const existing = localCameras.find(
+        (camera) =>
+          camera.name.trim().toLowerCase() ===
+          String(row.name || "")
+            .trim()
+            .toLowerCase(),
+      );
+
+      const dailyPrice = Number(row.daily_price) || 0;
+
+      return {
+        ...(existing || {}),
+
+        id: String(row.id),
+        name: row.name,
+        quantity: Number(row.quantity) || 0,
+        dailyPrice,
+        price: formatRupiah(dailyPrice),
+        active: row.active,
+
+        category: existing?.category || "Camera Rental",
+
+        description:
+          existing?.description || "Contact Enmax House for camera details.",
+
+        image: existing?.image || "",
+
+        gallery: existing?.gallery?.length
+          ? [...existing.gallery]
+          : existing?.image
+            ? [existing.image]
+            : [],
+
+        durations: existing?.durations || ["daily"],
+
+        rentalRates: existing?.rentalRates
+          ? { ...existing.rentalRates }
+          : undefined,
+      };
+    });
+
+    console.log("Camera catalog successfully loaded from Supabase:", cameras);
+  } catch (error) {
+    console.error("Failed to load camera catalog from Supabase:", error);
+
+    cameras = localCameras;
+  }
+}
+
+/* =========================================================
    CAMERA CARDS
    ========================================================= */
 
@@ -343,6 +429,16 @@ function renderCameraCards() {
   if (!cameraGrid) return;
 
   cameraGrid.innerHTML = "";
+
+  if (!cameras.length) {
+    cameraGrid.innerHTML = `
+      <div class="empty-comments">
+        <p>No cameras are currently available.</p>
+      </div>
+    `;
+
+    return;
+  }
 
   cameras.forEach((camera) => {
     const card = document.createElement("article");
@@ -352,7 +448,7 @@ function renderCameraCards() {
     card.innerHTML = `
       <div class="camera-card-image">
         <img
-          src="${camera.image}"
+          src="${escapeHTML(camera.image || "")}"
           alt="${escapeHTML(camera.name)}"
           loading="lazy"
         >
@@ -381,7 +477,7 @@ function renderCameraCards() {
           <button
             type="button"
             class="camera-view-button"
-            data-camera-id="${camera.id}"
+            data-camera-id="${escapeHTML(camera.id)}"
           >
             View Camera →
           </button>
@@ -459,16 +555,22 @@ function setupOneDurationSelect(select) {
 
   /*
    * Only Canon SX740 HS and Panasonic Lumix TZ99
-   * can be rented for 6 hours and 12 hours.
-   *
-   * All other cameras are daily rental only.
+   * have 6-hour and 12-hour options.
    */
 
   if (isFlexiblePriceCamera(camera)) {
     select.innerHTML = `
-      <option value="6">6 Hours — Rp 100.000</option>
-      <option value="12">12 Hours — Rp 150.000</option>
-      <option value="daily">Daily Rental — Rp 180.000 / day</option>
+      <option value="6">
+        6 Hours — ${formatRupiah(camera.rentalRates[6])}
+      </option>
+
+      <option value="12">
+        12 Hours — ${formatRupiah(camera.rentalRates[12])}
+      </option>
+
+      <option value="daily">
+        Daily Rental — ${formatRupiah(camera.dailyPrice)} / day
+      </option>
     `;
 
     if (
@@ -482,7 +584,11 @@ function setupOneDurationSelect(select) {
     }
   } else {
     select.innerHTML = `
-      <option value="daily">Daily Rental</option>
+      <option value="daily">
+        Daily Rental — ${
+          camera ? formatRupiah(camera.dailyPrice) : "Select a camera"
+        }${camera ? " / day" : ""}
+      </option>
     `;
 
     select.value = RENTAL_MODE.DAILY;
@@ -499,6 +605,7 @@ function updateDurationFieldState(select) {
   if (select === rentalDuration) {
     if (endDate) {
       endDate.readOnly = !isDaily;
+
       endDate.title = isDaily
         ? "Choose your return date"
         : "Automatically calculated from pickup and duration";
@@ -506,6 +613,7 @@ function updateDurationFieldState(select) {
 
     if (endTime) {
       endTime.readOnly = !isDaily;
+
       endTime.title = isDaily
         ? "Choose your return time"
         : "Automatically calculated from pickup and duration";
@@ -560,7 +668,7 @@ function getChargeableDays(hours) {
    ========================================================= */
 
 function openCameraModal(cameraId) {
-  const camera = cameras.find((item) => item.id === cameraId);
+  const camera = cameras.find((item) => item.id === String(cameraId));
 
   if (!camera || !cameraModal) return;
 
@@ -622,13 +730,16 @@ function getCurrentGallery() {
 
   return Array.isArray(camera.gallery) && camera.gallery.length
     ? camera.gallery
-    : [camera.image];
+    : camera.image
+      ? [camera.image]
+      : [];
 }
 
 function updateGalleryImage() {
   if (!modalCameraImage) return;
 
   const camera = cameras.find((item) => item.id === selectedCameraId);
+
   const gallery = getCurrentGallery();
 
   if (!camera || !gallery.length) return;
@@ -637,6 +748,7 @@ function updateGalleryImage() {
     ((currentGalleryIndex % gallery.length) + gallery.length) % gallery.length;
 
   modalCameraImage.src = gallery[currentGalleryIndex];
+
   modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
 
   if (galleryCounter) {
@@ -946,9 +1058,7 @@ modalBookButton?.addEventListener("click", () => {
    ========================================================= */
 
 function getTodayString() {
-  const today = new Date();
-
-  return toLocalDateString(today);
+  return toLocalDateString(new Date());
 }
 
 function setMinimumDates() {
@@ -1039,8 +1149,7 @@ function syncReturnDateTime() {
   const camera = getSelectedCamera();
 
   /*
-   * 6-hour and 12-hour rentals are available only
-   * for SX740 HS and Lumix TZ99.
+   * Fixed 6-hour and 12-hour rentals.
    */
 
   if (
@@ -1065,8 +1174,8 @@ function syncReturnDateTime() {
   }
 
   /*
-   * Daily rental: customer selects the return date and time.
-   * Do not overwrite their selection.
+   * Daily rental:
+   * Customer chooses the return date and time.
    */
 
   if (mode === RENTAL_MODE.DAILY) {
@@ -1121,10 +1230,12 @@ function setupBookingListeners() {
 
   [endDate, endTime].forEach((input) => {
     input?.addEventListener("change", updateBookingSummary);
+
     input?.addEventListener("input", updateBookingSummary);
   });
 
   cameraQuantity?.addEventListener("change", updateBookingSummary);
+
   cameraQuantity?.addEventListener("input", updateBookingSummary);
 
   setMinimumDates();
@@ -1137,7 +1248,7 @@ function setupBookingListeners() {
 function setupPhoneInputs() {
   if (typeof window.intlTelInput !== "function") {
     console.warn(
-      "intl-tel-input belum dimuat. Country code selector tidak aktif.",
+      "intl-tel-input has not loaded. Country code selector is unavailable.",
     );
 
     return;
@@ -1203,6 +1314,7 @@ function updateBookingSummary() {
   const camera = getSelectedCamera();
   const mode = getSelectedRentalMode();
   const actualHours = getRentalDurationDifference();
+
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
 
   if (summaryCamera) {
@@ -1211,9 +1323,13 @@ function updateBookingSummary() {
 
   if (summaryDuration) {
     if (mode === RENTAL_MODE.SIX_HOURS) {
-      summaryDuration.textContent = "6 Hours — Rp 100.000";
+      const price = getPriceForRental(camera, mode, actualHours);
+
+      summaryDuration.textContent = `6 Hours — ${formatRupiah(price.amount)}`;
     } else if (mode === RENTAL_MODE.TWELVE_HOURS) {
-      summaryDuration.textContent = "12 Hours — Rp 150.000";
+      const price = getPriceForRental(camera, mode, actualHours);
+
+      summaryDuration.textContent = `12 Hours — ${formatRupiah(price.amount)}`;
     } else {
       const days = getChargeableDays(actualHours);
 
@@ -1239,9 +1355,8 @@ function updateBookingSummary() {
 
 function updateDisplayedPriceIfPossible(camera, mode, actualHours) {
   /*
-   * If the HTML has an element with id="summaryPrice",
-   * this displays the estimated total rental price.
-   * No HTML changes are required for the rest of the script.
+   * If the HTML contains id="summaryPrice",
+   * display the estimated total rental price.
    */
 
   const summaryPrice = $("summaryPrice");
@@ -1249,6 +1364,7 @@ function updateDisplayedPriceIfPossible(camera, mode, actualHours) {
   if (!summaryPrice) return;
 
   const priceInfo = getPriceForRental(camera, mode, actualHours);
+
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
 
   summaryPrice.textContent =
@@ -1340,6 +1456,7 @@ function validateBookingForm() {
 
   if (!selectedCamera) {
     showFieldError(cameraSelect, "Please select a valid camera.");
+
     isValid = false;
   }
 
@@ -1441,6 +1558,7 @@ function validateBookingForm() {
 
     if (input?.value.trim() && !isValidPhoneNumber(id)) {
       showFieldError(input, "Please enter a valid phone number.");
+
       isValid = false;
     }
   });
@@ -1452,6 +1570,7 @@ function validateBookingForm() {
 
     if (!Number.isInteger(quantity) || quantity < 1) {
       showFieldError(cameraQuantity, "Number of units must be at least 1.");
+
       isValid = false;
     }
   }
@@ -1462,6 +1581,7 @@ function validateBookingForm() {
 
   if (ktpCheck && !ktpCheck.checked) {
     showFieldError(ktpCheck, "A valid ID card or passport is required.");
+
     isValid = false;
   }
 
@@ -1515,12 +1635,15 @@ function createWhatsAppMessage() {
   const workplace = $("workplace")?.value.trim() || "";
 
   const whatsapp = getInternationalNumber("whatsapp");
+
   const emergencyContact = getInternationalNumber("emergencyContact");
 
   const instagram = $("instagram")?.value.trim() || "";
 
   const pickupLocation = $("pickupLocation")?.value.trim() || "";
+
   const returnLocation = $("returnLocation")?.value.trim() || "";
+
   const comments = $("comments")?.value.trim() || "";
 
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
@@ -1544,6 +1667,7 @@ function createWhatsAppMessage() {
   }
 
   const priceInfo = getPriceForRental(camera, mode, actualHours);
+
   const totalPrice = priceInfo.amount * quantity;
 
   const ktpCheck = $("ktpCheck")?.checked;
@@ -1629,6 +1753,7 @@ function setupNavbar() {
   navMenu.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
       navMenu.classList.remove("active");
+
       menuToggle.setAttribute("aria-expanded", "false");
     });
   });
@@ -1710,7 +1835,9 @@ function renderComment(comment) {
         <div class="comment-rating">${stars}</div>
       </div>
 
-      <span class="comment-date">${escapeHTML(date)}</span>
+      <span class="comment-date">
+        ${escapeHTML(date)}
+      </span>
     </div>
 
     <p>${escapeHTML(comment.comment || "")}</p>
@@ -1761,9 +1888,13 @@ if (commentForm) {
     }
 
     try {
-      const { error } = await supabaseClient
-        .from("reviews")
-        .insert([{ name, rating, comment }]);
+      const { error } = await supabaseClient.from("reviews").insert([
+        {
+          name,
+          rating,
+          comment,
+        },
+      ]);
 
       if (error) throw error;
 

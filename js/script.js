@@ -14,7 +14,9 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const WHATSAPP_NUMBER = "6282145929947";
 
-/* CAMERA DATA */
+/* =========================================================
+   CAMERA DATA
+   ========================================================= */
 
 const cameras = [
   {
@@ -24,7 +26,8 @@ const cameras = [
     description:
       "Compact camera with excellent image quality, perfect for travel, daily content, and casual photography.",
     price: "Rp 200.000",
-    durations: [24],
+    dailyPrice: 200000,
+    durations: ["daily"],
     image: "assets/cameras/camera-01.jpg",
     gallery: [
       "assets/cameras/camera-01.jpg",
@@ -39,8 +42,14 @@ const cameras = [
     category: "Instantly Post Ready",
     description:
       "Powerful zoom in a compact body, made for travel and everyday moments.",
-    price: "Rp 125.000",
-    durations: [6, 12, 24],
+    price: "Rp 100.000",
+    dailyPrice: 180000,
+    rentalRates: {
+      6: 100000,
+      12: 150000,
+      24: 180000,
+    },
+    durations: [6, 12, 24, "daily"],
     image: "assets/cameras/camera-02.jpg",
     gallery: [
       "assets/cameras/camera-02.jpg",
@@ -55,8 +64,14 @@ const cameras = [
     category: "Feel Leica Quality",
     description:
       "Versatile zoom and compact design for travel and everyday shooting.",
-    price: "Rp 125.000",
-    durations: [6, 12, 24],
+    price: "Rp 100.000",
+    dailyPrice: 180000,
+    rentalRates: {
+      6: 100000,
+      12: 150000,
+      24: 180000,
+    },
+    durations: [6, 12, 24, "daily"],
     image: "assets/cameras/camera-03.jpg",
     gallery: [
       "assets/cameras/camera-03.jpg",
@@ -72,7 +87,8 @@ const cameras = [
     description:
       "Premium compact camera with Leica character for street and lifestyle photography.",
     price: "Rp 125.000",
-    durations: [24],
+    dailyPrice: 125000,
+    durations: ["daily"],
     image: "assets/cameras/camera-04.jpg",
     gallery: [
       "assets/cameras/camera-04.jpg",
@@ -88,7 +104,8 @@ const cameras = [
     description:
       "Creator-focused compact camera for vlogs, travel, and social content.",
     price: "Rp 180.000",
-    durations: [6, 12, 24],
+    dailyPrice: 180000,
+    durations: ["daily"],
     image: "assets/cameras/camera-05.jpg",
     gallery: [
       "assets/cameras/camera-05.jpg",
@@ -99,7 +116,9 @@ const cameras = [
   },
 ];
 
-/* DOM ELEMENTS */
+/* =========================================================
+   DOM ELEMENTS
+   ========================================================= */
 
 const $ = (id) => document.getElementById(id);
 
@@ -180,6 +199,143 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* =========================================================
+   CAMERA PRICE HELPERS
+   ========================================================= */
+
+function isFlexiblePriceCamera(camera) {
+  return Boolean(camera?.rentalRates);
+}
+
+function formatRupiah(amount) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  })
+    .format(amount)
+    .replace(/\u00a0/g, " ");
+}
+
+function getCameraDailyPrice(camera) {
+  if (!camera) return 0;
+
+  return Number(camera.dailyPrice) || 0;
+}
+
+function getSelectedCamera() {
+  return cameras.find(
+    (camera) => camera.id === (cameraSelect?.value || selectedCameraId),
+  );
+}
+
+function getPriceForRental(camera, mode, actualHours = null) {
+  if (!camera) {
+    return {
+      amount: 0,
+      description: "-",
+      days: 0,
+    };
+  }
+
+  const hours =
+    actualHours ??
+    (mode === RENTAL_MODE.SIX_HOURS
+      ? 6
+      : mode === RENTAL_MODE.TWELVE_HOURS
+        ? 12
+        : null);
+
+  /*
+   * SX740 HS and Lumix TZ99:
+   * 6 hours  = Rp100.000
+   * 12 hours = Rp150.000
+   * 24 hours = Rp180.000
+   *
+   * For daily rentals longer than 24 hours,
+   * each started 24-hour block is charged Rp180.000.
+   */
+
+  if (isFlexiblePriceCamera(camera)) {
+    if (mode === RENTAL_MODE.SIX_HOURS) {
+      return {
+        amount: camera.rentalRates[6],
+        description: "6 Hours",
+        days: 0,
+      };
+    }
+
+    if (mode === RENTAL_MODE.TWELVE_HOURS) {
+      return {
+        amount: camera.rentalRates[12],
+        description: "12 Hours",
+        days: 0,
+      };
+    }
+
+    if (mode === RENTAL_MODE.DAILY) {
+      const days = getChargeableDays(actualHours);
+
+      if (!days) {
+        return {
+          amount: 0,
+          description: "Daily Rental",
+          days: 0,
+        };
+      }
+
+      return {
+        amount: days * camera.dailyPrice,
+        description: `${days} ${days === 1 ? "Day" : "Days"}`,
+        days,
+      };
+    }
+  }
+
+  /*
+   * Other cameras remain daily-only.
+   * Their existing daily prices are unchanged.
+   */
+
+  if (mode === RENTAL_MODE.DAILY) {
+    const days = getChargeableDays(actualHours);
+
+    if (!days) {
+      return {
+        amount: 0,
+        description: "Daily Rental",
+        days: 0,
+      };
+    }
+
+    return {
+      amount: days * getCameraDailyPrice(camera),
+      description: `${days} ${days === 1 ? "Day" : "Days"}`,
+      days,
+    };
+  }
+
+  return {
+    amount: getCameraDailyPrice(camera),
+    description: "Daily Rental",
+    days: 1,
+  };
+}
+
+function getCameraStartingPrice(camera) {
+  if (!camera) return "-";
+
+  if (isFlexiblePriceCamera(camera)) {
+    return formatRupiah(camera.rentalRates[6]);
+  }
+
+  return formatRupiah(getCameraDailyPrice(camera));
+}
+
+function getCameraPriceLabel(camera) {
+  return isFlexiblePriceCamera(camera) ? "Starting from" : "Per day";
+}
+
+/* =========================================================
    CAMERA CARDS
    ========================================================= */
 
@@ -213,9 +369,12 @@ function renderCameraCards() {
 
         <div class="camera-card-footer">
           <div class="camera-price-block">
-            <span class="camera-price-label">Starting from</span>
+            <span class="camera-price-label">
+              ${escapeHTML(getCameraPriceLabel(camera))}
+            </span>
+
             <strong class="camera-price">
-              ${escapeHTML(camera.price)}
+              ${escapeHTML(getCameraStartingPrice(camera))}
             </strong>
           </div>
 
@@ -255,7 +414,10 @@ function populateCameraSelect() {
     const option = document.createElement("option");
 
     option.value = camera.id;
-    option.textContent = `${camera.name} — Starting from ${camera.price}`;
+
+    option.textContent = isFlexiblePriceCamera(camera)
+      ? `${camera.name} — Starting from ${getCameraStartingPrice(camera)}`
+      : `${camera.name} — ${getCameraStartingPrice(camera)} per day`;
 
     cameraSelect.appendChild(option);
   });
@@ -272,18 +434,6 @@ function populateCameraSelect() {
 
 /* =========================================================
    RENTAL DURATION SYSTEM
-   Options:
-   - 6 Hours
-   - 12 Hours
-   - Daily Rental
-
-   Daily rental:
-   Chargeable days = ceiling(actual hours / 24).
-
-   Examples:
-   19 Oct 10:00 -> 20 Oct 09:00 = 1 day
-   19 Oct 10:00 -> 20 Oct 10:00 = 1 day
-   19 Oct 10:00 -> 20 Oct 11:00 = 2 days
    ========================================================= */
 
 const RENTAL_MODE = {
@@ -305,21 +455,36 @@ function setupOneDurationSelect(select) {
   if (!select) return;
 
   const previousValue = select.value;
+  const camera = getSelectedCamera();
 
-  select.innerHTML = `
-    <option value="6">6 Hours</option>
-    <option value="12">12 Hours</option>
-    <option value="daily">Daily Rental</option>
-  `;
+  /*
+   * Only Canon SX740 HS and Panasonic Lumix TZ99
+   * can be rented for 6 hours and 12 hours.
+   *
+   * All other cameras are daily rental only.
+   */
 
-  // Default to daily rental.
-  if (
-    previousValue === RENTAL_MODE.SIX_HOURS ||
-    previousValue === RENTAL_MODE.TWELVE_HOURS ||
-    previousValue === RENTAL_MODE.DAILY
-  ) {
-    select.value = previousValue;
+  if (isFlexiblePriceCamera(camera)) {
+    select.innerHTML = `
+      <option value="6">6 Hours — Rp 100.000</option>
+      <option value="12">12 Hours — Rp 150.000</option>
+      <option value="daily">Daily Rental — Rp 180.000 / day</option>
+    `;
+
+    if (
+      previousValue === RENTAL_MODE.SIX_HOURS ||
+      previousValue === RENTAL_MODE.TWELVE_HOURS ||
+      previousValue === RENTAL_MODE.DAILY
+    ) {
+      select.value = previousValue;
+    } else {
+      select.value = RENTAL_MODE.DAILY;
+    }
   } else {
+    select.innerHTML = `
+      <option value="daily">Daily Rental</option>
+    `;
+
     select.value = RENTAL_MODE.DAILY;
   }
 
@@ -331,8 +496,6 @@ function updateDurationFieldState(select) {
 
   const isDaily = select.value === RENTAL_MODE.DAILY;
 
-  // The main booking form allows manual return date/time
-  // only for Daily Rental.
   if (select === rentalDuration) {
     if (endDate) {
       endDate.readOnly = !isDaily;
@@ -402,6 +565,11 @@ function openCameraModal(cameraId) {
   if (!camera || !cameraModal) return;
 
   selectedCameraId = camera.id;
+
+  if (cameraSelect) {
+    cameraSelect.value = camera.id;
+  }
+
   currentGalleryIndex = 0;
 
   if (modalCameraCategory) {
@@ -417,7 +585,9 @@ function openCameraModal(cameraId) {
   }
 
   if (modalCameraPrice) {
-    modalCameraPrice.textContent = camera.price;
+    modalCameraPrice.textContent = isFlexiblePriceCamera(camera)
+      ? `Starting from ${getCameraStartingPrice(camera)}`
+      : `${getCameraStartingPrice(camera)} per day`;
   }
 
   if (modalBookButton) {
@@ -467,7 +637,6 @@ function updateGalleryImage() {
     ((currentGalleryIndex % gallery.length) + gallery.length) % gallery.length;
 
   modalCameraImage.src = gallery[currentGalleryIndex];
-
   modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
 
   if (galleryCounter) {
@@ -751,7 +920,13 @@ modalBookButton?.addEventListener("click", () => {
   setupRentalDurationOptions();
 
   if (rentalDuration) {
-    rentalDuration.value = selectedMode;
+    const camera = cameras.find((item) => item.id === cameraId);
+
+    rentalDuration.value =
+      isFlexiblePriceCamera(camera) &&
+      [RENTAL_MODE.SIX_HOURS, RENTAL_MODE.TWELVE_HOURS].includes(selectedMode)
+        ? selectedMode
+        : RENTAL_MODE.DAILY;
   }
 
   updateDurationFieldState(rentalDuration);
@@ -861,10 +1036,17 @@ function syncReturnDateTime() {
   }
 
   const mode = getSelectedRentalMode();
+  const camera = getSelectedCamera();
 
-  // 6-hour and 12-hour rentals:
-  // return is automatically calculated.
-  if (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS) {
+  /*
+   * 6-hour and 12-hour rentals are available only
+   * for SX740 HS and Lumix TZ99.
+   */
+
+  if (
+    isFlexiblePriceCamera(camera) &&
+    (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS)
+  ) {
     const hours = Number(mode);
 
     const returned = new Date(pickup.getTime() + hours * 60 * 60 * 1000);
@@ -882,15 +1064,15 @@ function syncReturnDateTime() {
     return;
   }
 
-  // Daily rental:
-  // customer selects return date and time manually.
-  // Do not overwrite their selection.
+  /*
+   * Daily rental: customer selects the return date and time.
+   * Do not overwrite their selection.
+   */
+
   if (mode === RENTAL_MODE.DAILY) {
     if (endDate) {
       endDate.min = startDate?.value || getTodayString();
 
-      // If return date is before pickup date,
-      // clear the invalid date.
       if (
         endDate.value &&
         startDate?.value &&
@@ -943,7 +1125,6 @@ function setupBookingListeners() {
   });
 
   cameraQuantity?.addEventListener("change", updateBookingSummary);
-
   cameraQuantity?.addEventListener("input", updateBookingSummary);
 
   setMinimumDates();
@@ -1019,36 +1200,59 @@ function isValidPhoneNumber(id) {
    ========================================================= */
 
 function updateBookingSummary() {
-  if (summaryCamera && cameraSelect) {
-    const camera = cameras.find((item) => item.id === cameraSelect.value);
+  const camera = getSelectedCamera();
+  const mode = getSelectedRentalMode();
+  const actualHours = getRentalDurationDifference();
+  const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
 
+  if (summaryCamera) {
     summaryCamera.textContent = camera ? camera.name : "-";
   }
 
   if (summaryDuration) {
-    const mode = getSelectedRentalMode();
-
     if (mode === RENTAL_MODE.SIX_HOURS) {
-      summaryDuration.textContent = "6 Hours";
+      summaryDuration.textContent = "6 Hours — Rp 100.000";
     } else if (mode === RENTAL_MODE.TWELVE_HOURS) {
-      summaryDuration.textContent = "12 Hours";
+      summaryDuration.textContent = "12 Hours — Rp 150.000";
     } else {
-      const hours = getRentalDurationDifference();
-      const days = getChargeableDays(hours);
+      const days = getChargeableDays(actualHours);
 
-      if (!hours || !days) {
+      if (!actualHours || !days) {
         summaryDuration.textContent = "Daily Rental — select return time";
       } else {
-        summaryDuration.textContent = `${formatDuration(hours)} (${hours.toFixed(2)} hours actual)`;
+        const priceInfo = getPriceForRental(camera, mode, actualHours);
+
+        summaryDuration.textContent =
+          `${formatDuration(actualHours)} ` +
+          `(${actualHours.toFixed(2)} hours actual) — ` +
+          `${formatRupiah(priceInfo.amount)} per camera`;
       }
     }
   }
 
   if (summaryQuantity) {
-    const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
-
     summaryQuantity.textContent = `${quantity} ${quantity === 1 ? "unit" : "units"}`;
   }
+
+  updateDisplayedPriceIfPossible(camera, mode, actualHours);
+}
+
+function updateDisplayedPriceIfPossible(camera, mode, actualHours) {
+  /*
+   * If the HTML has an element with id="summaryPrice",
+   * this displays the estimated total rental price.
+   * No HTML changes are required for the rest of the script.
+   */
+
+  const summaryPrice = $("summaryPrice");
+
+  if (!summaryPrice) return;
+
+  const priceInfo = getPriceForRental(camera, mode, actualHours);
+  const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
+
+  summaryPrice.textContent =
+    priceInfo.amount > 0 ? formatRupiah(priceInfo.amount * quantity) : "-";
 }
 
 /* =========================================================
@@ -1181,8 +1385,21 @@ function validateBookingForm() {
       isValid = false;
     }
 
-    // Fixed-duration rentals must match exactly.
     const mode = getSelectedRentalMode();
+
+    /*
+     * Fixed durations are only valid for cameras
+     * that support 6-hour and 12-hour rentals.
+     */
+
+    if (!isFlexiblePriceCamera(selectedCamera) && mode !== RENTAL_MODE.DAILY) {
+      showFieldError(
+        rentalDuration,
+        "This camera is only available for daily rental.",
+      );
+
+      isValid = false;
+    }
 
     if (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS) {
       const expectedHours = Number(mode);
@@ -1200,7 +1417,6 @@ function validateBookingForm() {
       }
     }
 
-    // Daily rental is charged in 24-hour blocks.
     if (mode === RENTAL_MODE.DAILY && returned > pickup) {
       const actualHours =
         (returned.getTime() - pickup.getTime()) / (60 * 60 * 1000);
@@ -1236,7 +1452,6 @@ function validateBookingForm() {
 
     if (!Number.isInteger(quantity) || quantity < 1) {
       showFieldError(cameraQuantity, "Number of units must be at least 1.");
-
       isValid = false;
     }
   }
@@ -1247,7 +1462,6 @@ function validateBookingForm() {
 
   if (ktpCheck && !ktpCheck.checked) {
     showFieldError(ktpCheck, "A valid ID card or passport is required.");
-
     isValid = false;
   }
 
@@ -1306,9 +1520,7 @@ function createWhatsAppMessage() {
   const instagram = $("instagram")?.value.trim() || "";
 
   const pickupLocation = $("pickupLocation")?.value.trim() || "";
-
   const returnLocation = $("returnLocation")?.value.trim() || "";
-
   const comments = $("comments")?.value.trim() || "";
 
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
@@ -1317,11 +1529,9 @@ function createWhatsAppMessage() {
   const returned = getReturnDateTime();
 
   const mode = getSelectedRentalMode();
-
   const actualHours = getRentalDurationDifference();
 
   let rentalDurationText = "-";
-  let chargeableDaysText = "-";
 
   if (mode === RENTAL_MODE.SIX_HOURS) {
     rentalDurationText = "6 Hours";
@@ -1331,9 +1541,10 @@ function createWhatsAppMessage() {
     const days = getChargeableDays(actualHours);
 
     rentalDurationText = `${days} ${days === 1 ? "Day" : "Days"}`;
-
-    chargeableDaysText = `${days} ${days === 1 ? "day" : "days"}`;
   }
+
+  const priceInfo = getPriceForRental(camera, mode, actualHours);
+  const totalPrice = priceInfo.amount * quantity;
 
   const ktpCheck = $("ktpCheck")?.checked;
   const hotelCheck = $("hotelCheck")?.checked;
@@ -1354,14 +1565,19 @@ Hello Enmax House, I would like to submit a camera booking request.
 
 RENTAL DETAILS
 Camera: ${camera ? camera.name : "-"}
-Starting Price: ${camera ? camera.price : "-"}
-Number of Units: ${quantity}
 Rental Type: ${mode === RENTAL_MODE.DAILY ? "Daily Rental" : rentalDurationText}
 Rental Duration: ${rentalDurationText}
+Price per Camera: ${priceInfo.amount > 0 ? formatRupiah(priceInfo.amount) : "-"}
+Number of Units: ${quantity}
+Estimated Total Rental Price: ${totalPrice > 0 ? formatRupiah(totalPrice) : "-"}
 Actual Rental Time: ${
     actualHours && actualHours > 0 ? `${actualHours.toFixed(2)} hours` : "-"
   }
-Chargeable Days: ${mode === RENTAL_MODE.DAILY ? chargeableDaysText : "-"}
+Chargeable Days: ${
+    mode === RENTAL_MODE.DAILY && priceInfo.days
+      ? `${priceInfo.days} ${priceInfo.days === 1 ? "day" : "days"}`
+      : "-"
+  }
 Pickup: ${formatDateTimeIndonesia(pickup)}
 Return: ${formatDateTimeIndonesia(returned)}
 Pickup Location: ${pickupLocation}

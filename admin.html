@@ -1,202 +1,355 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard | Enmax House</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | Enmax House</title>
 
-  <style>
-    :root {
-      --pink: #ff2aa6;
-      --bg: #0b0b0f;
-      --panel: #15151c;
-      --text: #f5f5f7;
-      --muted: #aaaab5;
-      --border: #30303a;
-    }
+    <style>
+      :root {
+        --pink: #ff2aa6;
+        --bg: #0b0b0f;
+        --panel: #15151c;
+        --text: #f5f5f7;
+        --muted: #aaaab5;
+        --border: #30303a;
+      }
 
-    * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, sans-serif;
-    }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+      }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 6%;
-      border-bottom: 1px solid var(--border);
-    }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 6%;
+        border-bottom: 1px solid var(--border);
+        gap: 12px;
+      }
 
-    header strong {
-      font-size: 20px;
-      letter-spacing: 1px;
-    }
+      header strong {
+        font-size: 20px;
+        letter-spacing: 1px;
+      }
 
-    header span { color: var(--pink); }
+      header span {
+        color: var(--pink);
+      }
 
-    main {
-      width: min(1100px, 92%);
-      margin: 36px auto;
-    }
+      main {
+        width: min(1200px, 92%);
+        margin: 36px auto;
+      }
 
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-      margin-bottom: 22px;
-    }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 22px;
+      }
 
-    h1 { font-size: 28px; margin-top: 0; }
-    h2 { font-size: 20px; }
+      h1 {
+        font-size: 28px;
+        margin-top: 0;
+      }
+      h2 {
+        font-size: 20px;
+      }
 
-    p { color: var(--muted); line-height: 1.6; }
+      p {
+        color: var(--muted);
+        line-height: 1.6;
+      }
 
-    label {
-      display: block;
-      margin: 15px 0 7px;
-      font-size: 14px;
-    }
+      label {
+        display: block;
+        margin: 15px 0 7px;
+        font-size: 14px;
+      }
 
-    input {
-      width: 100%;
-      padding: 13px;
-      color: white;
-      background: #0d0d12;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
-    }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 13px;
+        color: white;
+        background: #0d0d12;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 15px;
+      }
 
-    button {
-      padding: 12px 17px;
-      background: var(--pink);
-      color: white;
-      border: 0;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+      button {
+        padding: 11px 15px;
+        background: var(--pink);
+        color: white;
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      }
 
-    button:hover { opacity: .88; }
+      button:hover {
+        opacity: 0.88;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
-    .secondary {
-      background: transparent;
-      border: 1px solid var(--border);
-    }
+      .secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+      }
 
-    .hidden { display: none !important; }
+      .danger {
+        background: #a52845;
+      }
 
-    .message {
-      margin-top: 15px;
-      overflow-wrap: anywhere;
-    }
+      .hidden {
+        display: none !important;
+      }
 
-    .camera-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 14px;
-    }
+      .message {
+        margin-top: 15px;
+        overflow-wrap: anywhere;
+      }
 
-    .camera {
-      padding: 18px;
-      background: #0d0d12;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-    }
+      .camera-list,
+      .booking-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+      }
 
-    .camera h3 { margin-top: 0; }
-    .camera p { margin: 7px 0; }
+      .camera,
+      .booking {
+        padding: 18px;
+        background: #0d0d12;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        min-width: 0;
+      }
 
-    .camera input { margin-bottom: 10px; }
+      .camera h3,
+      .booking h3 {
+        margin-top: 0;
+        overflow-wrap: anywhere;
+      }
 
-    .status { color: var(--pink); }
+      .camera p,
+      .booking p {
+        margin: 8px 0;
+        overflow-wrap: anywhere;
+      }
 
-    @media (max-width: 600px) {
-      header { padding: 17px 4%; }
-      main { margin-top: 24px; }
-      .panel { padding: 18px; }
-    }
-  </style>
-</head>
+      .camera input {
+        margin-bottom: 10px;
+      }
 
-<body>
-  <header>
-    <strong>ENMAX <span>HOUSE</span></strong>
-    <button id="logoutBtn" class="secondary hidden">
-      Logout
-    </button>
-  </header>
+      .status {
+        color: var(--pink);
+        font-weight: bold;
+      }
 
-  <main>
-    <section id="loginPanel" class="panel">
-      <h1>Admin Login</h1>
-      <p>Login untuk mengelola inventaris kamera Enmax House.</p>
+      .status-badge {
+        display: inline-block;
+        padding: 5px 9px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 12px;
+        color: var(--pink);
+      }
 
-      <form id="loginForm">
-        <label for="email">Email admin</label>
-        <input id="email" type="email" autocomplete="username"
-          placeholder="Email owner" required>
+      .booking-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
 
-        <label for="password">Password</label>
-        <input id="password" type="password"
-          autocomplete="current-password"
-          placeholder="Password" required>
+      .booking-actions button {
+        flex: 1;
+        min-width: 100px;
+      }
 
-        <br><br>
-        <button type="submit">Login</button>
-      </form>
+      .filter-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: end;
+      }
 
-      <p id="loginMessage" class="message" role="status"></p>
-    </section>
+      .filter-row label {
+        margin-top: 0;
+      }
 
-    <section id="dashboard" class="hidden">
-      <div class="panel">
-        <h1>Dashboard</h1>
-        <p>Selamat datang di panel admin Enmax House.</p>
-        <p id="adminEmail"></p>
-        <p class="status">Inventaris kamera</p>
-      </div>
+      .notes {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #15151c;
+        padding: 10px;
+        border-radius: 8px;
+      }
 
-      <div class="panel">
-        <h2>Daftar Kamera</h2>
-        <p>Ubah jumlah unit dan harga harian sesuai kondisi aktual.</p>
-        <button id="refreshBtn" class="secondary">
-          Refresh data
-        </button>
-        <p id="cameraMessage" class="message" role="status"></p>
-        <div id="cameraList" class="camera-list"></div>
-      </div>
+      .muted {
+        color: var(--muted);
+      }
 
-      <div class="panel">
-        <h2>Tambah Kamera</h2>
-        <form id="addCameraForm">
-          <label for="cameraName">Nama kamera</label>
-          <input id="cameraName" required
-            placeholder="Contoh: Canon EOS R50">
+      @media (max-width: 600px) {
+        header {
+          padding: 17px 4%;
+        }
+        main {
+          margin-top: 24px;
+        }
+        .panel {
+          padding: 18px;
+        }
+        .filter-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
 
-          <label for="cameraQuantity">Jumlah unit</label>
-          <input id="cameraQuantity" type="number"
-            min="0" step="1" value="1" required>
+  <body>
+    <header>
+      <strong>ENMAX <span>HOUSE</span></strong>
+      <button id="logoutBtn" class="secondary hidden">Logout</button>
+    </header>
 
-          <label for="cameraPrice">Harga per hari (Rp)</label>
-          <input id="cameraPrice" type="number"
-            min="0" step="1000" value="0" required>
+    <main>
+      <!-- LOGIN -->
+      <section id="loginPanel" class="panel">
+        <h1>Admin Login</h1>
+        <p>Login untuk mengelola booking dan inventaris kamera Enmax House.</p>
 
-          <br><br>
-          <button type="submit">Tambah kamera</button>
+        <form id="loginForm">
+          <label for="email">Email admin</label>
+          <input
+            id="email"
+            type="email"
+            autocomplete="username"
+            placeholder="Email owner"
+            required
+          />
+
+          <label for="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Password"
+            required
+          />
+
+          <br /><br />
+          <button id="loginBtn" type="submit">Login</button>
         </form>
-      </div>
-    </section>
-  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/admin.js"></script>
-</body>
+        <p id="loginMessage" class="message" role="status"></p>
+      </section>
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="hidden">
+        <div class="panel">
+          <h1>Dashboard Admin</h1>
+          <p>Selamat datang di panel admin Enmax House.</p>
+          <p id="adminEmail"></p>
+        </div>
+
+        <!-- BOOKING -->
+        <div class="panel">
+          <h2>Booking Customer</h2>
+          <p>
+            Lihat permintaan rental yang masuk dan kelola statusnya. Booking
+            baru akan berstatus pending.
+          </p>
+
+          <div class="filter-row">
+            <div>
+              <label for="bookingStatusFilter">Filter status</label>
+              <select id="bookingStatusFilter">
+                <option value="all">Semua status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Disetujui</option>
+                <option value="rejected">Ditolak</option>
+              </select>
+            </div>
+
+            <button id="refreshBookingsBtn" class="secondary" type="button">
+              Refresh booking
+            </button>
+          </div>
+
+          <p id="bookingMessage" class="message" role="status"></p>
+          <div id="bookingList" class="booking-list"></div>
+        </div>
+
+        <!-- INVENTORY -->
+        <div class="panel">
+          <h2>Daftar Kamera</h2>
+          <p>Ubah jumlah unit dan harga harian sesuai kondisi aktual.</p>
+
+          <button id="refreshBtn" class="secondary" type="button">
+            Refresh data kamera
+          </button>
+
+          <p id="cameraMessage" class="message" role="status"></p>
+          <div id="cameraList" class="camera-list"></div>
+        </div>
+
+        <!-- ADD CAMERA -->
+        <div class="panel">
+          <h2>Tambah Kamera</h2>
+
+          <form id="addCameraForm">
+            <label for="cameraName">Nama kamera</label>
+            <input
+              id="cameraName"
+              required
+              placeholder="Contoh: Canon EOS R50"
+            />
+
+            <label for="cameraQuantity">Jumlah unit</label>
+            <input
+              id="cameraQuantity"
+              type="number"
+              min="0"
+              step="1"
+              value="1"
+              required
+            />
+
+            <label for="cameraPrice">Harga per hari (Rp)</label>
+            <input
+              id="cameraPrice"
+              type="number"
+              min="0"
+              step="1000"
+              value="0"
+              required
+            />
+
+            <br /><br />
+            <button id="addCameraBtn" type="submit">Tambah kamera</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/admin.js"></script>
+  </body>
 </html>

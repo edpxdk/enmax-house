@@ -22,15 +22,15 @@ const WHATSAPP_NUMBER = "6282145929947";
    ========================================================= */
 
 /*
- * Data lokal tetap dipertahankan untuk:
+ * Data lokal dipertahankan untuk:
  * - Foto kamera
  * - Galeri foto
  * - Kategori
  * - Deskripsi
  * - Tarif rental 6 dan 12 jam
  *
- * Nama, harga harian, jumlah unit, dan status aktif
- * akan disinkronkan dengan tabel Supabase "cameras".
+ * ID, nama, harga harian, jumlah unit, dan status aktif
+ * disinkronkan dengan tabel Supabase "cameras".
  */
 
 let cameras = [
@@ -200,11 +200,6 @@ let previousBodyOverflow = "";
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  /*
-   * Load camera data before rendering the website.
-   * If Supabase is unavailable, local data remains usable.
-   */
-
   await loadCamerasFromSupabase();
 
   renderCameraCards();
@@ -336,9 +331,7 @@ function getCameraPriceLabel(camera) {
 
 async function loadCamerasFromSupabase() {
   /*
-   * Keep a local copy as a fallback.
-   * This also preserves images, gallery, category,
-   * descriptions, and the 6/12-hour rates.
+   * Preserve local metadata as fallback.
    */
 
   const localCameras = cameras.map((camera) => ({
@@ -365,11 +358,8 @@ async function loadCamerasFromSupabase() {
 
     cameras = data.map((row) => {
       /*
-       * Match the database record with local metadata
-       * using the camera name, not its ID.
-       *
-       * Database IDs are numeric, while the old local
-       * IDs use values such as "camera-01".
+       * Match database records to local metadata by name.
+       * The ID from Supabase remains the source of truth.
        */
 
       const existing = localCameras.find(
@@ -596,6 +586,10 @@ function setupOneDurationSelect(select) {
 
   updateDurationFieldState(select);
 }
+
+/* =========================================================
+   DURATION FIELD STATE
+   ========================================================= */
 
 function updateDurationFieldState(select) {
   if (!select) return;
@@ -1230,7 +1224,6 @@ function setupBookingListeners() {
 
   [endDate, endTime].forEach((input) => {
     input?.addEventListener("change", updateBookingSummary);
-
     input?.addEventListener("input", updateBookingSummary);
   });
 
@@ -1599,12 +1592,28 @@ function validateBookingForm() {
 }
 
 /* =========================================================
-   BOOKING FORM SUBMIT
+   BOOKING FORM SUBMIT — SUPABASE + WHATSAPP
    ========================================================= */
 
+/*
+ * Flow:
+ * 1. Validate the form.
+ * 2. Insert a pending booking into Supabase.
+ * 3. Open WhatsApp only after the insert succeeds.
+ *
+ * Public customers cannot approve their own bookings.
+ */
+
 if (bookingForm) {
-  bookingForm.addEventListener("submit", (event) => {
+  bookingForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+
+    const submitButton = bookingForm.querySelector(
+      'button[type="submit"], input[type="submit"]',
+    );
+
+    // Prevent duplicate submissions.
+    if (submitButton?.disabled) return;
 
     syncReturnDateTime();
 
@@ -1619,13 +1628,205 @@ if (bookingForm) {
       return;
     }
 
-    createWhatsAppMessage();
+    const camera = cameras.find((item) => item.id === cameraSelect?.value);
+
+    if (!camera) {
+      alert("Camera not found. Please select a camera again.");
+
+      return;
+    }
+
+    /*
+     * The camera ID must originate from the Supabase record.
+     * Local fallback IDs such as "camera-01" are not valid
+     * database foreign keys.
+     */
+
+    const cameraId = Number(camera.id);
+
+    if (!Number.isSafeInteger(cameraId) || cameraId <= 0) {
+      console.error("Invalid Supabase camera ID:", camera.id);
+
+      alert(
+        "Camera data could not be verified. " +
+          "Please refresh the page and try again.",
+      );
+
+      return;
+    }
+
+    const pickup = getPickupDateTime();
+    const returned = getReturnDateTime();
+
+    if (!pickup || !returned || returned <= pickup) {
+      alert("Please check the rental dates and times.");
+
+      return;
+    }
+
+    const quantity = Number(cameraQuantity?.value);
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      alert("Please enter a valid camera quantity.");
+
+      return;
+    }
+
+    const customerName = $("fullName")?.value.trim() || "";
+
+    const whatsapp = getInternationalNumber("whatsapp");
+
+    const emergencyContact = getInternationalNumber("emergencyContact");
+
+    const occupation = $("occupation")?.value.trim() || "";
+
+    const workplace = $("workplace")?.value.trim() || "";
+
+    const instagram = $("instagram")?.value.trim() || "";
+
+    const pickupLocation = $("pickupLocation")?.value.trim() || "";
+
+    const returnLocation = $("returnLocation")?.value.trim() || "";
+
+    const comments = $("comments")?.value.trim() || "";
+
+    const mode = getSelectedRentalMode();
+
+    const actualHours = getRentalDurationDifference();
+
+    const priceInfo = getPriceForRental(camera, mode, actualHours);
+
+    const totalPrice = priceInfo.amount * quantity;
+
+    /*
+     * Additional details are stored in notes because
+     * the current table does not have separate columns
+     * for these optional fields.
+     */
+
+    const notes = [
+      `Rental duration: ${formatDuration(actualHours)}`,
+      `Occupation: ${occupation}`,
+      `Workplace: ${workplace}`,
+      `Emergency contact: ${emergencyContact}`,
+      `Instagram: ${instagram}`,
+      `Pickup location: ${pickupLocation}`,
+      `Return location: ${returnLocation}`,
+      `ID/passport prepared: ${$("ktpCheck")?.checked ? "Yes" : "No"}`,
+      `Hotel confirmation: ${$("hotelCheck")?.checked ? "Yes" : "No"}`,
+      `Flight details: ${$("flightCheck")?.checked ? "Yes" : "No"}`,
+      `Estimated total: ${formatRupiah(totalPrice)}`,
+      `Additional comments: ${comments || "-"}`,
+    ].join("\n");
+
+    const bookingData = {
+      camera_id: cameraId,
+      customer_name: customerName,
+      customer_email: null,
+      customer_phone: whatsapp,
+      pickup_at: pickup.toISOString(),
+      return_at: returned.toISOString(),
+      quantity: quantity,
+      source: "website",
+      status: "pending",
+      notes: notes,
+    };
+
+    /*
+     * Prepare the WhatsApp message before the insert,
+     * but do not open WhatsApp until the insert succeeds.
+     */
+
+    const whatsappURL = createWhatsAppMessage();
+
+    const originalButtonText = submitButton
+      ? submitButton.tagName === "INPUT"
+        ? submitButton.value
+        : submitButton.textContent
+      : "";
+
+    if (submitButton) {
+      submitButton.disabled = true;
+
+      if (submitButton.tagName === "INPUT") {
+        submitButton.value = "Saving booking...";
+      } else {
+        submitButton.textContent = "Saving booking...";
+      }
+    }
+
+    try {
+      /*
+       * Save the booking request.
+       *
+       * A successful insert means the request was saved,
+       * not that the booking has been approved.
+       */
+
+      const { error } = await supabaseClient
+        .from("rental_bookings")
+        .insert([bookingData]);
+
+      if (error) {
+        throw error;
+      }
+
+      /*
+       * The insert succeeded. Now proceed to WhatsApp.
+       *
+       * This implementation attempts a new tab first.
+       * If the browser blocks the popup, it falls back
+       * to navigating the current page.
+       */
+
+      let whatsappWindow = null;
+
+      try {
+        whatsappWindow = window.open(
+          whatsappURL,
+          "_blank",
+          "noopener,noreferrer",
+        );
+      } catch (error) {
+        console.warn("Unable to open WhatsApp in a new tab:", error);
+      }
+
+      if (!whatsappWindow) {
+        window.location.href = whatsappURL;
+      }
+    } catch (error) {
+      console.error("Failed to save booking to Supabase:", error);
+
+      alert(
+        "Booking belum berhasil disimpan ke sistem. " +
+          "Silakan coba lagi. Jika masalah berlanjut, " +
+          "hubungi Enmax House melalui WhatsApp.",
+      );
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+
+        if (submitButton.tagName === "INPUT") {
+          submitButton.value = originalButtonText;
+        } else {
+          submitButton.textContent = originalButtonText;
+        }
+      }
+    }
   });
 }
 
 /* =========================================================
    WHATSAPP MESSAGE
    ========================================================= */
+
+/*
+ * This function builds and returns the WhatsApp URL.
+ * It no longer opens a window by itself.
+ *
+ * The booking submit handler controls when the URL opens,
+ * after the Supabase insert succeeds.
+ */
 
 function createWhatsAppMessage() {
   const camera = cameras.find((item) => item.id === cameraSelect?.value);
@@ -1724,13 +1925,7 @@ ${comments || "-"}
 I understand that this is a booking request, not a confirmed reservation. I will wait for Enmax House to review and confirm my booking.
   `.trim();
 
-  const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-
-  const newWindow = window.open(whatsappURL, "_blank", "noopener,noreferrer");
-
-  if (!newWindow) {
-    window.location.href = whatsappURL;
-  }
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
 /* =========================================================

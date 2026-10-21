@@ -1,24 +1,15 @@
 /* =========================================================
-   ENMAX HOUSE
-   Camera Rental Website
+   ENMAX HOUSE — CAMERA RENTAL WEBSITE
    ========================================================= */
 
-/* =========================================================
-   SUPABASE CONFIGURATION
-   ========================================================= */
+/* SUPABASE CONFIGURATION */
 
 const SUPABASE_URL = "https://egfuemmimojqzdqjsofg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_TWiZEW8hb8rI91I4cu3Law_H9NCykz6";
-
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/* CONFIGURATION */
-
 const WHATSAPP_NUMBER = "6282145929947";
 
-/* =========================================================
-   CAMERA DATA — LOCAL METADATA / FALLBACK
-   ========================================================= */
+/* CAMERA DATA — LOCAL METADATA / FALLBACK */
 
 let cameras = [
   {
@@ -46,11 +37,7 @@ let cameras = [
       "Powerful zoom in a compact body, made for travel and everyday moments.",
     price: "Rp 100.000",
     dailyPrice: 180000,
-    rentalRates: {
-      6: 100000,
-      12: 150000,
-      24: 180000,
-    },
+    rentalRates: { 6: 100000, 12: 150000, 24: 180000 },
     durations: [6, 12, 24, "daily"],
     image: "assets/cameras/camera-02.jpg",
     gallery: [
@@ -68,11 +55,7 @@ let cameras = [
       "Versatile zoom and compact design for travel and everyday shooting.",
     price: "Rp 100.000",
     dailyPrice: 180000,
-    rentalRates: {
-      6: 100000,
-      12: 150000,
-      24: 180000,
-    },
+    rentalRates: { 6: 100000, 12: 150000, 24: 180000 },
     durations: [6, 12, 24, "daily"],
     image: "assets/cameras/camera-03.jpg",
     gallery: [
@@ -118,78 +101,62 @@ let cameras = [
   },
 ];
 
-/* =========================================================
-   DOM ELEMENTS
-   ========================================================= */
+/* DOM HELPERS AND ELEMENTS */
 
 const $ = (id) => document.getElementById(id);
 
 const navbar = $("navbar");
 const navMenu = $("navMenu");
 const menuToggle = $("menuToggle");
-
 const cameraGrid = $("cameraGrid");
 const cameraSelect = $("cameraSelect");
-
 const cameraModal = $("cameraModal");
 const modalOverlay = $("modalOverlay");
 const modalClose = $("modalClose");
-
 const modalCameraImage = $("modalCameraImage");
 const galleryPrev = $("galleryPrev");
 const galleryNext = $("galleryNext");
 const galleryCounter = $("galleryCounter");
-
 const modalCameraCategory = $("modalCameraCategory");
 const modalCameraName = $("modalCameraName");
 const modalCameraDescription = $("modalCameraDescription");
 const modalCameraPrice = $("modalCameraPrice");
 const modalRentalDuration = $("modalRentalDuration");
 const modalBookButton = $("modalBookButton");
-
 const bookingForm = $("bookingForm");
-
 const rentalDuration = $("rentalDuration");
 const startDate = $("startDate");
 const endDate = $("endDate");
 const startTime = $("startTime");
 const endTime = $("endTime");
 const cameraQuantity = $("cameraQuantity");
-
 const summaryCamera = $("summaryCamera");
 const summaryDuration = $("summaryDuration");
 const summaryQuantity = $("summaryQuantity");
-
 const agreement = $("agreement");
 const agreementError = $("agreementError");
-
 const commentForm = $("commentForm");
 const commentsList = $("commentsList");
 const currentYear = $("currentYear");
 
-/* =========================================================
-   GLOBAL STATE
-   ========================================================= */
-
 let selectedCameraId = null;
 let currentGalleryIndex = 0;
-
 const phoneInputs = {};
-
-/* PHOTO LIGHTBOX STATE */
-
 let photoLightbox = null;
 let lightboxImage = null;
 let previousBodyOverflow = "";
-
-/* AVAILABILITY CHECK STATE */
-
 let availabilityTimer = null;
 let availabilityRequestId = 0;
 
-/* =========================================================
-   INITIALIZATION
-   ========================================================= */
+/* RENTAL MODES */
+
+const RENTAL_MODE = {
+  SIX_HOURS: "6",
+  TWELVE_HOURS: "12",
+  DAILY: "daily",
+};
+
+/* INITIALIZATION */
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadCamerasFromSupabase();
@@ -205,13 +172,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupBookingListeners();
   setupDurationSynchronization();
   setupAvailabilityChecker();
+  setupAvailabilityCalendar();
   updateBookingSummary();
   loadComments();
   updateCurrentYear();
 });
 
 /* =========================================================
-   CAMERA PRICE HELPERS
+   PRICE HELPERS
    ========================================================= */
 
 function isFlexiblePriceCamera(camera) {
@@ -229,9 +197,7 @@ function formatRupiah(amount) {
 }
 
 function getCameraDailyPrice(camera) {
-  if (!camera) return 0;
-
-  return Number(camera.dailyPrice) || 0;
+  return Number(camera?.dailyPrice) || 0;
 }
 
 function getSelectedCamera() {
@@ -241,13 +207,7 @@ function getSelectedCamera() {
 }
 
 function getPriceForRental(camera, mode, actualHours = null) {
-  if (!camera) {
-    return {
-      amount: 0,
-      description: "-",
-      days: 0,
-    };
-  }
+  if (!camera) return { amount: 0, description: "-", days: 0 };
 
   if (isFlexiblePriceCamera(camera)) {
     if (mode === RENTAL_MODE.SIX_HOURS) {
@@ -269,19 +229,10 @@ function getPriceForRental(camera, mode, actualHours = null) {
 
   if (mode === RENTAL_MODE.DAILY) {
     const days = getChargeableDays(actualHours);
-
-    if (!days) {
-      return {
-        amount: 0,
-        description: "Daily Rental",
-        days: 0,
-      };
-    }
-
-    const dailyPrice = getCameraDailyPrice(camera);
+    if (!days) return { amount: 0, description: "Daily Rental", days: 0 };
 
     return {
-      amount: days * dailyPrice,
+      amount: days * getCameraDailyPrice(camera),
       description: `${days} ${days === 1 ? "Day" : "Days"}`,
       days,
     };
@@ -296,11 +247,7 @@ function getPriceForRental(camera, mode, actualHours = null) {
 
 function getCameraStartingPrice(camera) {
   if (!camera) return "-";
-
-  if (isFlexiblePriceCamera(camera)) {
-    return formatRupiah(camera.rentalRates[6]);
-  }
-
+  if (isFlexiblePriceCamera(camera)) return formatRupiah(camera.rentalRates[6]);
   return formatRupiah(getCameraDailyPrice(camera));
 }
 
@@ -328,10 +275,9 @@ async function loadCamerasFromSupabase() {
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
-      console.warn("No active cameras found in Supabase. Using local catalog.");
-
+    if (!data?.length) {
       cameras = localCameras;
+      console.warn("No active cameras found in Supabase. Using local catalog.");
       return;
     }
 
@@ -348,39 +294,31 @@ async function loadCamerasFromSupabase() {
 
       return {
         ...(existing || {}),
-
         id: String(row.id),
         name: row.name,
         quantity: Number(row.quantity) || 0,
         dailyPrice,
         price: formatRupiah(dailyPrice),
         active: row.active,
-
         category: existing?.category || "Camera Rental",
-
         description:
           existing?.description || "Contact Enmax House for camera details.",
-
         image: existing?.image || "",
-
         gallery: existing?.gallery?.length
           ? [...existing.gallery]
           : existing?.image
             ? [existing.image]
             : [],
-
         durations: existing?.durations || ["daily"],
-
         rentalRates: existing?.rentalRates
           ? { ...existing.rentalRates }
           : undefined,
       };
     });
 
-    console.log("Camera catalog successfully loaded from Supabase:", cameras);
+    console.log("Camera catalog loaded:", cameras);
   } catch (error) {
-    console.error("Failed to load camera catalog from Supabase:", error);
-
+    console.error("Failed to load camera catalog:", error);
     cameras = localCameras;
   }
 }
@@ -391,60 +329,33 @@ async function loadCamerasFromSupabase() {
 
 function renderCameraCards() {
   if (!cameraGrid) return;
-
   cameraGrid.innerHTML = "";
 
   if (!cameras.length) {
-    cameraGrid.innerHTML = `
-      <div class="empty-comments">
-        <p>No cameras are currently available.</p>
-      </div>
-    `;
-
+    cameraGrid.innerHTML = `<div class="empty-comments"><p>No cameras are currently available.</p></div>`;
     return;
   }
 
   cameras.forEach((camera) => {
     const card = document.createElement("article");
-
     card.className = "camera-card";
 
     card.innerHTML = `
       <div class="camera-card-image">
-        <img
-          src="${escapeHTML(camera.image || "")}"
-          alt="${escapeHTML(camera.name)}"
-          loading="lazy"
-        >
+        <img src="${escapeHTML(camera.image || "")}"
+          alt="${escapeHTML(camera.name)}" loading="lazy">
       </div>
-
       <div class="camera-card-content">
-        <span class="camera-category">
-          ${escapeHTML(camera.category)}
-        </span>
-
+        <span class="camera-category">${escapeHTML(camera.category)}</span>
         <h3>${escapeHTML(camera.name)}</h3>
-
         <p>${escapeHTML(camera.description)}</p>
-
         <div class="camera-card-footer">
           <div class="camera-price-block">
-            <span class="camera-price-label">
-              ${escapeHTML(getCameraPriceLabel(camera))}
-            </span>
-
-            <strong class="camera-price">
-              ${escapeHTML(getCameraStartingPrice(camera))}
-            </strong>
+            <span class="camera-price-label">${escapeHTML(getCameraPriceLabel(camera))}</span>
+            <strong class="camera-price">${escapeHTML(getCameraStartingPrice(camera))}</strong>
           </div>
-
-          <button
-            type="button"
-            class="camera-view-button"
-            data-camera-id="${escapeHTML(camera.id)}"
-          >
-            View Camera →
-          </button>
+          <button type="button" class="camera-view-button"
+            data-camera-id="${escapeHTML(camera.id)}">View Camera →</button>
         </div>
       </div>
     `;
@@ -453,9 +364,9 @@ function renderCameraCards() {
   });
 
   cameraGrid.querySelectorAll(".camera-view-button").forEach((button) => {
-    button.addEventListener("click", () => {
-      openCameraModal(button.dataset.cameraId);
-    });
+    button.addEventListener("click", () =>
+      openCameraModal(button.dataset.cameraId),
+    );
   });
 }
 
@@ -466,45 +377,30 @@ function renderCameraCards() {
 function populateCameraSelect() {
   if (!cameraSelect) return;
 
-  cameraSelect.innerHTML = `
-    <option value="">Select a camera</option>
-  `;
+  cameraSelect.innerHTML = `<option value="">Select a camera</option>`;
 
   cameras.forEach((camera) => {
     const option = document.createElement("option");
-
     option.value = camera.id;
-
     option.textContent = isFlexiblePriceCamera(camera)
       ? `${camera.name} — Starting from ${getCameraStartingPrice(camera)}`
       : `${camera.name} — ${getCameraStartingPrice(camera)} per day`;
-
     cameraSelect.appendChild(option);
   });
 
   cameraSelect.addEventListener("change", () => {
     selectedCameraId = cameraSelect.value || null;
-
     setupRentalDurationOptions();
     syncReturnDateTime();
     updateBookingSummary();
+    syncCalendarCameraFromBooking();
     scheduleAvailabilityCheck();
   });
 }
 
 /* =========================================================
-   RENTAL DURATION SYSTEM
+   RENTAL DURATION
    ========================================================= */
-
-const RENTAL_MODE = {
-  SIX_HOURS: "6",
-  TWELVE_HOURS: "12",
-  DAILY: "daily",
-};
-
-function createDailyReturnMessage() {
-  return "Select your return date and time.";
-}
 
 function setupRentalDurationOptions() {
   setupOneDurationSelect(rentalDuration);
@@ -519,64 +415,39 @@ function setupOneDurationSelect(select) {
 
   if (isFlexiblePriceCamera(camera)) {
     select.innerHTML = `
-      <option value="6">
-        6 Hours — ${formatRupiah(camera.rentalRates[6])}
-      </option>
-
-      <option value="12">
-        12 Hours — ${formatRupiah(camera.rentalRates[12])}
-      </option>
-
-      <option value="daily">
-        Daily Rental — ${formatRupiah(camera.dailyPrice)} / day
-      </option>
+      <option value="6">6 Hours — ${formatRupiah(camera.rentalRates[6])}</option>
+      <option value="12">12 Hours — ${formatRupiah(camera.rentalRates[12])}</option>
+      <option value="daily">Daily Rental — ${formatRupiah(camera.dailyPrice)} / day</option>
     `;
 
-    if (
-      previousValue === RENTAL_MODE.SIX_HOURS ||
-      previousValue === RENTAL_MODE.TWELVE_HOURS ||
-      previousValue === RENTAL_MODE.DAILY
-    ) {
-      select.value = previousValue;
-    } else {
-      select.value = RENTAL_MODE.DAILY;
-    }
+    select.value = ["6", "12", "daily"].includes(previousValue)
+      ? previousValue
+      : "daily";
   } else {
     select.innerHTML = `
-      <option value="daily">
-        Daily Rental — ${
-          camera ? formatRupiah(camera.dailyPrice) : "Select a camera"
-        }${camera ? " / day" : ""}
-      </option>
+      <option value="daily">Daily Rental — ${
+        camera ? formatRupiah(camera.dailyPrice) + " / day" : "Select a camera"
+      }</option>
     `;
-
-    select.value = RENTAL_MODE.DAILY;
+    select.value = "daily";
   }
 
   updateDurationFieldState(select);
 }
 
-/* =========================================================
-   DURATION FIELD STATE
-   ========================================================= */
-
 function updateDurationFieldState(select) {
   if (!select) return;
-
   const isDaily = select.value === RENTAL_MODE.DAILY;
 
   if (select === rentalDuration) {
     if (endDate) {
       endDate.readOnly = !isDaily;
-
       endDate.title = isDaily
         ? "Choose your return date"
         : "Automatically calculated from pickup and duration";
     }
-
     if (endTime) {
       endTime.readOnly = !isDaily;
-
       endTime.title = isDaily
         ? "Choose your return time"
         : "Automatically calculated from pickup and duration";
@@ -592,66 +463,44 @@ function getSelectedRentalMode() {
 
 function getSelectedDurationHours() {
   const mode = getSelectedRentalMode();
-
   if (mode === RENTAL_MODE.SIX_HOURS) return 6;
   if (mode === RENTAL_MODE.TWELVE_HOURS) return 12;
-
-  if (mode === RENTAL_MODE.DAILY) {
-    return getRentalDurationDifference();
-  }
-
+  if (mode === RENTAL_MODE.DAILY) return getRentalDurationDifference();
   return null;
 }
 
 function formatDuration(hours) {
-  if (!Number.isFinite(hours) || hours <= 0) {
-    return "-";
-  }
-
+  if (!Number.isFinite(hours) || hours <= 0) return "-";
   if (hours === 6) return "6 Hours";
   if (hours === 12) return "12 Hours";
-
   const days = Math.ceil(hours / 24);
-
   return `${days} ${days === 1 ? "Day" : "Days"}`;
 }
 
 function getChargeableDays(hours) {
-  if (!Number.isFinite(hours) || hours <= 0) {
-    return null;
-  }
-
+  if (!Number.isFinite(hours) || hours <= 0) return null;
   return Math.ceil(hours / 24);
 }
 
 /* =========================================================
-   CAMERA MODAL
+   CAMERA MODAL AND GALLERY
    ========================================================= */
 
 function openCameraModal(cameraId) {
   const camera = cameras.find((item) => item.id === String(cameraId));
-
   if (!camera || !cameraModal) return;
 
   selectedCameraId = camera.id;
-
   if (cameraSelect) {
     cameraSelect.value = camera.id;
+    cameraSelect.dispatchEvent(new Event("change"));
   }
 
   currentGalleryIndex = 0;
-
-  if (modalCameraCategory) {
-    modalCameraCategory.textContent = camera.category;
-  }
-
-  if (modalCameraName) {
-    modalCameraName.textContent = camera.name;
-  }
-
-  if (modalCameraDescription) {
+  if (modalCameraCategory) modalCameraCategory.textContent = camera.category;
+  if (modalCameraName) modalCameraName.textContent = camera.name;
+  if (modalCameraDescription)
     modalCameraDescription.textContent = camera.description;
-  }
 
   if (modalCameraPrice) {
     modalCameraPrice.textContent = isFlexiblePriceCamera(camera)
@@ -659,36 +508,23 @@ function openCameraModal(cameraId) {
       : `${getCameraStartingPrice(camera)} per day`;
   }
 
-  if (modalBookButton) {
-    modalBookButton.dataset.cameraId = camera.id;
-  }
+  if (modalBookButton) modalBookButton.dataset.cameraId = camera.id;
 
   setupOneDurationSelect(modalRentalDuration);
-
-  if (rentalDuration && modalRentalDuration) {
+  if (rentalDuration && modalRentalDuration)
     modalRentalDuration.value = rentalDuration.value;
-  }
 
   updateDurationFieldState(modalRentalDuration);
   updateGalleryImage();
-
   cameraModal.classList.add("active");
   cameraModal.setAttribute("aria-hidden", "false");
-
   document.body.classList.add("modal-open");
-
   window.setTimeout(() => modalClose?.focus(), 100);
 }
 
-/* =========================================================
-   GALLERY
-   ========================================================= */
-
 function getCurrentGallery() {
   const camera = cameras.find((item) => item.id === selectedCameraId);
-
   if (!camera) return [];
-
   return Array.isArray(camera.gallery) && camera.gallery.length
     ? camera.gallery
     : camera.image
@@ -698,41 +534,25 @@ function getCurrentGallery() {
 
 function updateGalleryImage() {
   if (!modalCameraImage) return;
-
   const camera = cameras.find((item) => item.id === selectedCameraId);
   const gallery = getCurrentGallery();
-
   if (!camera || !gallery.length) return;
 
   currentGalleryIndex =
     ((currentGalleryIndex % gallery.length) + gallery.length) % gallery.length;
-
   modalCameraImage.src = gallery[currentGalleryIndex];
-
   modalCameraImage.alt = `${camera.name} photo ${currentGalleryIndex + 1}`;
-
-  if (galleryCounter) {
+  if (galleryCounter)
     galleryCounter.textContent = `${currentGalleryIndex + 1} / ${gallery.length}`;
-  }
 
-  const multipleImages = gallery.length > 1;
-
-  if (galleryPrev) {
-    galleryPrev.style.display = multipleImages ? "flex" : "none";
-  }
-
-  if (galleryNext) {
-    galleryNext.style.display = multipleImages ? "flex" : "none";
-  }
+  const multiple = gallery.length > 1;
+  if (galleryPrev) galleryPrev.style.display = multiple ? "flex" : "none";
+  if (galleryNext) galleryNext.style.display = multiple ? "flex" : "none";
 }
 
 function moveGallery(direction) {
-  const gallery = getCurrentGallery();
-
-  if (!gallery.length) return;
-
+  if (!getCurrentGallery().length) return;
   currentGalleryIndex += direction;
-
   updateGalleryImage();
 }
 
@@ -740,6 +560,58 @@ function setupGalleryControls() {
   galleryPrev?.addEventListener("click", () => moveGallery(-1));
   galleryNext?.addEventListener("click", () => moveGallery(1));
 }
+
+function closeCameraModal() {
+  if (!cameraModal) return;
+  cameraModal.classList.remove("active");
+  cameraModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+modalClose?.addEventListener("click", closeCameraModal);
+modalOverlay?.addEventListener("click", closeCameraModal);
+
+document.addEventListener("keydown", (event) => {
+  if (photoLightbox?.classList.contains("active")) return;
+
+  if (event.key === "Escape" && cameraModal?.classList.contains("active")) {
+    closeCameraModal();
+  }
+
+  if (!cameraModal?.classList.contains("active")) return;
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    moveGallery(-1);
+  }
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    moveGallery(1);
+  }
+});
+
+modalBookButton?.addEventListener("click", () => {
+  const cameraId = modalBookButton.dataset.cameraId;
+  if (!cameraId || !cameraSelect) return;
+
+  const selectedMode = modalRentalDuration?.value || RENTAL_MODE.DAILY;
+  cameraSelect.value = cameraId;
+  selectedCameraId = cameraId;
+  setupRentalDurationOptions();
+
+  const camera = cameras.find((item) => item.id === cameraId);
+  rentalDuration.value =
+    isFlexiblePriceCamera(camera) && ["6", "12"].includes(selectedMode)
+      ? selectedMode
+      : RENTAL_MODE.DAILY;
+
+  updateDurationFieldState(rentalDuration);
+  syncReturnDateTime();
+  updateBookingSummary();
+  scheduleAvailabilityCheck();
+  closeCameraModal();
+
+  $("booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 /* =========================================================
    PHOTO LIGHTBOX
@@ -749,7 +621,6 @@ function setupPhotoLightbox() {
   if (photoLightbox) return;
 
   photoLightbox = document.createElement("div");
-
   photoLightbox.id = "photoLightbox";
   photoLightbox.setAttribute("aria-hidden", "true");
   photoLightbox.setAttribute("role", "dialog");
@@ -757,142 +628,53 @@ function setupPhotoLightbox() {
   photoLightbox.setAttribute("aria-label", "Enlarged camera photo");
 
   photoLightbox.innerHTML = `
-    <button
-      type="button"
-      class="lightbox-close"
-      aria-label="Close enlarged photo"
-    >×</button>
-
+    <button type="button" class="lightbox-close" aria-label="Close enlarged photo">×</button>
     <img class="lightbox-image" src="" alt="">
   `;
-
   document.body.appendChild(photoLightbox);
-
   lightboxImage = photoLightbox.querySelector(".lightbox-image");
 
-  const closeButton = photoLightbox.querySelector(".lightbox-close");
-
   const style = document.createElement("style");
-
   style.id = "photoLightboxStyles";
-
   style.textContent = `
-    #photoLightbox {
-      position: fixed;
-      inset: 0;
-      z-index: 100000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-sizing: border-box;
-      padding: 60px 24px 24px;
-      background: rgba(0, 0, 0, 0.94);
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.25s ease, visibility 0.25s ease;
-      cursor: zoom-out;
-    }
-
-    #photoLightbox.active {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    #photoLightbox .lightbox-image {
-      display: block;
-      width: auto;
-      height: auto;
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 4px;
-      cursor: default;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-
-    #photoLightbox .lightbox-close {
-      position: absolute;
-      top: 12px;
-      right: 22px;
-      z-index: 2;
-      width: 46px;
-      height: 46px;
-      padding: 0;
-      border: none;
-      background: transparent;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
-      font-size: 40px;
-      font-weight: 300;
-      line-height: 1;
-      cursor: pointer;
-    }
-
-    #photoLightbox .lightbox-close:hover {
-      color: #ff2aa6;
-    }
-
-    .camera-card-image img,
-    #modalCameraImage {
-      cursor: zoom-in;
-    }
-
-    @media (max-width: 600px) {
-      #photoLightbox {
-        padding: 58px 10px 16px;
-      }
-
-      #photoLightbox .lightbox-close {
-        top: 8px;
-        right: 12px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #photoLightbox {
-        transition: none;
-      }
-    }
+    #photoLightbox{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;
+    justify-content:center;box-sizing:border-box;padding:60px 24px 24px;background:rgba(0,0,0,.94);
+    opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility .25s ease;cursor:zoom-out}
+    #photoLightbox.active{opacity:1;visibility:visible;pointer-events:auto}
+    #photoLightbox .lightbox-image{display:block;width:auto;height:auto;max-width:100%;max-height:100%;
+    object-fit:contain;border-radius:4px;cursor:default;user-select:none;-webkit-user-drag:none}
+    #photoLightbox .lightbox-close{position:absolute;top:12px;right:22px;z-index:2;width:46px;height:46px;
+    padding:0;border:0;background:transparent;color:#fff;font:300 40px/1 Arial,sans-serif;cursor:pointer}
+    #photoLightbox .lightbox-close:hover{color:#ff2aa6}
+    .camera-card-image img,#modalCameraImage{cursor:zoom-in}
+    @media(max-width:600px){#photoLightbox{padding:58px 10px 16px}#photoLightbox .lightbox-close{top:8px;right:12px}}
+    @media(prefers-reduced-motion:reduce){#photoLightbox{transition:none}}
   `;
-
-  if (!$("photoLightboxStyles")) {
-    document.head.appendChild(style);
-  }
+  if (!$("photoLightboxStyles")) document.head.appendChild(style);
 
   cameraGrid?.addEventListener("click", (event) => {
     const image = event.target.closest(".camera-card-image img");
-
     if (!image || !cameraGrid.contains(image)) return;
-
     event.preventDefault();
     event.stopPropagation();
-
     openPhotoLightbox(image.src, image.alt);
   });
 
   modalCameraImage?.addEventListener("click", () => {
-    if (!modalCameraImage.src) return;
-
-    openPhotoLightbox(
-      modalCameraImage.src,
-      modalCameraImage.alt || "Camera sample photo",
-    );
+    if (modalCameraImage.src)
+      openPhotoLightbox(
+        modalCameraImage.src,
+        modalCameraImage.alt || "Camera sample photo",
+      );
   });
 
-  closeButton.addEventListener("click", closePhotoLightbox);
-
+  photoLightbox
+    .querySelector(".lightbox-close")
+    ?.addEventListener("click", closePhotoLightbox);
   photoLightbox.addEventListener("click", (event) => {
-    if (event.target === photoLightbox) {
-      closePhotoLightbox();
-    }
+    if (event.target === photoLightbox) closePhotoLightbox();
   });
-
-  lightboxImage.addEventListener("click", (event) => {
-    event.stopPropagation();
-  });
+  lightboxImage.addEventListener("click", (event) => event.stopPropagation());
 
   document.addEventListener(
     "keydown",
@@ -911,108 +693,25 @@ function setupPhotoLightbox() {
 
 function openPhotoLightbox(src, alt = "Camera sample photo") {
   if (!photoLightbox || !lightboxImage || !src) return;
-
   previousBodyOverflow = document.body.style.overflow;
-
   lightboxImage.src = src;
   lightboxImage.alt = alt;
-
   photoLightbox.classList.add("active");
   photoLightbox.setAttribute("aria-hidden", "false");
-
   document.body.style.overflow = "hidden";
-
   photoLightbox.querySelector(".lightbox-close")?.focus();
 }
 
 function closePhotoLightbox() {
   if (!photoLightbox) return;
-
   photoLightbox.classList.remove("active");
   photoLightbox.setAttribute("aria-hidden", "true");
-
   if (lightboxImage) {
     lightboxImage.src = "";
     lightboxImage.alt = "";
   }
-
   document.body.style.overflow = previousBodyOverflow;
 }
-
-/* =========================================================
-   CLOSE CAMERA MODAL
-   ========================================================= */
-
-function closeCameraModal() {
-  if (!cameraModal) return;
-
-  cameraModal.classList.remove("active");
-  cameraModal.setAttribute("aria-hidden", "true");
-
-  document.body.classList.remove("modal-open");
-}
-
-modalClose?.addEventListener("click", closeCameraModal);
-modalOverlay?.addEventListener("click", closeCameraModal);
-
-document.addEventListener("keydown", (event) => {
-  if (photoLightbox?.classList.contains("active")) return;
-
-  if (event.key === "Escape" && cameraModal?.classList.contains("active")) {
-    closeCameraModal();
-  }
-
-  if (!cameraModal?.classList.contains("active")) return;
-
-  if (event.key === "ArrowLeft") {
-    event.preventDefault();
-    moveGallery(-1);
-  }
-
-  if (event.key === "ArrowRight") {
-    event.preventDefault();
-    moveGallery(1);
-  }
-});
-
-/* =========================================================
-   BOOK THIS CAMERA
-   ========================================================= */
-
-modalBookButton?.addEventListener("click", () => {
-  const cameraId = modalBookButton.dataset.cameraId;
-
-  if (!cameraId || !cameraSelect) return;
-
-  const selectedMode = modalRentalDuration?.value || RENTAL_MODE.DAILY;
-
-  cameraSelect.value = cameraId;
-  selectedCameraId = cameraId;
-
-  setupRentalDurationOptions();
-
-  if (rentalDuration) {
-    const camera = cameras.find((item) => item.id === cameraId);
-
-    rentalDuration.value =
-      isFlexiblePriceCamera(camera) &&
-      [RENTAL_MODE.SIX_HOURS, RENTAL_MODE.TWELVE_HOURS].includes(selectedMode)
-        ? selectedMode
-        : RENTAL_MODE.DAILY;
-  }
-
-  updateDurationFieldState(rentalDuration);
-  syncReturnDateTime();
-  updateBookingSummary();
-  scheduleAvailabilityCheck();
-
-  closeCameraModal();
-
-  $("booking")?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-});
 
 /* =========================================================
    DATE AND TIME HELPERS
@@ -1022,68 +721,37 @@ function getTodayString() {
   return toLocalDateString(new Date());
 }
 
-function setMinimumDates() {
-  const today = getTodayString();
-
-  if (startDate) {
-    startDate.min = today;
-  }
-
-  if (endDate) {
-    endDate.min = startDate?.value || today;
-  }
-}
-
 function toLocalDateString(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-
   return `${year}-${month}-${day}`;
 }
 
 function toLocalTimeString(date) {
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
 
-  return `${hours}:${minutes}`;
+function setMinimumDates() {
+  const today = getTodayString();
+  if (startDate) startDate.min = today;
+  if (endDate) endDate.min = startDate?.value || today;
 }
 
 function getPickupDateTime() {
   if (!startDate?.value || !startTime?.value) return null;
-
   const date = new Date(`${startDate.value}T${startTime.value}:00`);
-
-  if (Number.isNaN(date.getTime())) return null;
-
-  return date;
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function getReturnDateTime() {
   if (!endDate?.value || !endTime?.value) return null;
-
   const date = new Date(`${endDate.value}T${endTime.value}:00`);
-
-  if (Number.isNaN(date.getTime())) return null;
-
-  return date;
-}
-
-function formatDateIndonesia(dateString) {
-  if (!dateString) return "-";
-
-  const date = new Date(`${dateString}T00:00:00`);
-
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function formatDateTimeIndonesia(date) {
   if (!date || Number.isNaN(date.getTime())) return "-";
-
   return date.toLocaleString("en-GB", {
     day: "2-digit",
     month: "long",
@@ -1095,12 +763,11 @@ function formatDateTimeIndonesia(date) {
 }
 
 /* =========================================================
-   AUTOMATIC RETURN DATE AND TIME
+   AUTOMATIC RETURN DATE/TIME
    ========================================================= */
 
 function syncReturnDateTime() {
   const pickup = getPickupDateTime();
-
   if (!pickup) {
     updateBookingSummary();
     return;
@@ -1111,31 +778,22 @@ function syncReturnDateTime() {
 
   if (
     isFlexiblePriceCamera(camera) &&
-    (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS)
+    [RENTAL_MODE.SIX_HOURS, RENTAL_MODE.TWELVE_HOURS].includes(mode)
   ) {
-    const hours = Number(mode);
-
-    const returned = new Date(pickup.getTime() + hours * 60 * 60 * 1000);
-
+    const returned = new Date(pickup.getTime() + Number(mode) * 60 * 60 * 1000);
     if (endDate) {
       endDate.value = toLocalDateString(returned);
       endDate.min = startDate?.value || getTodayString();
     }
-
-    if (endTime) {
-      endTime.value = toLocalTimeString(returned);
-    }
-
+    if (endTime) endTime.value = toLocalTimeString(returned);
     updateBookingSummary();
     scheduleAvailabilityCheck();
-
     return;
   }
 
   if (mode === RENTAL_MODE.DAILY) {
     if (endDate) {
       endDate.min = startDate?.value || getTodayString();
-
       if (
         endDate.value &&
         startDate?.value &&
@@ -1144,15 +802,10 @@ function syncReturnDateTime() {
         endDate.value = "";
       }
     }
-
     updateBookingSummary();
     scheduleAvailabilityCheck();
   }
 }
-
-/* =========================================================
-   DURATION SYNCHRONIZATION
-   ========================================================= */
 
 function setupDurationSynchronization() {
   rentalDuration?.addEventListener("change", () => {
@@ -1167,10 +820,6 @@ function setupDurationSynchronization() {
   });
 }
 
-/* =========================================================
-   BOOKING LISTENERS
-   ========================================================= */
-
 function setupBookingListeners() {
   [startDate, startTime].forEach((input) => {
     input?.addEventListener("change", () => {
@@ -1178,7 +827,6 @@ function setupBookingListeners() {
       updateBookingSummary();
       scheduleAvailabilityCheck();
     });
-
     input?.addEventListener("input", () => {
       syncReturnDateTime();
       updateBookingSummary();
@@ -1191,7 +839,6 @@ function setupBookingListeners() {
       updateBookingSummary();
       scheduleAvailabilityCheck();
     });
-
     input?.addEventListener("input", () => {
       updateBookingSummary();
       scheduleAvailabilityCheck();
@@ -1202,7 +849,6 @@ function setupBookingListeners() {
     updateBookingSummary();
     scheduleAvailabilityCheck();
   });
-
   cameraQuantity?.addEventListener("input", () => {
     updateBookingSummary();
     scheduleAvailabilityCheck();
@@ -1212,18 +858,315 @@ function setupBookingListeners() {
 }
 
 /* =========================================================
-   CAMERA AVAILABILITY — DISPLAY AND CHECK
+   NEW: AVAILABILITY CALENDAR
    ========================================================= */
 
-/*
- * This function is a user-facing availability check.
- * The authoritative stock check happens again inside
- * create_rental_booking on the database before insertion.
- */
+const calendarState = {
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+  cameraId: "",
+  bookings: [],
+  selectedDate: "",
+  loading: false,
+  requestId: 0,
+};
+
+function setupAvailabilityCalendar() {
+  const calendarSelect = $("calendarCameraSelect");
+  const calendarContainer = $("availabilityCalendar");
+  const openButton = $("openAvailabilityCalendar");
+
+  if (!calendarSelect || !calendarContainer) return;
+
+  calendarSelect.innerHTML = `<option value="">Select a camera</option>`;
+
+  cameras.forEach((camera) => {
+    const option = document.createElement("option");
+    option.value = camera.id;
+    option.textContent = camera.name;
+    calendarSelect.appendChild(option);
+  });
+
+  calendarSelect.addEventListener("change", () => {
+    calendarState.cameraId = calendarSelect.value;
+    if (cameraSelect && cameraSelect.value !== calendarSelect.value) {
+      cameraSelect.value = calendarSelect.value;
+      selectedCameraId = calendarSelect.value || null;
+      setupRentalDurationOptions();
+      syncReturnDateTime();
+      updateBookingSummary();
+    }
+    loadCalendarBookings();
+  });
+
+  cameraSelect?.addEventListener("change", () => {
+    syncCalendarCameraFromBooking();
+  });
+
+  openButton?.addEventListener("click", () => {
+    syncCalendarCameraFromBooking();
+    $("availabilityCalendarSection")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+
+  calendarState.cameraId = cameraSelect?.value || "";
+  calendarSelect.value = calendarState.cameraId;
+
+  renderAvailabilityCalendar();
+
+  if (calendarState.cameraId) {
+    loadCalendarBookings();
+  } else {
+    showCalendarMessage("Select a camera to view its schedule.");
+  }
+}
+
+function syncCalendarCameraFromBooking() {
+  const calendarSelect = $("calendarCameraSelect");
+  if (!calendarSelect || !cameraSelect) return;
+
+  if (calendarSelect.value !== cameraSelect.value) {
+    calendarSelect.value = cameraSelect.value;
+  }
+
+  calendarState.cameraId = cameraSelect.value || "";
+
+  if (calendarState.cameraId) {
+    loadCalendarBookings();
+  } else {
+    calendarState.bookings = [];
+    renderAvailabilityCalendar();
+    showCalendarMessage("Select a camera to view its schedule.");
+  }
+}
+
+function showCalendarMessage(message, isError = false) {
+  const note = $("availabilityCalendarNote");
+  if (!note) return;
+  note.textContent = message;
+  note.style.color = isError ? "#ff7777" : "";
+}
+
+function getCalendarMonthStart() {
+  return `${calendarState.year}-${String(calendarState.month + 1).padStart(2, "0")}-01`;
+}
+
+function getCalendarMonthEnd() {
+  const nextMonth = new Date(calendarState.year, calendarState.month + 1, 1);
+  return `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+async function loadCalendarBookings() {
+  const cameraId = calendarState.cameraId;
+  if (
+    !cameraId ||
+    !Number.isSafeInteger(Number(cameraId)) ||
+    Number(cameraId) <= 0
+  ) {
+    calendarState.bookings = [];
+    renderAvailabilityCalendar();
+    showCalendarMessage("Select a camera to view its schedule.");
+    return;
+  }
+
+  const requestId = ++calendarState.requestId;
+  calendarState.loading = true;
+  renderAvailabilityCalendar();
+  showCalendarMessage("Loading camera schedule...");
+
+  try {
+    const { data, error } = await supabaseClient.rpc(
+      "get_public_camera_bookings",
+      {
+        p_camera_id: Number(cameraId),
+        p_month_start: getCalendarMonthStart(),
+        p_month_end: getCalendarMonthEnd(),
+      },
+    );
+
+    if (error) throw error;
+    if (requestId !== calendarState.requestId) return;
+
+    calendarState.bookings = Array.isArray(data) ? data : [];
+    calendarState.loading = false;
+    renderAvailabilityCalendar();
+
+    const camera = cameras.find((item) => item.id === cameraId);
+    showCalendarMessage(
+      `${camera?.name || "Selected camera"} schedule loaded. Dates marked “Booked” have at least one pending or confirmed booking. Remaining stock depends on the exact rental times and quantity.`,
+    );
+  } catch (error) {
+    console.error("Failed to load calendar bookings:", error);
+    if (requestId !== calendarState.requestId) return;
+
+    calendarState.bookings = [];
+    calendarState.loading = false;
+    renderAvailabilityCalendar();
+    showCalendarMessage(
+      "Unable to load the calendar schedule. Check that the Supabase RPC get_public_camera_bookings exists and is accessible.",
+      true,
+    );
+  }
+}
+
+function calendarDateHasBooking(year, month, day) {
+  const dayStart = new Date(year, month, day, 0, 0, 0, 0);
+  const dayEnd = new Date(year, month, day + 1, 0, 0, 0, 0);
+
+  return calendarState.bookings.some((booking) => {
+    const pickup = new Date(booking.pickup_at);
+    const returned = new Date(booking.return_at);
+    return pickup < dayEnd && returned > dayStart;
+  });
+}
+
+function renderAvailabilityCalendar() {
+  const container = $("availabilityCalendar");
+  if (!container) return;
+
+  const monthName = new Date(
+    calendarState.year,
+    calendarState.month,
+    1,
+  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  const firstWeekday = new Date(
+    calendarState.year,
+    calendarState.month,
+    1,
+  ).getDay();
+  const daysInMonth = new Date(
+    calendarState.year,
+    calendarState.month + 1,
+    0,
+  ).getDate();
+  const today = getTodayString();
+
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  let html = `
+    <div class="availability-calendar-toolbar">
+      <button type="button" id="calendarPreviousMonth" aria-label="Previous month">←</button>
+      <strong>${escapeHTML(monthName)}</strong>
+      <button type="button" id="calendarNextMonth" aria-label="Next month">→</button>
+    </div>
+    <div class="availability-calendar-grid">
+      ${weekdays.map((day) => `<div class="calendar-weekday">${day}</div>`).join("")}
+  `;
+
+  for (let i = 0; i < firstWeekday; i++) {
+    html += `<div aria-hidden="true"></div>`;
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = `${calendarState.year}-${String(calendarState.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const hasBooking = calendarDateHasBooking(
+      calendarState.year,
+      calendarState.month,
+      day,
+    );
+    const isPast = date < today;
+    const isToday = date === today;
+    const isSelected = date === calendarState.selectedDate;
+
+    const classes = [
+      "calendar-date-button",
+      hasBooking ? "has-booking" : "",
+      isToday ? "is-today" : "",
+      isSelected ? "is-selected" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    html += `
+      <button type="button" class="${classes}" data-calendar-date="${date}"
+        ${isPast ? "disabled" : ""} aria-label="${date}${hasBooking ? ", existing booking" : ""}">
+        <span class="calendar-date-number">${day}</span>
+        <span class="calendar-date-status">${hasBooking ? "Booked" : ""}</span>
+      </button>
+    `;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+
+  $("calendarPreviousMonth")?.addEventListener("click", () => {
+    calendarState.month--;
+    if (calendarState.month < 0) {
+      calendarState.month = 11;
+      calendarState.year--;
+    }
+    loadCalendarBookings();
+  });
+
+  $("calendarNextMonth")?.addEventListener("click", () => {
+    calendarState.month++;
+    if (calendarState.month > 11) {
+      calendarState.month = 0;
+      calendarState.year++;
+    }
+    loadCalendarBookings();
+  });
+
+  container.querySelectorAll("[data-calendar-date]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectCalendarDate(button.dataset.calendarDate);
+    });
+  });
+}
+
+function selectCalendarDate(date) {
+  if (!date) return;
+
+  const today = getTodayString();
+  if (date < today) return;
+
+  calendarState.selectedDate = date;
+
+  if (startDate) {
+    startDate.value = date;
+    startDate.dispatchEvent(new Event("input", { bubbles: true }));
+    startDate.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  /*
+   * For daily rentals, the customer can select a return date manually.
+   * For 6/12-hour rentals, return date/time are calculated automatically.
+   */
+  if (
+    getSelectedRentalMode() === RENTAL_MODE.DAILY &&
+    endDate &&
+    !endDate.readOnly
+  ) {
+    if (!endDate.value || endDate.value < date) {
+      endDate.value = date;
+    }
+    endDate.min = date;
+  }
+
+  syncReturnDateTime();
+  updateBookingSummary();
+  scheduleAvailabilityCheck();
+  renderAvailabilityCalendar();
+
+  $("bookingForm")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+
+  showCalendarMessage(
+    `Pickup date set to ${date}. Choose the pickup time and check the exact availability before submitting.`,
+  );
+}
+
+/* =========================================================
+   AVAILABILITY MESSAGE / REAL-TIME CHECK
+   ========================================================= */
 
 function ensureAvailabilityMessage() {
   let message = $("availabilityMessage");
-
   if (message || !bookingForm) return message;
 
   message = document.createElement("div");
@@ -1231,15 +1174,12 @@ function ensureAvailabilityMessage() {
   message.className = "availability-message";
   message.setAttribute("role", "status");
   message.setAttribute("aria-live", "polite");
-
   message.style.cssText =
-    "margin:12px 0;padding:12px 14px;border-radius:8px;" +
-    "font-size:14px;line-height:1.5;display:none;";
+    "margin:12px 0;padding:12px 14px;border-radius:8px;font-size:14px;line-height:1.5;display:none;";
 
   const submitButton = bookingForm.querySelector(
-    'button[type="submit"], input[type="submit"]',
+    'button[type="submit"],input[type="submit"]',
   );
-
   if (submitButton?.parentElement) {
     submitButton.parentElement.insertBefore(message, submitButton);
   } else {
@@ -1251,29 +1191,26 @@ function ensureAvailabilityMessage() {
 
 function showAvailabilityMessage(text, type = "info") {
   const message = ensureAvailabilityMessage();
-
   if (!message) return;
 
   message.textContent = text;
   message.style.display = "block";
 
   if (type === "error") {
-    message.style.background = "rgba(220, 38, 38, 0.12)";
+    message.style.background = "rgba(220,38,38,.12)";
     message.style.color = "#dc2626";
   } else if (type === "success") {
-    message.style.background = "rgba(22, 163, 74, 0.12)";
+    message.style.background = "rgba(22,163,74,.12)";
     message.style.color = "#16a34a";
   } else {
-    message.style.background = "rgba(128, 128, 128, 0.12)";
+    message.style.background = "rgba(128,128,128,.12)";
     message.style.color = "inherit";
   }
 }
 
 async function checkCameraAvailability() {
   const requestId = ++availabilityRequestId;
-
   const camera = cameras.find((item) => item.id === cameraSelect?.value);
-
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
   const quantity = Number(cameraQuantity?.value);
@@ -1291,7 +1228,6 @@ async function checkCameraAvailability() {
     showAvailabilityMessage(
       "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
     );
-
     return null;
   }
 
@@ -1308,29 +1244,23 @@ async function checkCameraAvailability() {
     );
 
     if (error) throw error;
-
-    // Ignore an outdated response if the user has changed the booking.
     if (requestId !== availabilityRequestId) return null;
 
     const result = Array.isArray(data) ? data[0] : data;
-
     if (!result) {
       showAvailabilityMessage(
         "Ketersediaan belum bisa diverifikasi. Periksa tanggal dan jam, lalu coba lagi.",
         "error",
       );
-
       return null;
     }
 
     const available = Number(result.available_quantity);
-
     if (!Number.isFinite(available)) {
       showAvailabilityMessage(
         "Respons ketersediaan tidak valid. Silakan coba lagi.",
         "error",
       );
-
       return null;
     }
 
@@ -1339,7 +1269,6 @@ async function checkCameraAvailability() {
         `Stok tidak cukup untuk periode ini. Tersedia ${available} unit, sedangkan kamu memilih ${quantity} unit.`,
         "error",
       );
-
       return result;
     }
 
@@ -1347,28 +1276,22 @@ async function checkCameraAvailability() {
       `Tersedia ${available} unit untuk periode yang kamu pilih.`,
       "success",
     );
-
     return result;
   } catch (error) {
     console.error("Availability check failed:", error);
-
     if (requestId === availabilityRequestId) {
       showAvailabilityMessage(
         "Gagal mengecek ketersediaan. Coba lagi sebelum mengirim booking.",
         "error",
       );
     }
-
     return null;
   }
 }
 
 function scheduleAvailabilityCheck() {
   window.clearTimeout(availabilityTimer);
-
-  availabilityTimer = window.setTimeout(() => {
-    checkCameraAvailability();
-  }, 350);
+  availabilityTimer = window.setTimeout(checkCameraAvailability, 350);
 }
 
 function setupAvailabilityChecker() {
@@ -1397,13 +1320,11 @@ function setupPhoneInputs() {
     console.warn(
       "intl-tel-input has not loaded. Country code selector is unavailable.",
     );
-
     return;
   }
 
   ["whatsapp", "emergencyContact"].forEach((id) => {
     const input = $(id);
-
     if (!input) return;
 
     phoneInputs[id] = window.intlTelInput(input, {
@@ -1421,7 +1342,6 @@ function setupPhoneInputs() {
 function getInternationalNumber(id) {
   const input = $(id);
   const phoneInput = phoneInputs[id];
-
   if (!input) return "";
 
   if (phoneInput && input.value.trim()) {
@@ -1437,11 +1357,9 @@ function getInternationalNumber(id) {
 
 function isValidPhoneNumber(id) {
   const input = $(id);
-
   if (!input || !input.value.trim()) return false;
 
   const phoneInput = phoneInputs[id];
-
   if (phoneInput) {
     try {
       return phoneInput.isValidNumber();
@@ -1461,34 +1379,22 @@ function updateBookingSummary() {
   const camera = getSelectedCamera();
   const mode = getSelectedRentalMode();
   const actualHours = getRentalDurationDifference();
-
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
 
-  if (summaryCamera) {
-    summaryCamera.textContent = camera ? camera.name : "-";
-  }
+  if (summaryCamera) summaryCamera.textContent = camera ? camera.name : "-";
 
   if (summaryDuration) {
     if (mode === RENTAL_MODE.SIX_HOURS) {
-      const price = getPriceForRental(camera, mode, actualHours);
-
-      summaryDuration.textContent = `6 Hours — ${formatRupiah(price.amount)}`;
+      summaryDuration.textContent = `6 Hours — ${formatRupiah(getPriceForRental(camera, mode, actualHours).amount)}`;
     } else if (mode === RENTAL_MODE.TWELVE_HOURS) {
-      const price = getPriceForRental(camera, mode, actualHours);
-
-      summaryDuration.textContent = `12 Hours — ${formatRupiah(price.amount)}`;
+      summaryDuration.textContent = `12 Hours — ${formatRupiah(getPriceForRental(camera, mode, actualHours).amount)}`;
     } else {
       const days = getChargeableDays(actualHours);
-
       if (!actualHours || !days) {
         summaryDuration.textContent = "Daily Rental — select return time";
       } else {
         const priceInfo = getPriceForRental(camera, mode, actualHours);
-
-        summaryDuration.textContent =
-          `${formatDuration(actualHours)} ` +
-          `(${actualHours.toFixed(2)} hours actual) — ` +
-          `${formatRupiah(priceInfo.amount)} per camera`;
+        summaryDuration.textContent = `${formatDuration(actualHours)} (${actualHours.toFixed(2)} hours actual) — ${formatRupiah(priceInfo.amount)} per camera`;
       }
     }
   }
@@ -1502,29 +1408,18 @@ function updateBookingSummary() {
 
 function updateDisplayedPriceIfPossible(camera, mode, actualHours) {
   const summaryPrice = $("summaryPrice");
-
   if (!summaryPrice) return;
 
   const priceInfo = getPriceForRental(camera, mode, actualHours);
-
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
-
   summaryPrice.textContent =
     priceInfo.amount > 0 ? formatRupiah(priceInfo.amount * quantity) : "-";
 }
 
-/* =========================================================
-   ACTUAL RENTAL DURATION CALCULATION
-   ========================================================= */
-
 function getRentalDurationDifference() {
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
-
-  if (!pickup || !returned || returned <= pickup) {
-    return null;
-  }
-
+  if (!pickup || !returned || returned <= pickup) return null;
   return (returned.getTime() - pickup.getTime()) / (60 * 60 * 1000);
 }
 
@@ -1536,32 +1431,21 @@ function clearValidation() {
   document.querySelectorAll(".error-message").forEach((error) => {
     error.textContent = "";
   });
-
   document.querySelectorAll(".input-error").forEach((input) => {
     input.classList.remove("input-error");
   });
-
-  if (agreementError) {
-    agreementError.textContent = "";
-  }
+  if (agreementError) agreementError.textContent = "";
 }
 
 function showFieldError(input, message) {
   if (!input) return;
-
   input.classList.add("input-error");
-
-  const parent = input.closest(".form-group");
-  const error = parent?.querySelector(".error-message");
-
-  if (error) {
-    error.textContent = message;
-  }
+  const error = input.closest(".form-group")?.querySelector(".error-message");
+  if (error) error.textContent = message;
 }
 
 function validateBookingForm() {
   clearValidation();
-
   let isValid = true;
 
   const requiredFields = [
@@ -1583,25 +1467,19 @@ function validateBookingForm() {
 
   requiredFields.forEach(([id, message]) => {
     const input = $(id);
-
     if (!input || !String(input.value || "").trim()) {
       showFieldError(input, message);
       isValid = false;
     }
   });
 
-  /* CAMERA VALIDATION */
-
   const selectedCamera = cameras.find(
     (item) => item.id === cameraSelect?.value,
   );
-
   if (!selectedCamera) {
     showFieldError(cameraSelect, "Please select a valid camera.");
     isValid = false;
   }
-
-  /* PICKUP VALIDATION */
 
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
@@ -1611,25 +1489,20 @@ function validateBookingForm() {
       startDate || startTime,
       "Please enter a valid pickup date and time.",
     );
-
     isValid = false;
   } else if (pickup.getTime() < Date.now()) {
     showFieldError(
       startTime || startDate,
       "Pickup time cannot be in the past.",
     );
-
     isValid = false;
   }
-
-  /* RETURN VALIDATION */
 
   if (!returned) {
     showFieldError(
       endDate || endTime,
       "Please enter a valid return date and time.",
     );
-
     isValid = false;
   }
 
@@ -1639,7 +1512,6 @@ function validateBookingForm() {
         endTime || endDate,
         "Return time must be after pickup time.",
       );
-
       isValid = false;
     }
 
@@ -1650,83 +1522,54 @@ function validateBookingForm() {
         rentalDuration,
         "This camera is only available for daily rental.",
       );
-
       isValid = false;
     }
 
-    if (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS) {
-      const expectedHours = Number(mode);
-
-      const actualHours =
-        (returned.getTime() - pickup.getTime()) / (60 * 60 * 1000);
-
-      if (Math.abs(actualHours - expectedHours) > 0.001) {
+    if ([RENTAL_MODE.SIX_HOURS, RENTAL_MODE.TWELVE_HOURS].includes(mode)) {
+      const actualHours = (returned - pickup) / (60 * 60 * 1000);
+      if (Math.abs(actualHours - Number(mode)) > 0.001) {
         showFieldError(
           endTime || endDate,
           "Return time does not match the selected duration.",
         );
-
         isValid = false;
       }
     }
 
     if (mode === RENTAL_MODE.DAILY && returned > pickup) {
-      const actualHours =
-        (returned.getTime() - pickup.getTime()) / (60 * 60 * 1000);
-
-      const days = getChargeableDays(actualHours);
-
+      const days = getChargeableDays((returned - pickup) / (60 * 60 * 1000));
       if (!days || days < 1) {
         showFieldError(
           endTime || endDate,
           "Please choose a valid daily rental period.",
         );
-
         isValid = false;
       }
     }
   }
 
-  /* PHONE VALIDATION */
-
   ["whatsapp", "emergencyContact"].forEach((id) => {
     const input = $(id);
-
     if (input?.value.trim() && !isValidPhoneNumber(id)) {
       showFieldError(input, "Please enter a valid phone number.");
       isValid = false;
     }
   });
 
-  /* QUANTITY VALIDATION */
-
-  if (cameraQuantity) {
-    const quantity = Number(cameraQuantity.value);
-
-    if (!Number.isInteger(quantity) || quantity < 1) {
-      showFieldError(cameraQuantity, "Number of units must be at least 1.");
-
-      isValid = false;
-    }
-  }
-
-  /* REQUIRED ID / PASSPORT */
-
-  const ktpCheck = $("ktpCheck");
-
-  if (ktpCheck && !ktpCheck.checked) {
-    showFieldError(ktpCheck, "A valid ID card or passport is required.");
-
+  const quantity = Number(cameraQuantity?.value);
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    showFieldError(cameraQuantity, "Number of units must be at least 1.");
     isValid = false;
   }
 
-  /* AGREEMENT */
+  if ($("ktpCheck") && !$("ktpCheck").checked) {
+    showFieldError($("ktpCheck"), "A valid ID card or passport is required.");
+    isValid = false;
+  }
 
   if (!agreement?.checked) {
-    if (agreementError) {
+    if (agreementError)
       agreementError.textContent = "You must agree to the booking terms.";
-    }
-
     isValid = false;
   }
 
@@ -1734,79 +1577,50 @@ function validateBookingForm() {
 }
 
 /* =========================================================
-   BOOKING FORM SUBMIT — SUPABASE RPC + WHATSAPP
+   BOOKING SUBMIT — DATABASE RPC + WHATSAPP
    ========================================================= */
-
-/*
- * Flow:
- * 1. Validate the form.
- * 2. Check the current stock.
- * 3. Call create_rental_booking, which checks stock again
- *    inside the database before saving.
- * 4. Open WhatsApp only after the insert succeeds.
- *
- * The RPC is the authoritative stock check.
- * The browser-side availability display alone is not enough.
- */
 
 if (bookingForm) {
   bookingForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const submitButton = bookingForm.querySelector(
-      'button[type="submit"], input[type="submit"]',
+      'button[type="submit"],input[type="submit"]',
     );
-
     if (submitButton?.disabled) return;
 
     syncReturnDateTime();
 
-    const isValid = validateBookingForm();
-
-    if (!isValid) {
+    if (!validateBookingForm()) {
       document.querySelector(".input-error")?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
-
       return;
     }
 
     const camera = cameras.find((item) => item.id === cameraSelect?.value);
-
     if (!camera) {
       alert("Camera not found. Please select a camera again.");
       return;
     }
 
-    /*
-     * IDs must come from the Supabase cameras table.
-     * Local fallback IDs like "camera-01" cannot be used
-     * as database foreign keys.
-     */
-
     const cameraId = Number(camera.id);
-
     if (!Number.isSafeInteger(cameraId) || cameraId <= 0) {
-      console.error("Invalid Supabase camera ID:", camera.id);
-
       alert(
-        "Camera data could not be verified. " +
-          "Please refresh the page and try again.",
+        "Camera data could not be verified. Please refresh the page and try again.",
       );
-
       return;
     }
 
     const pickup = getPickupDateTime();
     const returned = getReturnDateTime();
+    const quantity = Number(cameraQuantity?.value);
 
     if (!pickup || !returned || returned <= pickup) {
       alert("Please check the rental dates and times.");
       return;
     }
-
-    const quantity = Number(cameraQuantity?.value);
 
     if (!Number.isInteger(quantity) || quantity < 1) {
       alert("Please enter a valid camera quantity.");
@@ -1843,14 +1657,7 @@ if (bookingForm) {
       `Additional comments: ${comments || "-"}`,
     ].join("\n");
 
-    /*
-     * Build the WhatsApp URL before saving.
-     * Do not open WhatsApp until the database confirms
-     * the booking request was successfully inserted.
-     */
-
     const whatsappURL = createWhatsAppMessage();
-
     const originalButtonText = submitButton
       ? submitButton.tagName === "INPUT"
         ? submitButton.value
@@ -1859,19 +1666,12 @@ if (bookingForm) {
 
     if (submitButton) {
       submitButton.disabled = true;
-
-      if (submitButton.tagName === "INPUT") {
+      if (submitButton.tagName === "INPUT")
         submitButton.value = "Checking availability...";
-      } else {
-        submitButton.textContent = "Checking availability...";
-      }
+      else submitButton.textContent = "Checking availability...";
     }
 
     try {
-      /*
-       * First check: user-facing availability information.
-       */
-
       const availability = await checkCameraAvailability();
 
       if (!availability || Number(availability.available_quantity) < quantity) {
@@ -1880,24 +1680,10 @@ if (bookingForm) {
         );
       }
 
-      /*
-       * Second check: authoritative database validation.
-       *
-       * create_rental_booking must exist in Supabase.
-       * It checks overlapping pending/confirmed bookings,
-       * locks the camera row, and inserts the booking only
-       * when enough units remain.
-       *
-       * Do not replace this RPC with a direct table insert,
-       * because a direct insert would bypass this function.
-       */
-
       if (submitButton) {
-        if (submitButton.tagName === "INPUT") {
+        if (submitButton.tagName === "INPUT")
           submitButton.value = "Saving booking...";
-        } else {
-          submitButton.textContent = "Saving booking...";
-        }
+        else submitButton.textContent = "Saving booking...";
       }
 
       const { data: bookingId, error } = await supabaseClient.rpc(
@@ -1915,25 +1701,15 @@ if (bookingForm) {
       );
 
       if (error) throw error;
-
-      if (!bookingId) {
-        throw new Error("Supabase did not return a booking ID.");
-      }
+      if (!bookingId) throw new Error("Supabase did not return a booking ID.");
 
       console.log("Booking request saved:", bookingId);
-
       showAvailabilityMessage(
         "Permintaan booking berhasil disimpan. Membuka WhatsApp...",
         "success",
       );
 
-      /*
-       * Attempt to open WhatsApp in a new tab.
-       * Fall back to the current page if blocked.
-       */
-
       let whatsappWindow = null;
-
       try {
         whatsappWindow = window.open(
           whatsappURL,
@@ -1944,62 +1720,47 @@ if (bookingForm) {
         console.warn("Unable to open WhatsApp in a new tab:", error);
       }
 
-      if (!whatsappWindow) {
-        window.location.href = whatsappURL;
-      }
+      if (!whatsappWindow) window.location.href = whatsappURL;
     } catch (error) {
-      console.error("Failed to save booking to Supabase:", error);
-
-      const errorMessage = String(error?.message || "");
+      console.error("Failed to save booking:", error);
+      const message = String(error?.message || "").toLowerCase();
 
       if (
-        errorMessage.toLowerCase().includes("stok tidak cukup") ||
-        errorMessage.toLowerCase().includes("stock") ||
-        errorMessage.toLowerCase().includes("not enough")
+        message.includes("stok tidak cukup") ||
+        message.includes("stock") ||
+        message.includes("not enough")
       ) {
-        showAvailabilityMessage(errorMessage, "error");
-
+        showAvailabilityMessage(error.message, "error");
         alert(
-          "Booking tidak bisa diproses karena stok kamera " +
-            "tidak cukup untuk periode tersebut. Silakan pilih " +
-            "waktu lain atau kurangi jumlah unit.",
+          "Booking tidak bisa diproses karena stok kamera tidak cukup untuk periode tersebut. Pilih waktu lain atau kurangi jumlah unit.",
         );
       } else if (
-        errorMessage.includes("create_rental_booking") ||
-        errorMessage.includes("get_camera_availability") ||
-        errorMessage.includes("Could not find the function")
+        message.includes("create_rental_booking") ||
+        message.includes("get_camera_availability") ||
+        message.includes("could not find the function")
       ) {
         showAvailabilityMessage(
           "Fungsi booking Supabase belum tersedia atau belum bisa diakses. Periksa fungsi SQL dan izinnya.",
           "error",
         );
-
         alert(
-          "Sistem booking belum siap. Periksa apakah fungsi " +
-            "Supabase create_rental_booking dan " +
-            "get_camera_availability sudah dibuat dengan benar.",
+          "Sistem booking belum siap. Periksa fungsi Supabase create_rental_booking dan get_camera_availability.",
         );
       } else {
         showAvailabilityMessage(
           "Booking belum berhasil disimpan. Silakan coba lagi.",
           "error",
         );
-
         alert(
-          "Booking belum berhasil disimpan ke sistem. " +
-            "Silakan coba lagi. Jika masalah berlanjut, " +
-            "hubungi Enmax House melalui WhatsApp.",
+          "Booking belum berhasil disimpan ke sistem. Coba lagi atau hubungi Enmax House melalui WhatsApp.",
         );
       }
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
-
-        if (submitButton.tagName === "INPUT") {
+        if (submitButton.tagName === "INPUT")
           submitButton.value = originalButtonText;
-        } else {
-          submitButton.textContent = originalButtonText;
-        }
+        else submitButton.textContent = originalButtonText;
       }
     }
   });
@@ -2011,55 +1772,37 @@ if (bookingForm) {
 
 function createWhatsAppMessage() {
   const camera = cameras.find((item) => item.id === cameraSelect?.value);
-
   const fullName = $("fullName")?.value.trim() || "";
   const occupation = $("occupation")?.value.trim() || "";
   const workplace = $("workplace")?.value.trim() || "";
-
   const whatsapp = getInternationalNumber("whatsapp");
   const emergencyContact = getInternationalNumber("emergencyContact");
-
   const instagram = $("instagram")?.value.trim() || "";
   const pickupLocation = $("pickupLocation")?.value.trim() || "";
   const returnLocation = $("returnLocation")?.value.trim() || "";
   const comments = $("comments")?.value.trim() || "";
-
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
-
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
-
   const mode = getSelectedRentalMode();
   const actualHours = getRentalDurationDifference();
 
   let rentalDurationText = "-";
-
-  if (mode === RENTAL_MODE.SIX_HOURS) {
-    rentalDurationText = "6 Hours";
-  } else if (mode === RENTAL_MODE.TWELVE_HOURS) {
-    rentalDurationText = "12 Hours";
-  } else if (actualHours && actualHours > 0) {
+  if (mode === RENTAL_MODE.SIX_HOURS) rentalDurationText = "6 Hours";
+  else if (mode === RENTAL_MODE.TWELVE_HOURS) rentalDurationText = "12 Hours";
+  else if (actualHours && actualHours > 0) {
     const days = getChargeableDays(actualHours);
-
     rentalDurationText = `${days} ${days === 1 ? "Day" : "Days"}`;
   }
 
   const priceInfo = getPriceForRental(camera, mode, actualHours);
   const totalPrice = priceInfo.amount * quantity;
 
-  const ktpCheck = $("ktpCheck")?.checked;
-  const hotelCheck = $("hotelCheck")?.checked;
-  const flightCheck = $("flightCheck")?.checked;
-
   const documentStatus = `
-ID Card / Passport: ${
-    ktpCheck
-      ? "Required — to be presented or sent via WhatsApp"
-      : "Not prepared"
-  }
-Hotel Booking Confirmation: ${hotelCheck ? "Will be provided" : "Not specified"}
-Flight Details: ${flightCheck ? "Will be provided" : "Not specified"}
-  `.trim();
+ID Card / Passport: ${$("ktpCheck")?.checked ? "Required — to be presented or sent via WhatsApp" : "Not prepared"}
+Hotel Booking Confirmation: ${$("hotelCheck")?.checked ? "Will be provided" : "Not specified"}
+Flight Details: ${$("flightCheck")?.checked ? "Will be provided" : "Not specified"}
+`.trim();
 
   const message = `
 Hello Enmax House, I would like to submit a camera booking request.
@@ -2071,14 +1814,8 @@ Rental Duration: ${rentalDurationText}
 Price per Camera: ${priceInfo.amount > 0 ? formatRupiah(priceInfo.amount) : "-"}
 Number of Units: ${quantity}
 Estimated Total Rental Price: ${totalPrice > 0 ? formatRupiah(totalPrice) : "-"}
-Actual Rental Time: ${
-    actualHours && actualHours > 0 ? `${actualHours.toFixed(2)} hours` : "-"
-  }
-Chargeable Days: ${
-    mode === RENTAL_MODE.DAILY && priceInfo.days
-      ? `${priceInfo.days} ${priceInfo.days === 1 ? "day" : "days"}`
-      : "-"
-  }
+Actual Rental Time: ${actualHours && actualHours > 0 ? `${actualHours.toFixed(2)} hours` : "-"}
+Chargeable Days: ${mode === RENTAL_MODE.DAILY && priceInfo.days ? `${priceInfo.days} ${priceInfo.days === 1 ? "day" : "days"}` : "-"}
 Pickup: ${formatDateTimeIndonesia(pickup)}
 Return: ${formatDateTimeIndonesia(returned)}
 Pickup Location: ${pickupLocation}
@@ -2099,9 +1836,9 @@ ADDITIONAL NOTES
 ${comments || "-"}
 
 I understand that this is a booking request, not a confirmed reservation. I will wait for Enmax House to review and confirm my booking.
-  `.trim();
+`.trim();
 
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(message);
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
 /* =========================================================
@@ -2117,7 +1854,6 @@ function setupNavbar() {
 
   menuToggle.addEventListener("click", () => {
     const isOpen = navMenu.classList.toggle("active");
-
     menuToggle.setAttribute("aria-expanded", String(isOpen));
   });
 
@@ -2136,11 +1872,7 @@ function setupNavbar() {
 async function loadComments() {
   if (!commentsList) return;
 
-  commentsList.innerHTML = `
-    <div class="empty-comments">
-      <p>Loading comments...</p>
-    </div>
-  `;
+  commentsList.innerHTML = `<div class="empty-comments"><p>Loading comments...</p></div>`;
 
   try {
     const { data, error } = await supabaseClient
@@ -2151,42 +1883,26 @@ async function loadComments() {
     if (error) throw error;
 
     commentsList.innerHTML = "";
-
-    if (!data || data.length === 0) {
-      commentsList.innerHTML = `
-        <div class="empty-comments">
-          <p>Belum ada komentar. Jadilah yang pertama.</p>
-        </div>
-      `;
-
+    if (!data?.length) {
+      commentsList.innerHTML = `<div class="empty-comments"><p>Belum ada komentar. Jadilah yang pertama.</p></div>`;
       return;
     }
 
     data.forEach(renderComment);
   } catch (error) {
-    console.error("Supabase error:", error);
-
-    commentsList.innerHTML = `
-      <div class="empty-comments">
-        <p>Unable to load comments.</p>
-      </div>
-    `;
+    console.error("Failed to load comments:", error);
+    commentsList.innerHTML = `<div class="empty-comments"><p>Unable to load comments.</p></div>`;
   }
 }
-
-/* RENDER COMMENT */
 
 function renderComment(comment) {
   if (!commentsList) return;
 
   const article = document.createElement("article");
-
   article.className = "comment-card";
 
   const rating = Math.max(0, Math.min(5, Number(comment.rating) || 0));
-
   const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
-
   const date = comment.created_at
     ? new Date(comment.created_at).toLocaleDateString("id-ID", {
         day: "2-digit",
@@ -2198,27 +1914,16 @@ function renderComment(comment) {
   article.innerHTML = `
     <div class="comment-header">
       <div>
-        <strong class="comment-author">
-          ${escapeHTML(comment.name)}
-        </strong>
-
+        <strong class="comment-author">${escapeHTML(comment.name)}</strong>
         <div class="comment-rating">${stars}</div>
       </div>
-
-      <span class="comment-date">
-        ${escapeHTML(date)}
-      </span>
+      <span class="comment-date">${escapeHTML(date)}</span>
     </div>
-
     <p>${escapeHTML(comment.comment || "")}</p>
   `;
 
   commentsList.appendChild(article);
 }
-
-/* =========================================================
-   COMMENT FORM
-   ========================================================= */
 
 if (commentForm) {
   commentForm.addEventListener("submit", async (event) => {
@@ -2227,7 +1932,6 @@ if (commentForm) {
     const nameInput = $("commentName");
     const ratingInput = $("commentRating");
     const textInput = $("commentText");
-
     const name = nameInput?.value.trim() || "";
     const rating = Number(ratingInput?.value);
     const comment = textInput?.value.trim() || "";
@@ -2251,7 +1955,6 @@ if (commentForm) {
     }
 
     const submitButton = commentForm.querySelector('button[type="submit"]');
-
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.textContent = "Submitting...";
@@ -2269,13 +1972,10 @@ if (commentForm) {
       if (error) throw error;
 
       alert("Thank you for your comment!");
-
       commentForm.reset();
-
       await loadComments();
     } catch (error) {
-      console.error("Supabase error:", error);
-
+      console.error("Failed to submit comment:", error);
       alert("Failed to submit your comment. Please try again.");
     } finally {
       if (submitButton) {
@@ -2304,7 +2004,5 @@ function escapeHTML(value) {
    ========================================================= */
 
 function updateCurrentYear() {
-  if (currentYear) {
-    currentYear.textContent = new Date().getFullYear();
-  }
+  if (currentYear) currentYear.textContent = new Date().getFullYear();
 }

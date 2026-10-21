@@ -785,23 +785,46 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
   const pickup = new Date(pickupValue);
   const returned = new Date(returnValue);
 
+  const problems = [];
+
+  if (!customerName) {
+    problems.push("Nama customer belum diisi");
+  }
+
+  if (!customerPhone) {
+    problems.push("Nomor WhatsApp belum diisi");
+  }
+
+  if (!cameraId) {
+    problems.push("Kamera belum dipilih");
+  }
+
+  if (!Number.isSafeInteger(quantity) || quantity < 1) {
+    problems.push("Jumlah unit harus bilangan bulat minimal 1");
+  }
+
+  if (!pickupValue) {
+    problems.push("Waktu pickup belum diisi");
+  } else if (Number.isNaN(pickup.getTime())) {
+    problems.push("Waktu pickup tidak valid");
+  }
+
+  if (!returnValue) {
+    problems.push("Waktu return belum diisi");
+  } else if (Number.isNaN(returned.getTime())) {
+    problems.push("Waktu return tidak valid");
+  }
+
   if (
-    !customerName ||
-    !customerPhone ||
-    !cameraId ||
-    !Number.isSafeInteger(quantity) ||
-    quantity < 1 ||
-    !pickupValue ||
-    !returnValue ||
-    Number.isNaN(pickup.getTime()) ||
-    Number.isNaN(returned.getTime()) ||
+    !Number.isNaN(pickup.getTime()) &&
+    !Number.isNaN(returned.getTime()) &&
     returned <= pickup
   ) {
-    showMessage(
-      "manualBookingMessage",
-      "Periksa nama, nomor WhatsApp, kamera, jumlah unit, serta waktu pickup dan return.",
-      true,
-    );
+    problems.push("Waktu return harus setelah pickup");
+  }
+
+  if (problems.length > 0) {
+    showMessage("manualBookingMessage", problems.join(". ") + ".", true);
     return;
   }
 

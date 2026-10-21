@@ -61,6 +61,7 @@
         font-size: 28px;
         margin-top: 0;
       }
+
       h2 {
         font-size: 20px;
       }
@@ -88,6 +89,17 @@
         font-size: 15px;
       }
 
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 1px solid var(--pink);
+        border-color: var(--pink);
+      }
+
+      input[type="checkbox"] {
+        width: auto;
+      }
+
       button {
         padding: 11px 15px;
         background: var(--pink);
@@ -101,6 +113,7 @@
       button:hover {
         opacity: 0.88;
       }
+
       button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -206,18 +219,42 @@
         color: var(--muted);
       }
 
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 16px;
+      }
+
+      .form-full {
+        grid-column: 1 / -1;
+      }
+
+      .form-help {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+
       @media (max-width: 600px) {
         header {
           padding: 17px 4%;
         }
+
         main {
           margin-top: 24px;
         }
+
         .panel {
           padding: 18px;
         }
-        .filter-row {
+
+        .filter-row,
+        .form-grid {
           grid-template-columns: 1fr;
+        }
+
+        .form-full {
+          grid-column: auto;
         }
       }
     </style>
@@ -226,7 +263,9 @@
   <body>
     <header>
       <strong>ENMAX <span>HOUSE</span></strong>
-      <button id="logoutBtn" class="secondary hidden">Logout</button>
+      <button id="logoutBtn" class="secondary hidden" type="button">
+        Logout
+      </button>
     </header>
 
     <main>
@@ -269,12 +308,12 @@
           <p id="adminEmail"></p>
         </div>
 
-        <!-- BOOKING -->
+        <!-- BOOKING CUSTOMER -->
         <div class="panel">
           <h2>Booking Customer</h2>
           <p>
             Lihat permintaan rental yang masuk dan kelola statusnya. Booking
-            baru akan berstatus pending.
+            dari website baru akan berstatus pending.
           </p>
 
           <div class="filter-row">
@@ -295,6 +334,97 @@
 
           <p id="bookingMessage" class="message" role="status"></p>
           <div id="bookingList" class="booking-list"></div>
+        </div>
+
+        <!-- MANUAL BOOKING -->
+        <div class="panel">
+          <h2>Tambah Booking Manual</h2>
+          <p>
+            Catat rental yang diterima melalui WhatsApp atau di luar website.
+            Booking yang disimpan melalui formulir ini akan langsung berstatus
+            disetujui.
+          </p>
+
+          <form id="manualBookingForm">
+            <div class="form-grid">
+              <div>
+                <label for="manualCustomerName">Nama customer</label>
+                <input
+                  id="manualCustomerName"
+                  type="text"
+                  placeholder="Nama lengkap customer"
+                  autocomplete="name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label for="manualCustomerPhone">Nomor WhatsApp</label>
+                <input
+                  id="manualCustomerPhone"
+                  type="tel"
+                  placeholder="Contoh: 628123456789"
+                  autocomplete="tel"
+                  required
+                />
+              </div>
+
+              <div>
+                <label for="manualCameraId">Kamera</label>
+                <select id="manualCameraId" required>
+                  <option value="">Pilih kamera</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="manualQuantity">Jumlah unit</label>
+                <input
+                  id="manualQuantity"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="1"
+                  required
+                />
+              </div>
+
+              <div>
+                <label for="manualPickupAt">Tanggal dan waktu pickup</label>
+                <input id="manualPickupAt" type="datetime-local" required />
+              </div>
+
+              <div>
+                <label for="manualReturnAt">Tanggal dan waktu return</label>
+                <input id="manualReturnAt" type="datetime-local" required />
+              </div>
+
+              <div class="form-full">
+                <label for="manualNotes">Catatan</label>
+                <textarea
+                  id="manualNotes"
+                  rows="3"
+                  placeholder="Contoh: booking via WhatsApp, DP sudah dibayar..."
+                ></textarea>
+              </div>
+            </div>
+
+            <p class="form-help">
+              Pastikan tanggal, waktu, dan jumlah unit benar sebelum menyimpan.
+              Form ini belum mengecek bentrok jadwal otomatis.
+            </p>
+
+            <br />
+            <button id="manualBookingBtn" type="submit">
+              Simpan Booking Manual
+            </button>
+          </form>
+
+          <p
+            id="manualBookingMessage"
+            class="message"
+            role="status"
+            aria-live="polite"
+          ></p>
         </div>
 
         <!-- INVENTORY -->
@@ -318,6 +448,7 @@
             <label for="cameraName">Nama kamera</label>
             <input
               id="cameraName"
+              type="text"
               required
               placeholder="Contoh: Canon EOS R50"
             />

@@ -1,6 +1,6 @@
 /* =========================================================
    ENMAX HOUSE - ADMIN DASHBOARD
-   Supabase Auth, Bookings, and Camera Inventory
+   Supabase Auth, Bookings, Manual Booking, Camera Inventory
    ========================================================= */
 
 const SUPABASE_URL = "https://egfuemmimojqzdqjsofg.supabase.co";
@@ -39,6 +39,11 @@ function showLogin() {
 
   $("cameraList").replaceChildren();
   $("bookingList").replaceChildren();
+
+  const manualCameraSelect = $("manualCameraId");
+  if (manualCameraSelect) {
+    manualCameraSelect.replaceChildren(new Option("Pilih kamera", ""));
+  }
 }
 
 function showDashboard(user) {
@@ -84,7 +89,11 @@ async function handleSession(session) {
     await verifyAdmin(session.user);
     showDashboard(session.user);
 
-    await Promise.all([loadCameras(), loadBookings()]);
+    await Promise.all([
+      loadCameras(),
+      loadBookings(),
+      loadManualBookingCameras(),
+    ]);
   } catch (error) {
     await db.auth.signOut();
     showLogin();
@@ -121,6 +130,7 @@ $("loginForm").addEventListener("submit", async (event) => {
     }
 
     await verifyAdmin(data.user);
+
     showMessage("loginMessage", "");
     await handleSession(data.session);
   } catch (error) {
@@ -148,6 +158,7 @@ logoutBtn.addEventListener("click", async () => {
     }
 
     showLogin();
+    showMessage("loginMessage", "Kamu sudah logout.");
   } catch (error) {
     showMessage("cameraMessage", error.message, true);
   } finally {
@@ -224,8 +235,8 @@ async function loadBookings() {
 
   try {
     /*
-      Query bookings dan kamera secara terpisah.
-      Ini tidak bergantung pada nama relasi foreign key Supabase.
+      Query booking dan kamera secara terpisah.
+      Tidak bergantung pada nama relasi foreign key Supabase.
     */
 
     const [bookingResult, cameraResult] = await Promise.all([
@@ -305,6 +316,8 @@ function renderBookings() {
       makeTextElement("h3", booking.customer_name || "Customer"),
     );
 
+    card.appendChild(makeTextElement("p", "ID Booking: #" + booking.id));
+
     card.appendChild(makeTextElement("p", "Kamera: " + booking.camera_name));
 
     card.appendChild(makeTextElement("p", "Jumlah unit: " + booking.quantity));
@@ -331,18 +344,28 @@ function renderBookings() {
       makeTextElement("p", "Diterima: " + formatDateTime(booking.created_at)),
     );
 
+    const sourceLabel = {
+      website: "Website",
+      manual: "Manual (Admin)",
+    };
+
     card.appendChild(
-      makeTextElement("p", "Sumber: " + (booking.source || "-")),
+      makeTextElement(
+        "p",
+        "Sumber: " + (sourceLabel[booking.source] || booking.source || "-"),
+      ),
     );
 
     const statusRow = document.createElement("p");
+
     statusRow.appendChild(
       makeTextElement("span", statusLabel(booking.status), "status-badge"),
     );
+
     card.appendChild(statusRow);
 
     if (booking.notes) {
-      card.appendChild(makeTextElement("p", "Catatan customer:"));
+      card.appendChild(makeTextElement("p", "Catatan:"));
 
       card.appendChild(makeTextElement("div", booking.notes, "notes"));
     }
@@ -353,6 +376,7 @@ function renderBookings() {
     if (booking.status === "pending") {
       const approveButton = document.createElement("button");
       approveButton.textContent = "Setujui";
+
       approveButton.addEventListener("click", () => {
         updateBookingStatus(booking, "confirmed", approveButton);
       });
@@ -360,6 +384,7 @@ function renderBookings() {
       const rejectButton = document.createElement("button");
       rejectButton.textContent = "Tolak";
       rejectButton.className = "danger";
+
       rejectButton.addEventListener("click", () => {
         updateBookingStatus(booking, "rejected", rejectButton);
       });
@@ -369,6 +394,7 @@ function renderBookings() {
       const resetButton = document.createElement("button");
       resetButton.textContent = "Kembalikan ke Pending";
       resetButton.className = "secondary";
+
       resetButton.addEventListener("click", () => {
         updateBookingStatus(booking, "pending", resetButton);
       });
@@ -414,8 +440,7 @@ async function updateBookingStatus(booking, newStatus, button) {
 
   try {
     /*
-      Status hanya bisa berubah jika kebijakan RLS
-      Supabase mengizinkan admin yang sedang login.
+      Perubahan status bergantung pada kebijakan RLS Supabase.
     */
 
     const { data, error } = await db
@@ -492,8 +517,8 @@ async function loadCameras() {
       );
 
       const quantityLabel = makeTextElement("label", "Jumlah unit");
-      const quantity = document.createElement("input");
 
+      const quantity = document.createElement("input");
       quantity.type = "number";
       quantity.min = "0";
       quantity.step = "1";
@@ -509,6 +534,7 @@ async function loadCameras() {
 
       const save = document.createElement("button");
       save.textContent = "Simpan perubahan";
+      save.type = "button";
 
       save.addEventListener("click", async () => {
         if (!currentUser) return;
@@ -560,6 +586,7 @@ async function loadCameras() {
           );
 
           await loadCameras();
+          await loadManualBookingCameras();
         } catch (error) {
           showMessage("cameraMessage", error.message, true);
         } finally {
@@ -644,8 +671,212 @@ $("addCameraForm").addEventListener("submit", async (event) => {
     showMessage("cameraMessage", "Kamera berhasil ditambahkan.");
 
     await loadCameras();
+    await loadManualBookingCameras();
   } catch (error) {
     showMessage("cameraMessage", error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+});
+
+/* =========================================================
+   MANUAL BOOKING - LOAD CAMERA OPTIONS
+   ========================================================= */
+
+async function loadManualBookingCameras() {
+  const select = $("manualCameraId");
+  if (!select) return;
+
+  select.replaceChildren(new Option("Memuat daftar kamera...", ""));
+
+  try {
+    const { data, error } = await db
+      .from("cameras")
+      .select("id, name, quantity, active")
+      .eq("active", true)
+      .order("name");
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    select.replaceChildren(new Option("Pilih kamera", ""));
+
+    for (const camera of data || []) {
+      const option = new Option(camera.name, String(camera.id));
+
+      option.dataset.quantity = String(camera.quantity ?? 0);
+
+      select.appendChild(option);
+    }
+
+    if (!data || data.length === 0) {
+      select.replaceChildren(new Option("Belum ada kamera aktif", ""));
+    }
+  } catch (error) {
+    console.error("loadManualBookingCameras error:", error);
+
+    select.replaceChildren(new Option("Gagal memuat kamera", ""));
+
+    showMessage(
+      "manualBookingMessage",
+      "Gagal memuat kamera: " + error.message,
+      true,
+    );
+  }
+}
+
+/* =========================================================
+   MANUAL BOOKING - CAMERA QUANTITY
+   ========================================================= */
+
+$("manualCameraId").addEventListener("change", () => {
+  const select = $("manualCameraId");
+  const option = select.selectedOptions[0];
+  const quantityInput = $("manualQuantity");
+
+  if (!option || !option.value) {
+    quantityInput.removeAttribute("max");
+    return;
+  }
+
+  const cameraQuantity = Number(option.dataset.quantity || 0);
+
+  quantityInput.max = String(cameraQuantity);
+
+  if (cameraQuantity > 0) {
+    if (Number(quantityInput.value) > cameraQuantity) {
+      quantityInput.value = String(cameraQuantity);
+    }
+  }
+});
+
+/* =========================================================
+   MANUAL BOOKING - SAVE
+   ========================================================= */
+
+$("manualBookingForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!currentUser) {
+    showMessage(
+      "manualBookingMessage",
+      "Silakan login sebagai admin terlebih dahulu.",
+      true,
+    );
+    return;
+  }
+
+  const button = $("manualBookingBtn");
+  const originalText = button.textContent;
+
+  const customerName = $("manualCustomerName").value.trim();
+
+  const customerPhone = $("manualCustomerPhone").value.trim();
+
+  const cameraId = $("manualCameraId").value;
+  const quantity = Number($("manualQuantity").value);
+
+  const pickupValue = $("manualPickupAt").value;
+  const returnValue = $("manualReturnAt").value;
+  const notes = $("manualNotes").value.trim();
+
+  const pickup = new Date(pickupValue);
+  const returned = new Date(returnValue);
+
+  if (
+    !customerName ||
+    !customerPhone ||
+    !cameraId ||
+    !Number.isSafeInteger(quantity) ||
+    quantity < 1 ||
+    !pickupValue ||
+    !returnValue ||
+    Number.isNaN(pickup.getTime()) ||
+    Number.isNaN(returned.getTime()) ||
+    returned <= pickup
+  ) {
+    showMessage(
+      "manualBookingMessage",
+      "Periksa nama, nomor WhatsApp, kamera, jumlah unit, serta waktu pickup dan return.",
+      true,
+    );
+    return;
+  }
+
+  const selectedOption = $("manualCameraId").selectedOptions[0];
+
+  const cameraQuantity = Number(selectedOption?.dataset.quantity ?? 0);
+
+  if (quantity > cameraQuantity) {
+    showMessage(
+      "manualBookingMessage",
+      "Jumlah unit melebihi total inventaris kamera yang tercatat.",
+      true,
+    );
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Simpan booking manual ini sebagai booking yang sudah disetujui?",
+  );
+
+  if (!confirmed) return;
+
+  button.disabled = true;
+  button.textContent = "Menyimpan...";
+
+  try {
+    /*
+        Booking manual masuk ke tabel yang sama dengan
+        booking website.
+
+        source = manual
+        status = confirmed
+
+        Catatan: kode ini belum mengecek bentrok jadwal.
+      */
+
+    const bookingData = {
+      camera_id: Number(cameraId),
+      customer_name: customerName,
+      customer_email: null,
+      customer_phone: customerPhone,
+      pickup_at: pickup.toISOString(),
+      return_at: returned.toISOString(),
+      quantity,
+      source: "manual",
+      status: "confirmed",
+      notes: notes || null,
+    };
+
+    const { data, error } = await db
+      .from("rental_bookings")
+      .insert([bookingData])
+      .select("id")
+      .single();
+
+    if (error) {
+      throw new Error(
+        "Booking gagal disimpan. Periksa struktur tabel dan izin INSERT RLS admin: " +
+          error.message,
+      );
+    }
+
+    $("manualBookingForm").reset();
+    $("manualQuantity").value = "1";
+
+    showMessage(
+      "manualBookingMessage",
+      "Booking manual #" + data.id + " berhasil disimpan.",
+    );
+
+    await Promise.all([loadBookings(), loadManualBookingCameras()]);
+  } catch (error) {
+    console.error("manual booking error:", error);
+
+    showMessage("manualBookingMessage", error.message, true);
   } finally {
     button.disabled = false;
     button.textContent = originalText;
@@ -657,6 +888,7 @@ $("addCameraForm").addEventListener("submit", async (event) => {
    ========================================================= */
 
 $("refreshBtn").addEventListener("click", loadCameras);
+
 $("refreshBookingsBtn").addEventListener("click", loadBookings);
 
 $("bookingStatusFilter").addEventListener("change", renderBookings);

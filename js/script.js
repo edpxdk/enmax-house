@@ -1208,8 +1208,10 @@ function showAvailabilityMessage(text, type = "info") {
   }
 }
 
-async function checkCameraAvailability() {
+async function checkCameraAvailability(options = {}) {
+  const { forSubmit = false } = options;
   const requestId = ++availabilityRequestId;
+
   const camera = cameras.find((item) => item.id === cameraSelect?.value);
   const pickup = getPickupDateTime();
   const returned = getReturnDateTime();
@@ -1225,13 +1227,24 @@ async function checkCameraAvailability() {
     !Number.isInteger(quantity) ||
     quantity < 1
   ) {
-    showAvailabilityMessage(
-      "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
-    );
+    if (forSubmit) {
+      showAvailabilityMessage(
+        "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
+        "error",
+      );
+    } else {
+      showAvailabilityMessage(
+        "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
+      );
+    }
     return null;
   }
 
-  showAvailabilityMessage("Mengecek ketersediaan kamera...");
+  if (forSubmit) {
+    showAvailabilityMessage("Memverifikasi stok sebelum booking...");
+  } else {
+    showAvailabilityMessage("Mengecek ketersediaan kamera...");
+  }
 
   try {
     const { data, error } = await supabaseClient.rpc(
@@ -1244,9 +1257,15 @@ async function checkCameraAvailability() {
     );
 
     if (error) throw error;
-    if (requestId !== availabilityRequestId) return null;
+
+    // Pengecekan otomatis boleh diabaikan jika ada permintaan yang lebih baru.
+    // Pengecekan saat submit harus tetap mendapatkan hasilnya sendiri.
+    if (!forSubmit && requestId !== availabilityRequestId) {
+      return null;
+    }
 
     const result = Array.isArray(data) ? data[0] : data;
+
     if (!result) {
       showAvailabilityMessage(
         "Ketersediaan belum bisa diverifikasi. Periksa tanggal dan jam, lalu coba lagi.",
@@ -1256,6 +1275,7 @@ async function checkCameraAvailability() {
     }
 
     const available = Number(result.available_quantity);
+
     if (!Number.isFinite(available)) {
       showAvailabilityMessage(
         "Respons ketersediaan tidak valid. Silakan coba lagi.",
@@ -1276,15 +1296,18 @@ async function checkCameraAvailability() {
       `Tersedia ${available} unit untuk periode yang kamu pilih.`,
       "success",
     );
+
     return result;
   } catch (error) {
     console.error("Availability check failed:", error);
-    if (requestId === availabilityRequestId) {
+
+    if (forSubmit || requestId === availabilityRequestId) {
       showAvailabilityMessage(
         "Gagal mengecek ketersediaan. Coba lagi sebelum mengirim booking.",
         "error",
       );
     }
+
     return null;
   }
 }
@@ -1672,7 +1695,9 @@ if (bookingForm) {
     }
 
     try {
-      const availability = await checkCameraAvailability();
+      const availability = await checkCameraAvailability({
+        forSubmit: true,
+      });
 
       if (!availability || Number(availability.available_quantity) < quantity) {
         throw new Error(

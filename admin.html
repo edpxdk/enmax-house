@@ -61,7 +61,6 @@
         font-size: 28px;
         margin-top: 0;
       }
-
       h2 {
         font-size: 20px;
       }
@@ -113,7 +112,6 @@
       button:hover {
         opacity: 0.88;
       }
-
       button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -127,7 +125,6 @@
       .danger {
         background: #a52845;
       }
-
       .hidden {
         display: none !important;
       }
@@ -235,15 +232,40 @@
         margin-top: 8px;
       }
 
+      .notification-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .notification-heading h2 {
+        margin: 0;
+      }
+
+      .notification-tools {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .notification-card.unread {
+        border-color: var(--pink);
+      }
+
+      .realtime-indicator {
+        overflow-wrap: anywhere;
+      }
+
       @media (max-width: 600px) {
         header {
           padding: 17px 4%;
         }
-
         main {
           margin-top: 24px;
         }
-
         .panel {
           padding: 18px;
         }
@@ -306,6 +328,38 @@
           <h1>Dashboard Admin</h1>
           <p>Selamat datang di panel admin Enmax House.</p>
           <p id="adminEmail"></p>
+        </div>
+
+        <!-- BOOKING NOTIFICATIONS -->
+        <div class="panel" id="notificationPanel">
+          <div class="notification-heading">
+            <h2>🔔 Notifikasi Booking</h2>
+            <span id="notificationBadge" class="status-badge"
+              >0 belum dibaca</span
+            >
+          </div>
+
+          <p id="realtimeStatus" class="realtime-indicator" role="status">
+            Menunggu sesi admin...
+          </p>
+
+          <div class="notification-tools">
+            <button
+              id="markNotificationsReadBtn"
+              class="secondary"
+              type="button"
+            >
+              Tandai semua dibaca
+            </button>
+
+            <button id="clearNotificationsBtn" class="secondary" type="button">
+              Bersihkan daftar
+            </button>
+          </div>
+
+          <div id="notificationList" class="booking-list" aria-live="polite">
+            <p class="muted">Belum ada notifikasi booking baru.</p>
+          </div>
         </div>
 
         <!-- BOOKING CUSTOMER -->

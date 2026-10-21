@@ -855,7 +855,7 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
         Booking manual masuk ke tabel yang sama dengan
         booking website.
 
-        source = manual
+        source = website
         status = confirmed
 
         Catatan: kode ini belum mengecek bentrok jadwal.
@@ -869,7 +869,7 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
       pickup_at: pickup.toISOString(),
       return_at: returned.toISOString(),
       quantity,
-      source: "manual",
+      source: "website",
       status: "confirmed",
       notes: notes || null,
     };

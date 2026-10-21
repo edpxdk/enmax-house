@@ -24,6 +24,7 @@ let bookingsCache = [];
 
 let bookingRealtimeChannel = null;
 let notificationSessionUserId = null;
+let realtimeStartToken = 0;
 
 const bookingNotifications = [];
 const seenNotificationIds = new Set();
@@ -44,35 +45,45 @@ function showMessage(id, message, isError = false) {
 }
 
 function showLogin() {
-  // Putuskan Realtime sebelum mengosongkan sesi.
   stopBookingRealtime();
 
   currentUser = null;
   bookingsCache = [];
 
-  loginPanel.classList.remove("hidden");
-  dashboard.classList.add("hidden");
-  logoutBtn.classList.add("hidden");
+  loginPanel?.classList.remove("hidden");
+  dashboard?.classList.add("hidden");
+  logoutBtn?.classList.add("hidden");
 
-  $("cameraList").replaceChildren();
-  $("bookingList").replaceChildren();
+  $("cameraList")?.replaceChildren();
+  $("bookingList")?.replaceChildren();
 
   clearBookingNotifications();
 
   const manualCameraSelect = $("manualCameraId");
+
   if (manualCameraSelect) {
     manualCameraSelect.replaceChildren(new Option("Pilih kamera", ""));
+  }
+
+  const realtimeStatus = $("realtimeStatus");
+
+  if (realtimeStatus) {
+    realtimeStatus.textContent = "Notifikasi tidak terhubung.";
   }
 }
 
 function showDashboard(user) {
   currentUser = user;
 
-  loginPanel.classList.add("hidden");
-  dashboard.classList.remove("hidden");
-  logoutBtn.classList.remove("hidden");
+  loginPanel?.classList.add("hidden");
+  dashboard?.classList.remove("hidden");
+  logoutBtn?.classList.remove("hidden");
 
-  $("adminEmail").textContent = user.email || "";
+  const emailElement = $("adminEmail");
+
+  if (emailElement) {
+    emailElement.textContent = user.email || "";
+  }
 }
 
 /* =========================================================
@@ -111,8 +122,13 @@ async function handleSession(session) {
   try {
     await verifyAdmin(session.user);
 
-    // Pastikan sesi yang diperiksa masih sesi terbaru.
-    const { data: sessionResult } = await db.auth.getSession();
+    const { data: sessionResult, error: sessionError } =
+      await db.auth.getSession();
+
+    if (sessionError) {
+      throw sessionError;
+    }
+
     const activeSession = sessionResult?.session;
 
     if (!activeSession || activeSession.user.id !== session.user.id) {
@@ -133,7 +149,12 @@ async function handleSession(session) {
 
     await db.auth.signOut();
     showLogin();
-    showMessage("loginMessage", error.message, true);
+
+    showMessage(
+      "loginMessage",
+      error.message || "Gagal memverifikasi sesi admin.",
+      true,
+    );
   }
 }
 
@@ -141,10 +162,12 @@ async function handleSession(session) {
    LOGIN
    ========================================================= */
 
-$("loginForm").addEventListener("submit", async (event) => {
+$("loginForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const button = $("loginBtn");
+  if (!button) return;
+
   const originalText = button.textContent;
 
   button.disabled = true;
@@ -168,11 +191,15 @@ $("loginForm").addEventListener("submit", async (event) => {
     await verifyAdmin(data.user);
 
     showMessage("loginMessage", "");
+
     await handleSession(data.session);
   } catch (error) {
+    console.error("Login error:", error);
+
     await db.auth.signOut();
     showLogin();
-    showMessage("loginMessage", error.message, true);
+
+    showMessage("loginMessage", error.message || "Login gagal.", true);
   } finally {
     button.disabled = false;
     button.textContent = originalText;
@@ -183,11 +210,10 @@ $("loginForm").addEventListener("submit", async (event) => {
    LOGOUT
    ========================================================= */
 
-logoutBtn.addEventListener("click", async () => {
+logoutBtn?.addEventListener("click", async () => {
   logoutBtn.disabled = true;
 
   try {
-    // Hentikan listener segera ketika admin memilih logout.
     stopBookingRealtime();
 
     const { error } = await db.auth.signOut();
@@ -199,7 +225,9 @@ logoutBtn.addEventListener("click", async () => {
     showLogin();
     showMessage("loginMessage", "Kamu sudah logout.");
   } catch (error) {
-    showMessage("cameraMessage", error.message, true);
+    console.error("Logout error:", error);
+
+    showMessage("cameraMessage", error.message || "Gagal logout.", true);
   } finally {
     logoutBtn.disabled = false;
   }
@@ -218,7 +246,9 @@ function formatDateTime(value) {
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "-";
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
 
   return (
     new Intl.DateTimeFormat("id-ID", {
@@ -232,7 +262,9 @@ function formatDateTime(value) {
 function formatRupiah(value) {
   const amount = Number(value);
 
-  if (!Number.isFinite(amount)) return "-";
+  if (!Number.isFinite(amount)) {
+    return "-";
+  }
 
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -253,6 +285,7 @@ function statusLabel(status) {
 
 function makeTextElement(tag, text, className = "") {
   const element = document.createElement(tag);
+
   element.textContent = escapeText(text);
 
   if (className) {
@@ -293,7 +326,8 @@ function renderBookingNotifications() {
   }
 
   for (const item of bookingNotifications) {
-    const isRead = readNotificationIds.has(String(item.id));
+    const id = String(item.id);
+    const isRead = readNotificationIds.has(id);
 
     const card = document.createElement("article");
     card.className = "booking notification-card";
@@ -341,19 +375,28 @@ function renderBookingNotifications() {
     openButton.textContent = "Lihat booking";
 
     openButton.addEventListener("click", async () => {
-      readNotificationIds.add(String(item.id));
+      readNotificationIds.add(id);
       renderBookingNotifications();
 
-      $("bookingStatusFilter").value = "all";
+      const statusFilter = $("bookingStatusFilter");
+
+      if (statusFilter) {
+        statusFilter.value = "all";
+      }
+
       await loadBookings();
 
+      const bookingList = $("bookingList");
+
+      if (!bookingList) return;
+
       const bookingCard = Array.from(
-        $("bookingList").querySelectorAll(".booking"),
+        bookingList.querySelectorAll(".booking"),
       ).find((element) =>
         element.textContent.includes(`ID Booking: #${item.id}`),
       );
 
-      (bookingCard || $("bookingList")).scrollIntoView({
+      (bookingCard || bookingList).scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -367,12 +410,22 @@ function renderBookingNotifications() {
 }
 
 function addBookingNotification(booking) {
-  if (!booking || booking.id == null) return;
+  if (!booking || booking.id == null) {
+    console.warn(
+      "[Realtime] Booking tidak memiliki ID; notifikasi dilewati.",
+      booking,
+    );
+    return;
+  }
 
   const id = String(booking.id);
 
-  // Jangan tampilkan event yang sama lebih dari sekali.
-  if (seenNotificationIds.has(id)) return;
+  if (seenNotificationIds.has(id)) {
+    console.info(
+      `[Realtime] Booking #${id} sudah pernah diterima; duplikat dilewati.`,
+    );
+    return;
+  }
 
   seenNotificationIds.add(id);
 
@@ -390,17 +443,24 @@ function addBookingNotification(booking) {
   if (bookingNotifications.length > MAX_NOTIFICATIONS) {
     const removed = bookingNotifications.pop();
 
-    // Simpan ID yang pernah diterima untuk mencegah duplikasi.
-    readNotificationIds.delete(String(removed.id));
+    if (removed) {
+      readNotificationIds.delete(String(removed.id));
+    }
   }
 
   renderBookingNotifications();
+
+  console.info(
+    `[Realtime] Notifikasi booking #${id} berhasil ditambahkan ke tampilan.`,
+  );
 
   void loadNotificationCameraName(booking.camera_id, id);
 }
 
 async function loadNotificationCameraName(cameraId, notificationId) {
   if (!currentUser || cameraId == null) return;
+
+  const requestedUserId = currentUser.id;
 
   const { data, error } = await db
     .from("cameras")
@@ -409,7 +469,11 @@ async function loadNotificationCameraName(cameraId, notificationId) {
     .maybeSingle();
 
   if (error) {
-    console.error("Gagal mengambil nama kamera notifikasi:", error);
+    console.error("[Realtime] Gagal mengambil nama kamera notifikasi:", error);
+    return;
+  }
+
+  if (!currentUser || currentUser.id !== requestedUserId) {
     return;
   }
 
@@ -436,13 +500,18 @@ function clearBookingNotifications() {
    ========================================================= */
 
 function stopBookingRealtime() {
+  // Membatalkan callback channel lama agar tidak mengubah UI.
+  realtimeStartToken += 1;
+
   const channel = bookingRealtimeChannel;
 
   bookingRealtimeChannel = null;
   notificationSessionUserId = null;
 
   if (channel) {
-    void db.removeChannel(channel);
+    void db.removeChannel(channel).catch((error) => {
+      console.error("[Realtime] Gagal melepas channel lama:", error);
+    });
   }
 
   const status = $("realtimeStatus");
@@ -453,17 +522,21 @@ function stopBookingRealtime() {
 }
 
 function startBookingRealtime() {
-  if (!currentUser) return;
-
-  // Jangan membuat channel ganda untuk sesi admin yang sama.
-  if (bookingRealtimeChannel && notificationSessionUserId === currentUser.id) {
+  if (!currentUser) {
+    console.warn("[Realtime] Tidak bisa memulai listener: admin belum login.");
     return;
   }
 
-  // Jika sesi berganti, lepaskan channel yang lama.
+  if (bookingRealtimeChannel && notificationSessionUserId === currentUser.id) {
+    console.info("[Realtime] Listener untuk sesi admin ini sudah berjalan.");
+    return;
+  }
+
   stopBookingRealtime();
 
   const subscribedUserId = currentUser.id;
+  const thisStartToken = realtimeStartToken;
+
   notificationSessionUserId = subscribedUserId;
 
   const status = $("realtimeStatus");
@@ -471,6 +544,11 @@ function startBookingRealtime() {
   if (status) {
     status.textContent = "Menghubungkan ke Supabase Realtime...";
   }
+
+  console.info(
+    "[Realtime] Memulai listener INSERT pada public.rental_bookings.",
+    { adminUserId: subscribedUserId },
+  );
 
   const channel = db
     .channel(`admin-bookings-${subscribedUserId}`)
@@ -482,50 +560,85 @@ function startBookingRealtime() {
         table: "rental_bookings",
       },
       (payload) => {
-        // Abaikan event jika admin logout atau sesi sudah berubah.
+        console.info("[Realtime] Event postgres_changes diterima:", payload);
+
+        // Abaikan callback dari sesi lama.
         if (
+          thisStartToken !== realtimeStartToken ||
           !currentUser ||
           currentUser.id !== subscribedUserId ||
-          notificationSessionUserId !== subscribedUserId ||
-          !payload.new
+          notificationSessionUserId !== subscribedUserId
         ) {
+          console.warn(
+            "[Realtime] Event diabaikan karena sesi admin sudah berubah.",
+            {
+              currentUserId: currentUser?.id,
+              subscribedUserId,
+              notificationSessionUserId,
+            },
+          );
           return;
         }
 
-        addBookingNotification(payload.new);
+        const booking = payload?.new;
 
-        // Perbarui daftar booking yang sudah ada.
+        if (!booking || booking.id == null) {
+          console.warn(
+            "[Realtime] Payload tidak berisi data booking baru.",
+            payload,
+          );
+          return;
+        }
+
+        console.info(
+          `[Realtime] Booking baru diterima: #${booking.id}`,
+          booking,
+        );
+
+        addBookingNotification(booking);
+
+        // Perbarui daftar booking tanpa menghalangi notifikasi.
         void loadBookings();
       },
     )
     .subscribe((state, error) => {
-      // Jangan biarkan callback channel lama mengubah status UI.
-      if (bookingRealtimeChannel !== channel) return;
+      // Callback hanya berlaku untuk channel dan sesi yang aktif.
+      if (
+        bookingRealtimeChannel !== channel ||
+        thisStartToken !== realtimeStartToken ||
+        notificationSessionUserId !== subscribedUserId
+      ) {
+        return;
+      }
+
+      console.info("[Realtime] Status channel:", state);
+
+      if (error) {
+        console.error("[Realtime] Detail error channel:", error);
+      }
 
       if (status) {
         if (state === "SUBSCRIBED") {
           status.textContent = "● Realtime aktif — menunggu booking baru.";
         } else if (state === "CHANNEL_ERROR" || state === "TIMED_OUT") {
           status.textContent =
-            "Koneksi Realtime bermasalah. Periksa koneksi, publikasi Realtime, dan izin SELECT RLS admin.";
+            "Realtime bermasalah. Periksa publikasi tabel, izin SELECT RLS, dan Console.";
         } else if (state === "CLOSED") {
           status.textContent = "Koneksi Realtime ditutup.";
         } else {
           status.textContent = `Status koneksi: ${state}`;
         }
       }
-
-      if (error) {
-        console.error("Booking Realtime error:", error);
-      }
-
-      console.info("Booking Realtime:", state);
     });
 
   bookingRealtimeChannel = channel;
 }
 
-$("markNotificationsReadBtn").addEventListener("click", () => {
+/* =========================================================
+   NOTIFICATION BUTTONS
+   ========================================================= */
+
+$("markNotificationsReadBtn")?.addEventListener("click", () => {
   for (const item of bookingNotifications) {
     readNotificationIds.add(String(item.id));
   }
@@ -533,9 +646,9 @@ $("markNotificationsReadBtn").addEventListener("click", () => {
   renderBookingNotifications();
 });
 
-$("clearNotificationsBtn").addEventListener("click", () => {
-  // Bersihkan tampilan, tetapi pertahankan ID yang sudah pernah diterima
-  // agar event duplikat tidak muncul kembali dalam sesi ini.
+$("clearNotificationsBtn")?.addEventListener("click", () => {
+  // Hanya hapus notifikasi dari tampilan.
+  // ID tetap disimpan supaya event duplikat tidak muncul lagi.
   bookingNotifications.length = 0;
   readNotificationIds.clear();
 
@@ -552,7 +665,7 @@ async function loadBookings() {
   const requestedUserId = currentUser.id;
 
   showMessage("bookingMessage", "Memuat data booking...");
-  $("bookingList").replaceChildren();
+  $("bookingList")?.replaceChildren();
 
   try {
     const [bookingResult, cameraResult] = await Promise.all([
@@ -578,9 +691,9 @@ async function loadBookings() {
       );
     }
 
-    // Jangan tampilkan hasil request yang selesai setelah logout
-    // atau setelah admin berganti akun.
-    if (!currentUser || currentUser.id !== requestedUserId) return;
+    if (!currentUser || currentUser.id !== requestedUserId) {
+      return;
+    }
 
     const cameraMap = new Map(
       (cameraResult.data || []).map((camera) => [String(camera.id), camera]),
@@ -600,7 +713,11 @@ async function loadBookings() {
     console.error("loadBookings error:", error);
 
     if (currentUser && currentUser.id === requestedUserId) {
-      showMessage("bookingMessage", error.message, true);
+      showMessage(
+        "bookingMessage",
+        error.message || "Gagal memuat booking.",
+        true,
+      );
     }
   }
 }
@@ -611,9 +728,12 @@ async function loadBookings() {
 
 function renderBookings() {
   const list = $("bookingList");
+  if (!list) return;
+
   list.replaceChildren();
 
-  const selectedStatus = $("bookingStatusFilter").value;
+  const filter = $("bookingStatusFilter");
+  const selectedStatus = filter?.value || "all";
 
   const filteredBookings =
     selectedStatus === "all"
@@ -690,6 +810,7 @@ function renderBookings() {
 
     if (booking.notes) {
       card.appendChild(makeTextElement("p", "Catatan:"));
+
       card.appendChild(makeTextElement("div", booking.notes, "notes"));
     }
 
@@ -698,28 +819,34 @@ function renderBookings() {
 
     if (booking.status === "pending") {
       const approveButton = document.createElement("button");
+
+      approveButton.type = "button";
       approveButton.textContent = "Setujui";
 
       approveButton.addEventListener("click", () => {
-        updateBookingStatus(booking, "confirmed", approveButton);
+        void updateBookingStatus(booking, "confirmed", approveButton);
       });
 
       const rejectButton = document.createElement("button");
+
+      rejectButton.type = "button";
       rejectButton.textContent = "Tolak";
       rejectButton.className = "danger";
 
       rejectButton.addEventListener("click", () => {
-        updateBookingStatus(booking, "rejected", rejectButton);
+        void updateBookingStatus(booking, "rejected", rejectButton);
       });
 
       actions.append(approveButton, rejectButton);
     } else {
       const resetButton = document.createElement("button");
+
+      resetButton.type = "button";
       resetButton.textContent = "Kembalikan ke Pending";
       resetButton.className = "secondary";
 
       resetButton.addEventListener("click", () => {
-        updateBookingStatus(booking, "pending", resetButton);
+        void updateBookingStatus(booking, "pending", resetButton);
       });
 
       actions.appendChild(resetButton);
@@ -753,9 +880,12 @@ async function updateBookingStatus(booking, newStatus, button) {
     rejected: "Tolak booking customer ini?",
   };
 
-  if (!window.confirm(confirmationMessages[newStatus])) return;
+  if (!window.confirm(confirmationMessages[newStatus])) {
+    return;
+  }
 
   const originalText = button.textContent;
+
   button.disabled = true;
   button.textContent = "Menyimpan...";
 
@@ -791,7 +921,12 @@ async function updateBookingStatus(booking, newStatus, button) {
     await loadBookings();
   } catch (error) {
     console.error("updateBookingStatus error:", error);
-    showMessage("bookingMessage", error.message, true);
+
+    showMessage(
+      "bookingMessage",
+      error.message || "Gagal mengubah status booking.",
+      true,
+    );
   } finally {
     button.disabled = false;
     button.textContent = originalText;
@@ -819,9 +954,13 @@ async function loadCameras() {
       throw new Error("Gagal memuat kamera: " + error.message);
     }
 
-    if (!currentUser || currentUser.id !== requestedUserId) return;
+    if (!currentUser || currentUser.id !== requestedUserId) {
+      return;
+    }
 
     const list = $("cameraList");
+    if (!list) return;
+
     list.replaceChildren();
 
     for (const camera of data || []) {
@@ -854,8 +993,8 @@ async function loadCameras() {
       price.value = camera.daily_price ?? 0;
 
       const save = document.createElement("button");
-      save.textContent = "Simpan perubahan";
       save.type = "button";
+      save.textContent = "Simpan perubahan";
 
       save.addEventListener("click", async () => {
         if (!currentUser) return;
@@ -881,7 +1020,7 @@ async function loadCameras() {
         save.textContent = "Menyimpan...";
 
         try {
-          const { data, error } = await db
+          const { data: savedData, error: saveError } = await db
             .from("cameras")
             .update({
               quantity: newQuantity,
@@ -891,11 +1030,11 @@ async function loadCameras() {
             .select("id")
             .maybeSingle();
 
-          if (error) {
-            throw new Error("Gagal menyimpan: " + error.message);
+          if (saveError) {
+            throw new Error("Gagal menyimpan: " + saveError.message);
           }
 
-          if (!data) {
+          if (!savedData) {
             throw new Error(
               "Perubahan tidak tersimpan. Periksa izin UPDATE RLS.",
             );
@@ -909,7 +1048,13 @@ async function loadCameras() {
           await loadCameras();
           await loadManualBookingCameras();
         } catch (error) {
-          showMessage("cameraMessage", error.message, true);
+          console.error("Save camera error:", error);
+
+          showMessage(
+            "cameraMessage",
+            error.message || "Gagal menyimpan kamera.",
+            true,
+          );
         } finally {
           save.disabled = false;
           save.textContent = "Simpan perubahan";
@@ -935,7 +1080,8 @@ async function loadCameras() {
     );
   } catch (error) {
     console.error("loadCameras error:", error);
-    showMessage("cameraMessage", error.message, true);
+
+    showMessage("cameraMessage", error.message || "Gagal memuat kamera.", true);
   }
 }
 
@@ -943,12 +1089,14 @@ async function loadCameras() {
    ADD CAMERA
    ========================================================= */
 
-$("addCameraForm").addEventListener("submit", async (event) => {
+$("addCameraForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!currentUser) return;
 
   const button = $("addCameraBtn");
+  if (!button) return;
+
   const originalText = button.textContent;
 
   const name = $("cameraName").value.trim();
@@ -994,7 +1142,13 @@ $("addCameraForm").addEventListener("submit", async (event) => {
     await loadCameras();
     await loadManualBookingCameras();
   } catch (error) {
-    showMessage("cameraMessage", error.message, true);
+    console.error("Add camera error:", error);
+
+    showMessage(
+      "cameraMessage",
+      error.message || "Gagal menambahkan kamera.",
+      true,
+    );
   } finally {
     button.disabled = false;
     button.textContent = originalText;
@@ -1007,9 +1161,8 @@ $("addCameraForm").addEventListener("submit", async (event) => {
 
 async function loadManualBookingCameras() {
   const select = $("manualCameraId");
-  if (!select) return;
 
-  if (!currentUser) return;
+  if (!select || !currentUser) return;
 
   const requestedUserId = currentUser.id;
 
@@ -1026,13 +1179,17 @@ async function loadManualBookingCameras() {
       throw new Error(error.message);
     }
 
-    if (!currentUser || currentUser.id !== requestedUserId) return;
+    if (!currentUser || currentUser.id !== requestedUserId) {
+      return;
+    }
 
     select.replaceChildren(new Option("Pilih kamera", ""));
 
     for (const camera of data || []) {
       const option = new Option(camera.name, String(camera.id));
+
       option.dataset.quantity = String(camera.quantity ?? 0);
+
       select.appendChild(option);
     }
 
@@ -1058,10 +1215,12 @@ async function loadManualBookingCameras() {
    MANUAL BOOKING — CAMERA QUANTITY
    ========================================================= */
 
-$("manualCameraId").addEventListener("change", () => {
+$("manualCameraId")?.addEventListener("change", () => {
   const select = $("manualCameraId");
   const option = select.selectedOptions[0];
   const quantityInput = $("manualQuantity");
+
+  if (!quantityInput) return;
 
   if (!option || !option.value) {
     quantityInput.removeAttribute("max");
@@ -1081,7 +1240,7 @@ $("manualCameraId").addEventListener("change", () => {
    MANUAL BOOKING — SAVE
    ========================================================= */
 
-$("manualBookingForm").addEventListener("submit", async (event) => {
+$("manualBookingForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!currentUser) {
@@ -1094,6 +1253,8 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
   }
 
   const button = $("manualBookingBtn");
+  if (!button) return;
+
   const originalText = button.textContent;
 
   const customerName = $("manualCustomerName").value.trim();
@@ -1110,9 +1271,17 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
 
   const problems = [];
 
-  if (!customerName) problems.push("Nama customer belum diisi");
-  if (!customerPhone) problems.push("Nomor WhatsApp belum diisi");
-  if (!cameraId) problems.push("Kamera belum dipilih");
+  if (!customerName) {
+    problems.push("Nama customer belum diisi");
+  }
+
+  if (!customerPhone) {
+    problems.push("Nomor WhatsApp belum diisi");
+  }
+
+  if (!cameraId) {
+    problems.push("Kamera belum dipilih");
+  }
 
   if (!Number.isSafeInteger(quantity) || quantity < 1) {
     problems.push("Jumlah unit harus bilangan bulat minimal 1");
@@ -1140,6 +1309,7 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
   }
 
   const selectedOption = $("manualCameraId").selectedOptions[0];
+
   const cameraQuantity = Number(selectedOption?.dataset.quantity ?? 0);
 
   if (quantity > cameraQuantity) {
@@ -1197,8 +1367,13 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
 
     await Promise.all([loadBookings(), loadManualBookingCameras()]);
   } catch (error) {
-    console.error("manual booking error:", error);
-    showMessage("manualBookingMessage", error.message, true);
+    console.error("Manual booking error:", error);
+
+    showMessage(
+      "manualBookingMessage",
+      error.message || "Gagal menyimpan booking manual.",
+      true,
+    );
   } finally {
     button.disabled = false;
     button.textContent = originalText;
@@ -1209,18 +1384,26 @@ $("manualBookingForm").addEventListener("submit", async (event) => {
    EVENT LISTENERS
    ========================================================= */
 
-$("refreshBtn").addEventListener("click", loadCameras);
+$("refreshBtn")?.addEventListener("click", () => {
+  void loadCameras();
+});
 
-$("refreshBookingsBtn").addEventListener("click", loadBookings);
+$("refreshBookingsBtn")?.addEventListener("click", () => {
+  void loadBookings();
+});
 
-$("bookingStatusFilter").addEventListener("change", renderBookings);
+$("bookingStatusFilter")?.addEventListener("change", renderBookings);
 
 /* =========================================================
    SESSION RESTORE
    ========================================================= */
 
 db.auth.onAuthStateChange((event, session) => {
+  console.info("[Auth] Perubahan sesi:", event);
+
   if (event === "INITIAL_SESSION") {
+    void handleSession(session);
+  } else if (event === "SIGNED_IN" && session) {
     void handleSession(session);
   } else if (event === "SIGNED_OUT") {
     showLogin();

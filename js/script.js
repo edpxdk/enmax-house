@@ -8,7 +8,6 @@
    ========================================================= */
 
 const SUPABASE_URL = "https://egfuemmimojqzdqjsofg.supabase.co";
-
 const SUPABASE_KEY = "sb_publishable_TWiZEW8hb8rI91I4cu3Law_H9NCykz6";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -20,18 +19,6 @@ const WHATSAPP_NUMBER = "6282145929947";
 /* =========================================================
    CAMERA DATA — LOCAL METADATA / FALLBACK
    ========================================================= */
-
-/*
- * Data lokal dipertahankan untuk:
- * - Foto kamera
- * - Galeri foto
- * - Kategori
- * - Deskripsi
- * - Tarif rental 6 dan 12 jam
- *
- * ID, nama, harga harian, jumlah unit, dan status aktif
- * disinkronkan dengan tabel Supabase "cameras".
- */
 
 let cameras = [
   {
@@ -195,6 +182,11 @@ let photoLightbox = null;
 let lightboxImage = null;
 let previousBodyOverflow = "";
 
+/* AVAILABILITY CHECK STATE */
+
+let availabilityTimer = null;
+let availabilityRequestId = 0;
+
 /* =========================================================
    INITIALIZATION
    ========================================================= */
@@ -212,6 +204,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupPhoneInputs();
   setupBookingListeners();
   setupDurationSynchronization();
+  setupAvailabilityChecker();
   updateBookingSummary();
   loadComments();
   updateCurrentYear();
@@ -256,10 +249,6 @@ function getPriceForRental(camera, mode, actualHours = null) {
     };
   }
 
-  /*
-   * Fixed-duration rentals.
-   */
-
   if (isFlexiblePriceCamera(camera)) {
     if (mode === RENTAL_MODE.SIX_HOURS) {
       return {
@@ -277,12 +266,6 @@ function getPriceForRental(camera, mode, actualHours = null) {
       };
     }
   }
-
-  /*
-   * Daily rental:
-   * Each started 24-hour block is charged as one day.
-   * Daily price comes from Supabase when available.
-   */
 
   if (mode === RENTAL_MODE.DAILY) {
     const days = getChargeableDays(actualHours);
@@ -330,10 +313,6 @@ function getCameraPriceLabel(camera) {
    ========================================================= */
 
 async function loadCamerasFromSupabase() {
-  /*
-   * Preserve local metadata as fallback.
-   */
-
   const localCameras = cameras.map((camera) => ({
     ...camera,
     gallery: [...(camera.gallery || [])],
@@ -357,11 +336,6 @@ async function loadCamerasFromSupabase() {
     }
 
     cameras = data.map((row) => {
-      /*
-       * Match database records to local metadata by name.
-       * The ID from Supabase remains the source of truth.
-       */
-
       const existing = localCameras.find(
         (camera) =>
           camera.name.trim().toLowerCase() ===
@@ -512,9 +486,9 @@ function populateCameraSelect() {
     selectedCameraId = cameraSelect.value || null;
 
     setupRentalDurationOptions();
-
     syncReturnDateTime();
     updateBookingSummary();
+    scheduleAvailabilityCheck();
   });
 }
 
@@ -542,11 +516,6 @@ function setupOneDurationSelect(select) {
 
   const previousValue = select.value;
   const camera = getSelectedCamera();
-
-  /*
-   * Only Canon SX740 HS and Panasonic Lumix TZ99
-   * have 6-hour and 12-hour options.
-   */
 
   if (isFlexiblePriceCamera(camera)) {
     select.innerHTML = `
@@ -616,8 +585,6 @@ function updateDurationFieldState(select) {
 
   syncReturnDateTime();
 }
-
-/* GET SELECTED RENTAL MODE */
 
 function getSelectedRentalMode() {
   return rentalDuration?.value || RENTAL_MODE.DAILY;
@@ -733,7 +700,6 @@ function updateGalleryImage() {
   if (!modalCameraImage) return;
 
   const camera = cameras.find((item) => item.id === selectedCameraId);
-
   const gallery = getCurrentGallery();
 
   if (!camera || !gallery.length) return;
@@ -1038,6 +1004,7 @@ modalBookButton?.addEventListener("click", () => {
   updateDurationFieldState(rentalDuration);
   syncReturnDateTime();
   updateBookingSummary();
+  scheduleAvailabilityCheck();
 
   closeCameraModal();
 
@@ -1142,10 +1109,6 @@ function syncReturnDateTime() {
   const mode = getSelectedRentalMode();
   const camera = getSelectedCamera();
 
-  /*
-   * Fixed 6-hour and 12-hour rentals.
-   */
-
   if (
     isFlexiblePriceCamera(camera) &&
     (mode === RENTAL_MODE.SIX_HOURS || mode === RENTAL_MODE.TWELVE_HOURS)
@@ -1164,13 +1127,10 @@ function syncReturnDateTime() {
     }
 
     updateBookingSummary();
+    scheduleAvailabilityCheck();
+
     return;
   }
-
-  /*
-   * Daily rental:
-   * Customer chooses the return date and time.
-   */
 
   if (mode === RENTAL_MODE.DAILY) {
     if (endDate) {
@@ -1186,6 +1146,7 @@ function syncReturnDateTime() {
     }
 
     updateBookingSummary();
+    scheduleAvailabilityCheck();
   }
 }
 
@@ -1198,6 +1159,7 @@ function setupDurationSynchronization() {
     updateDurationFieldState(rentalDuration);
     syncReturnDateTime();
     updateBookingSummary();
+    scheduleAvailabilityCheck();
   });
 
   modalRentalDuration?.addEventListener("change", () => {
@@ -1214,24 +1176,216 @@ function setupBookingListeners() {
     input?.addEventListener("change", () => {
       syncReturnDateTime();
       updateBookingSummary();
+      scheduleAvailabilityCheck();
     });
 
     input?.addEventListener("input", () => {
       syncReturnDateTime();
       updateBookingSummary();
+      scheduleAvailabilityCheck();
     });
   });
 
   [endDate, endTime].forEach((input) => {
-    input?.addEventListener("change", updateBookingSummary);
-    input?.addEventListener("input", updateBookingSummary);
+    input?.addEventListener("change", () => {
+      updateBookingSummary();
+      scheduleAvailabilityCheck();
+    });
+
+    input?.addEventListener("input", () => {
+      updateBookingSummary();
+      scheduleAvailabilityCheck();
+    });
   });
 
-  cameraQuantity?.addEventListener("change", updateBookingSummary);
+  cameraQuantity?.addEventListener("change", () => {
+    updateBookingSummary();
+    scheduleAvailabilityCheck();
+  });
 
-  cameraQuantity?.addEventListener("input", updateBookingSummary);
+  cameraQuantity?.addEventListener("input", () => {
+    updateBookingSummary();
+    scheduleAvailabilityCheck();
+  });
 
   setMinimumDates();
+}
+
+/* =========================================================
+   CAMERA AVAILABILITY — DISPLAY AND CHECK
+   ========================================================= */
+
+/*
+ * This function is a user-facing availability check.
+ * The authoritative stock check happens again inside
+ * create_rental_booking on the database before insertion.
+ */
+
+function ensureAvailabilityMessage() {
+  let message = $("availabilityMessage");
+
+  if (message || !bookingForm) return message;
+
+  message = document.createElement("div");
+  message.id = "availabilityMessage";
+  message.className = "availability-message";
+  message.setAttribute("role", "status");
+  message.setAttribute("aria-live", "polite");
+
+  message.style.cssText =
+    "margin:12px 0;padding:12px 14px;border-radius:8px;" +
+    "font-size:14px;line-height:1.5;display:none;";
+
+  const submitButton = bookingForm.querySelector(
+    'button[type="submit"], input[type="submit"]',
+  );
+
+  if (submitButton?.parentElement) {
+    submitButton.parentElement.insertBefore(message, submitButton);
+  } else {
+    bookingForm.appendChild(message);
+  }
+
+  return message;
+}
+
+function showAvailabilityMessage(text, type = "info") {
+  const message = ensureAvailabilityMessage();
+
+  if (!message) return;
+
+  message.textContent = text;
+  message.style.display = "block";
+
+  if (type === "error") {
+    message.style.background = "rgba(220, 38, 38, 0.12)";
+    message.style.color = "#dc2626";
+  } else if (type === "success") {
+    message.style.background = "rgba(22, 163, 74, 0.12)";
+    message.style.color = "#16a34a";
+  } else {
+    message.style.background = "rgba(128, 128, 128, 0.12)";
+    message.style.color = "inherit";
+  }
+}
+
+async function checkCameraAvailability() {
+  const requestId = ++availabilityRequestId;
+
+  const camera = cameras.find((item) => item.id === cameraSelect?.value);
+
+  const pickup = getPickupDateTime();
+  const returned = getReturnDateTime();
+  const quantity = Number(cameraQuantity?.value);
+
+  if (
+    !camera ||
+    !Number.isSafeInteger(Number(camera.id)) ||
+    Number(camera.id) <= 0 ||
+    !pickup ||
+    !returned ||
+    returned <= pickup ||
+    !Number.isInteger(quantity) ||
+    quantity < 1
+  ) {
+    showAvailabilityMessage(
+      "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
+    );
+
+    return null;
+  }
+
+  showAvailabilityMessage("Mengecek ketersediaan kamera...");
+
+  try {
+    const { data, error } = await supabaseClient.rpc(
+      "get_camera_availability",
+      {
+        p_camera_id: Number(camera.id),
+        p_pickup_at: pickup.toISOString(),
+        p_return_at: returned.toISOString(),
+      },
+    );
+
+    if (error) throw error;
+
+    // Ignore an outdated response if the user has changed the booking.
+    if (requestId !== availabilityRequestId) return null;
+
+    const result = Array.isArray(data) ? data[0] : data;
+
+    if (!result) {
+      showAvailabilityMessage(
+        "Ketersediaan belum bisa diverifikasi. Periksa tanggal dan jam, lalu coba lagi.",
+        "error",
+      );
+
+      return null;
+    }
+
+    const available = Number(result.available_quantity);
+
+    if (!Number.isFinite(available)) {
+      showAvailabilityMessage(
+        "Respons ketersediaan tidak valid. Silakan coba lagi.",
+        "error",
+      );
+
+      return null;
+    }
+
+    if (available < quantity) {
+      showAvailabilityMessage(
+        `Stok tidak cukup untuk periode ini. Tersedia ${available} unit, sedangkan kamu memilih ${quantity} unit.`,
+        "error",
+      );
+
+      return result;
+    }
+
+    showAvailabilityMessage(
+      `Tersedia ${available} unit untuk periode yang kamu pilih.`,
+      "success",
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Availability check failed:", error);
+
+    if (requestId === availabilityRequestId) {
+      showAvailabilityMessage(
+        "Gagal mengecek ketersediaan. Coba lagi sebelum mengirim booking.",
+        "error",
+      );
+    }
+
+    return null;
+  }
+}
+
+function scheduleAvailabilityCheck() {
+  window.clearTimeout(availabilityTimer);
+
+  availabilityTimer = window.setTimeout(() => {
+    checkCameraAvailability();
+  }, 350);
+}
+
+function setupAvailabilityChecker() {
+  ensureAvailabilityMessage();
+
+  [
+    cameraSelect,
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    cameraQuantity,
+    rentalDuration,
+  ].forEach((element) => {
+    element?.addEventListener("change", scheduleAvailabilityCheck);
+    element?.addEventListener("input", scheduleAvailabilityCheck);
+  });
 }
 
 /* =========================================================
@@ -1347,11 +1501,6 @@ function updateBookingSummary() {
 }
 
 function updateDisplayedPriceIfPossible(camera, mode, actualHours) {
-  /*
-   * If the HTML contains id="summaryPrice",
-   * display the estimated total rental price.
-   */
-
   const summaryPrice = $("summaryPrice");
 
   if (!summaryPrice) return;
@@ -1449,7 +1598,6 @@ function validateBookingForm() {
 
   if (!selectedCamera) {
     showFieldError(cameraSelect, "Please select a valid camera.");
-
     isValid = false;
   }
 
@@ -1496,11 +1644,6 @@ function validateBookingForm() {
     }
 
     const mode = getSelectedRentalMode();
-
-    /*
-     * Fixed durations are only valid for cameras
-     * that support 6-hour and 12-hour rentals.
-     */
 
     if (!isFlexiblePriceCamera(selectedCamera) && mode !== RENTAL_MODE.DAILY) {
       showFieldError(
@@ -1551,7 +1694,6 @@ function validateBookingForm() {
 
     if (input?.value.trim() && !isValidPhoneNumber(id)) {
       showFieldError(input, "Please enter a valid phone number.");
-
       isValid = false;
     }
   });
@@ -1592,16 +1734,19 @@ function validateBookingForm() {
 }
 
 /* =========================================================
-   BOOKING FORM SUBMIT — SUPABASE + WHATSAPP
+   BOOKING FORM SUBMIT — SUPABASE RPC + WHATSAPP
    ========================================================= */
 
 /*
  * Flow:
  * 1. Validate the form.
- * 2. Insert a pending booking into Supabase.
- * 3. Open WhatsApp only after the insert succeeds.
+ * 2. Check the current stock.
+ * 3. Call create_rental_booking, which checks stock again
+ *    inside the database before saving.
+ * 4. Open WhatsApp only after the insert succeeds.
  *
- * Public customers cannot approve their own bookings.
+ * The RPC is the authoritative stock check.
+ * The browser-side availability display alone is not enough.
  */
 
 if (bookingForm) {
@@ -1612,7 +1757,6 @@ if (bookingForm) {
       'button[type="submit"], input[type="submit"]',
     );
 
-    // Prevent duplicate submissions.
     if (submitButton?.disabled) return;
 
     syncReturnDateTime();
@@ -1632,14 +1776,13 @@ if (bookingForm) {
 
     if (!camera) {
       alert("Camera not found. Please select a camera again.");
-
       return;
     }
 
     /*
-     * The camera ID must originate from the Supabase record.
-     * Local fallback IDs such as "camera-01" are not valid
-     * database foreign keys.
+     * IDs must come from the Supabase cameras table.
+     * Local fallback IDs like "camera-01" cannot be used
+     * as database foreign keys.
      */
 
     const cameraId = Number(camera.id);
@@ -1660,7 +1803,6 @@ if (bookingForm) {
 
     if (!pickup || !returned || returned <= pickup) {
       alert("Please check the rental dates and times.");
-
       return;
     }
 
@@ -1668,41 +1810,23 @@ if (bookingForm) {
 
     if (!Number.isInteger(quantity) || quantity < 1) {
       alert("Please enter a valid camera quantity.");
-
       return;
     }
 
     const customerName = $("fullName")?.value.trim() || "";
-
     const whatsapp = getInternationalNumber("whatsapp");
-
     const emergencyContact = getInternationalNumber("emergencyContact");
-
     const occupation = $("occupation")?.value.trim() || "";
-
     const workplace = $("workplace")?.value.trim() || "";
-
     const instagram = $("instagram")?.value.trim() || "";
-
     const pickupLocation = $("pickupLocation")?.value.trim() || "";
-
     const returnLocation = $("returnLocation")?.value.trim() || "";
-
     const comments = $("comments")?.value.trim() || "";
 
     const mode = getSelectedRentalMode();
-
     const actualHours = getRentalDurationDifference();
-
     const priceInfo = getPriceForRental(camera, mode, actualHours);
-
     const totalPrice = priceInfo.amount * quantity;
-
-    /*
-     * Additional details are stored in notes because
-     * the current table does not have separate columns
-     * for these optional fields.
-     */
 
     const notes = [
       `Rental duration: ${formatDuration(actualHours)}`,
@@ -1719,22 +1843,10 @@ if (bookingForm) {
       `Additional comments: ${comments || "-"}`,
     ].join("\n");
 
-    const bookingData = {
-      camera_id: cameraId,
-      customer_name: customerName,
-      customer_email: null,
-      customer_phone: whatsapp,
-      pickup_at: pickup.toISOString(),
-      return_at: returned.toISOString(),
-      quantity: quantity,
-      source: "website",
-      status: "pending",
-      notes: notes,
-    };
-
     /*
-     * Prepare the WhatsApp message before the insert,
-     * but do not open WhatsApp until the insert succeeds.
+     * Build the WhatsApp URL before saving.
+     * Do not open WhatsApp until the database confirms
+     * the booking request was successfully inserted.
      */
 
     const whatsappURL = createWhatsAppMessage();
@@ -1749,34 +1861,75 @@ if (bookingForm) {
       submitButton.disabled = true;
 
       if (submitButton.tagName === "INPUT") {
-        submitButton.value = "Saving booking...";
+        submitButton.value = "Checking availability...";
       } else {
-        submitButton.textContent = "Saving booking...";
+        submitButton.textContent = "Checking availability...";
       }
     }
 
     try {
       /*
-       * Save the booking request.
-       *
-       * A successful insert means the request was saved,
-       * not that the booking has been approved.
+       * First check: user-facing availability information.
        */
 
-      const { error } = await supabaseClient
-        .from("rental_bookings")
-        .insert([bookingData]);
+      const availability = await checkCameraAvailability();
 
-      if (error) {
-        throw error;
+      if (!availability || Number(availability.available_quantity) < quantity) {
+        throw new Error(
+          "Stok tidak tersedia atau ketersediaannya belum berhasil diverifikasi.",
+        );
       }
 
       /*
-       * The insert succeeded. Now proceed to WhatsApp.
+       * Second check: authoritative database validation.
        *
-       * This implementation attempts a new tab first.
-       * If the browser blocks the popup, it falls back
-       * to navigating the current page.
+       * create_rental_booking must exist in Supabase.
+       * It checks overlapping pending/confirmed bookings,
+       * locks the camera row, and inserts the booking only
+       * when enough units remain.
+       *
+       * Do not replace this RPC with a direct table insert,
+       * because a direct insert would bypass this function.
+       */
+
+      if (submitButton) {
+        if (submitButton.tagName === "INPUT") {
+          submitButton.value = "Saving booking...";
+        } else {
+          submitButton.textContent = "Saving booking...";
+        }
+      }
+
+      const { data: bookingId, error } = await supabaseClient.rpc(
+        "create_rental_booking",
+        {
+          p_camera_id: cameraId,
+          p_customer_name: customerName,
+          p_customer_phone: whatsapp,
+          p_pickup_at: pickup.toISOString(),
+          p_return_at: returned.toISOString(),
+          p_quantity: quantity,
+          p_customer_email: null,
+          p_notes: notes,
+        },
+      );
+
+      if (error) throw error;
+
+      if (!bookingId) {
+        throw new Error("Supabase did not return a booking ID.");
+      }
+
+      console.log("Booking request saved:", bookingId);
+
+      showAvailabilityMessage(
+        "Permintaan booking berhasil disimpan. Membuka WhatsApp...",
+        "success",
+      );
+
+      /*
+       * Attempt to open WhatsApp in a new tab.
+       * Fall back to the current page if blocked.
        */
 
       let whatsappWindow = null;
@@ -1797,11 +1950,47 @@ if (bookingForm) {
     } catch (error) {
       console.error("Failed to save booking to Supabase:", error);
 
-      alert(
-        "Booking belum berhasil disimpan ke sistem. " +
-          "Silakan coba lagi. Jika masalah berlanjut, " +
-          "hubungi Enmax House melalui WhatsApp.",
-      );
+      const errorMessage = String(error?.message || "");
+
+      if (
+        errorMessage.toLowerCase().includes("stok tidak cukup") ||
+        errorMessage.toLowerCase().includes("stock") ||
+        errorMessage.toLowerCase().includes("not enough")
+      ) {
+        showAvailabilityMessage(errorMessage, "error");
+
+        alert(
+          "Booking tidak bisa diproses karena stok kamera " +
+            "tidak cukup untuk periode tersebut. Silakan pilih " +
+            "waktu lain atau kurangi jumlah unit.",
+        );
+      } else if (
+        errorMessage.includes("create_rental_booking") ||
+        errorMessage.includes("get_camera_availability") ||
+        errorMessage.includes("Could not find the function")
+      ) {
+        showAvailabilityMessage(
+          "Fungsi booking Supabase belum tersedia atau belum bisa diakses. Periksa fungsi SQL dan izinnya.",
+          "error",
+        );
+
+        alert(
+          "Sistem booking belum siap. Periksa apakah fungsi " +
+            "Supabase create_rental_booking dan " +
+            "get_camera_availability sudah dibuat dengan benar.",
+        );
+      } else {
+        showAvailabilityMessage(
+          "Booking belum berhasil disimpan. Silakan coba lagi.",
+          "error",
+        );
+
+        alert(
+          "Booking belum berhasil disimpan ke sistem. " +
+            "Silakan coba lagi. Jika masalah berlanjut, " +
+            "hubungi Enmax House melalui WhatsApp.",
+        );
+      }
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
@@ -1820,14 +2009,6 @@ if (bookingForm) {
    WHATSAPP MESSAGE
    ========================================================= */
 
-/*
- * This function builds and returns the WhatsApp URL.
- * It no longer opens a window by itself.
- *
- * The booking submit handler controls when the URL opens,
- * after the Supabase insert succeeds.
- */
-
 function createWhatsAppMessage() {
   const camera = cameras.find((item) => item.id === cameraSelect?.value);
 
@@ -1836,15 +2017,11 @@ function createWhatsAppMessage() {
   const workplace = $("workplace")?.value.trim() || "";
 
   const whatsapp = getInternationalNumber("whatsapp");
-
   const emergencyContact = getInternationalNumber("emergencyContact");
 
   const instagram = $("instagram")?.value.trim() || "";
-
   const pickupLocation = $("pickupLocation")?.value.trim() || "";
-
   const returnLocation = $("returnLocation")?.value.trim() || "";
-
   const comments = $("comments")?.value.trim() || "";
 
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
@@ -1868,7 +2045,6 @@ function createWhatsAppMessage() {
   }
 
   const priceInfo = getPriceForRental(camera, mode, actualHours);
-
   const totalPrice = priceInfo.amount * quantity;
 
   const ktpCheck = $("ktpCheck")?.checked;
@@ -1925,7 +2101,7 @@ ${comments || "-"}
 I understand that this is a booking request, not a confirmed reservation. I will wait for Enmax House to review and confirm my booking.
   `.trim();
 
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(message);
 }
 
 /* =========================================================
@@ -1948,7 +2124,6 @@ function setupNavbar() {
   navMenu.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
       navMenu.classList.remove("active");
-
       menuToggle.setAttribute("aria-expanded", "false");
     });
   });

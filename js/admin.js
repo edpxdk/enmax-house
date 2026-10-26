@@ -409,6 +409,49 @@ function renderBookingNotifications() {
   updateNotificationBadge();
 }
 
+/* =========================================================
+   BOOKING ALERT SOUND
+   ========================================================= */
+
+let bookingAudioContext = null;
+
+async function playBookingAlert() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    if (!bookingAudioContext) {
+      bookingAudioContext = new AudioContextClass();
+    }
+
+    if (bookingAudioContext.state === "suspended") {
+      await bookingAudioContext.resume();
+    }
+
+    const now = bookingAudioContext.currentTime;
+    const oscillator = bookingAudioContext.createOscillator();
+    const gain = bookingAudioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, now);
+    oscillator.frequency.setValueAtTime(1175, now + 0.12);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.025);
+    gain.gain.setValueAtTime(0.25, now + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    oscillator.connect(gain);
+    gain.connect(bookingAudioContext.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.36);
+  } catch (error) {
+    console.warn("Suara notifikasi tidak dapat diputar:", error);
+  }
+}
+
 function addBookingNotification(booking) {
   if (!booking || booking.id == null) {
     console.warn(
@@ -428,6 +471,7 @@ function addBookingNotification(booking) {
   }
 
   seenNotificationIds.add(id);
+  void playBookingAlert();
 
   bookingNotifications.unshift({
     id: booking.id,

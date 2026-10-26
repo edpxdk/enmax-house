@@ -1501,3 +1501,134 @@ db.auth.onAuthStateChange((event, session) => {
     showLogin();
   }
 });
+
+/* ENMAX HOUSE — ADMIN PUSH NOTIFICATIONS */
+(() => {
+  const VAPID_PUBLIC_KEY =
+    "BBZHL-Egcs_pxyLXqGD6tp8sKRf11SUoBYo6NBG1eWkp2iMtbRA0rRggl68EnbL10fz_J31fkfXMAB2Rc2qneXA";
+  const SUPABASE_FUNCTION_URL =
+    "https://egfuemmimojqzdqjsofg.supabase.co/functions/v1/admin-push";
+  const SUPABASE_ANON_KEY = "sb_publishable_TWiZEW8hb8rI91I4cu3Law_H9NCykz6";
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    const raw = atob(base64);
+    return Uint8Array.from(raw, (char) => char.charCodeAt(0));
+  }
+
+  async function enableAdminPush() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      alert("Browser ini belum mendukung Web Push.");
+      return;
+    }
+
+    if (!VAPID_PUBLIC_KEY.startsWith("B")) {
+      alert("Masukkan VAPID Public Key terlebih dahulu.");
+      return;
+    }
+
+    const { data: sessionData, error: sessionError } =
+      await db.auth.getSession();
+
+    const session = sessionData?.session;
+
+    if (sessionError || !session?.access_token) {
+      alert("Login admin terlebih dahulu.");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      alert("Izin notifikasi belum diberikan.");
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.register(
+      "/service-worker.js",
+      { scope: "/" },
+    );
+
+    await navigator.serviceWorker.ready;
+
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    const response = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        action: "subscribe",
+        subscription: subscription.toJSON(),
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Gagal menyimpan subscription.");
+    }
+
+    alert("Notifikasi booking berhasil diaktifkan di perangkat ini!");
+  }
+
+  function addPushButton() {
+    if (document.getElementById("enmax-enable-push")) return;
+
+    const button = document.createElement("button");
+    button.id = "enmax-enable-push";
+    button.type = "button";
+    button.textContent = "🔔 Aktifkan Notifikasi";
+    button.style.cssText = [
+      "position:fixed",
+      "right:20px",
+      "bottom:20px",
+      "z-index:99999",
+      "padding:12px 16px",
+      "border:0",
+      "border-radius:10px",
+      "background:#ff2aa6",
+      "color:white",
+      "font-weight:700",
+      "cursor:pointer",
+      "box-shadow:0 4px 16px #0004",
+    ].join(";");
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      button.textContent = "Mengaktifkan...";
+
+      try {
+        await enableAdminPush();
+      } catch (error) {
+        console.error("Enmax push setup error:", error);
+        alert("Gagal mengaktifkan notifikasi: " + error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = "🔔 Aktifkan Notifikasi";
+      }
+    });
+
+    document.body.appendChild(button);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", addPushButton);
+  } else {
+    addPushButton();
+  }
+})();

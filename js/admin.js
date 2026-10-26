@@ -2,6 +2,7 @@
    ENMAX HOUSE - ADMIN DASHBOARD
    Supabase Auth, Bookings, Manual Booking, Camera Inventory
    + Supabase Realtime Booking Notifications
+   + Booking Alert Sound
    ========================================================= */
 
 const SUPABASE_URL = "https://egfuemmimojqzdqjsofg.supabase.co";
@@ -31,6 +32,101 @@ const seenNotificationIds = new Set();
 const readNotificationIds = new Set();
 
 const MAX_NOTIFICATIONS = 50;
+
+/* =========================================================
+   BOOKING ALERT SOUND — FIXED
+   ========================================================= */
+
+let bookingAudioContext = null;
+let audioUnlocked = false;
+
+async function unlockBookingAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextClass) {
+    throw new Error("Browser tidak mendukung Web Audio API.");
+  }
+
+  if (!bookingAudioContext) {
+    bookingAudioContext = new AudioContextClass();
+  }
+
+  if (bookingAudioContext.state === "suspended") {
+    await bookingAudioContext.resume();
+  }
+
+  audioUnlocked = bookingAudioContext.state === "running";
+
+  return audioUnlocked;
+}
+
+async function playBookingAlert() {
+  const unlocked = await unlockBookingAudio();
+
+  if (!unlocked) {
+    throw new Error(
+      "Audio belum aktif. Klik halaman admin, lalu tes suaranya kembali.",
+    );
+  }
+
+  const now = bookingAudioContext.currentTime;
+
+  const oscillator = bookingAudioContext.createOscillator();
+  const gain = bookingAudioContext.createGain();
+
+  oscillator.type = "sine";
+
+  oscillator.frequency.setValueAtTime(880, now);
+  oscillator.frequency.setValueAtTime(1175, now + 0.14);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.2, now + 0.025);
+  gain.gain.setValueAtTime(0.2, now + 0.14);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+
+  oscillator.connect(gain);
+  gain.connect(bookingAudioContext.destination);
+
+  oscillator.start(now);
+  oscillator.stop(now + 0.4);
+
+  console.info("[Audio] Suara notifikasi booking diputar.");
+}
+
+/*
+ * Aktifkan audio saat admin berinteraksi dengan halaman.
+ * Browser umumnya mensyaratkan interaksi pengguna sebelum audio
+ * dapat diputar secara otomatis.
+ */
+document.addEventListener(
+  "click",
+  () => {
+    void unlockBookingAudio().catch((error) => {
+      console.warn("[Audio] Aktivasi audio gagal:", error);
+    });
+  },
+  { once: true },
+);
+
+/*
+ * Fungsi tes harus berada di luar playBookingAlert().
+ * Jalankan di Console browser:
+ * testBookingSound()
+ * atau:
+ * window.testBookingSound()
+ */
+window.testBookingSound = async function () {
+  try {
+    await unlockBookingAudio();
+    await playBookingAlert();
+
+    console.info("[Audio] Tes suara berhasil.");
+    return true;
+  } catch (error) {
+    console.error("[Audio] Tes suara gagal:", error);
+    return false;
+  }
+};
 
 /* =========================================================
    MESSAGES AND UI
@@ -410,47 +506,8 @@ function renderBookingNotifications() {
 }
 
 /* =========================================================
-   BOOKING ALERT SOUND
+   BOOKING NOTIFICATIONS — ADD
    ========================================================= */
-
-let bookingAudioContext = null;
-
-async function playBookingAlert() {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-
-    if (!AudioContextClass) return;
-
-    if (!bookingAudioContext) {
-      bookingAudioContext = new AudioContextClass();
-    }
-
-    if (bookingAudioContext.state === "suspended") {
-      await bookingAudioContext.resume();
-    }
-
-    const now = bookingAudioContext.currentTime;
-    const oscillator = bookingAudioContext.createOscillator();
-    const gain = bookingAudioContext.createGain();
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(880, now);
-    oscillator.frequency.setValueAtTime(1175, now + 0.12);
-
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.025);
-    gain.gain.setValueAtTime(0.25, now + 0.12);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-    oscillator.connect(gain);
-    gain.connect(bookingAudioContext.destination);
-
-    oscillator.start(now);
-    oscillator.stop(now + 0.36);
-  } catch (error) {
-    console.warn("Suara notifikasi tidak dapat diputar:", error);
-  }
-}
 
 function addBookingNotification(booking) {
   if (!booking || booking.id == null) {
@@ -471,7 +528,14 @@ function addBookingNotification(booking) {
   }
 
   seenNotificationIds.add(id);
-  void playBookingAlert();
+
+  /*
+   * Suara dicoba hanya untuk booking baru yang belum pernah
+   * diterima sesi admin ini.
+   */
+  void playBookingAlert().catch((error) => {
+    console.warn("[Audio] Notifikasi booking tidak berbunyi:", error);
+  });
 
   bookingNotifications.unshift({
     id: booking.id,
@@ -544,7 +608,6 @@ function clearBookingNotifications() {
    ========================================================= */
 
 function stopBookingRealtime() {
-  // Membatalkan callback channel lama agar tidak mengubah UI.
   realtimeStartToken += 1;
 
   const channel = bookingRealtimeChannel;
@@ -606,7 +669,6 @@ function startBookingRealtime() {
       (payload) => {
         console.info("[Realtime] Event postgres_changes diterima:", payload);
 
-        // Abaikan callback dari sesi lama.
         if (
           thisStartToken !== realtimeStartToken ||
           !currentUser ||
@@ -615,11 +677,6 @@ function startBookingRealtime() {
         ) {
           console.warn(
             "[Realtime] Event diabaikan karena sesi admin sudah berubah.",
-            {
-              currentUserId: currentUser?.id,
-              subscribedUserId,
-              notificationSessionUserId,
-            },
           );
           return;
         }
@@ -641,12 +698,10 @@ function startBookingRealtime() {
 
         addBookingNotification(booking);
 
-        // Perbarui daftar booking tanpa menghalangi notifikasi.
         void loadBookings();
       },
     )
     .subscribe((state, error) => {
-      // Callback hanya berlaku untuk channel dan sesi yang aktif.
       if (
         bookingRealtimeChannel !== channel ||
         thisStartToken !== realtimeStartToken ||
@@ -691,8 +746,6 @@ $("markNotificationsReadBtn")?.addEventListener("click", () => {
 });
 
 $("clearNotificationsBtn")?.addEventListener("click", () => {
-  // Hanya hapus notifikasi dari tampilan.
-  // ID tetap disimpan supaya event duplikat tidak muncul lagi.
   bookingNotifications.length = 0;
   readNotificationIds.clear();
 
@@ -854,7 +907,6 @@ function renderBookings() {
 
     if (booking.notes) {
       card.appendChild(makeTextElement("p", "Catatan:"));
-
       card.appendChild(makeTextElement("div", booking.notes, "notes"));
     }
 
@@ -863,7 +915,6 @@ function renderBookings() {
 
     if (booking.status === "pending") {
       const approveButton = document.createElement("button");
-
       approveButton.type = "button";
       approveButton.textContent = "Setujui";
 
@@ -872,7 +923,6 @@ function renderBookings() {
       });
 
       const rejectButton = document.createElement("button");
-
       rejectButton.type = "button";
       rejectButton.textContent = "Tolak";
       rejectButton.className = "danger";
@@ -884,7 +934,6 @@ function renderBookings() {
       actions.append(approveButton, rejectButton);
     } else {
       const resetButton = document.createElement("button");
-
       resetButton.type = "button";
       resetButton.textContent = "Kembalikan ke Pending";
       resetButton.className = "secondary";
@@ -1353,7 +1402,6 @@ $("manualBookingForm")?.addEventListener("submit", async (event) => {
   }
 
   const selectedOption = $("manualCameraId").selectedOptions[0];
-
   const cameraQuantity = Number(selectedOption?.dataset.quantity ?? 0);
 
   if (quantity > cameraQuantity) {

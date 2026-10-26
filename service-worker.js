@@ -1,4 +1,5 @@
 const CACHE_NAME = "enmax-admin-shell-v1";
+const ADMIN_URL = "https://enmaxhouse.my.id/admin.html";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -26,6 +27,7 @@ self.addEventListener("activate", (event) => {
 // tetap mengambil data secara normal dari jaringan.
 self.addEventListener("fetch", () => {});
 
+// Menampilkan notifikasi push dari server.
 self.addEventListener("push", (event) => {
   let data = {};
 
@@ -48,37 +50,43 @@ self.addEventListener("push", (event) => {
         tag: data.tag || "enmax-house-booking",
         renotify: true,
         data: {
-          url: data.url || "/",
+          // Selalu arahkan notifikasi ke dashboard admin.
+          url: ADMIN_URL,
         },
       },
     ),
   );
 });
 
+// Saat notifikasi diklik, buka dashboard admin.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const targetUrl = new URL(
-    event.notification.data?.url || "/",
-    self.location.origin,
-  ).href;
-
   event.waitUntil(
-    clients
-      .matchAll({
+    (async () => {
+      const windows = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
-      })
-      .then((windows) => {
-        const existingWindow = windows.find((client) =>
-          client.url.startsWith(self.location.origin),
-        );
+      });
 
-        if (existingWindow) {
-          return existingWindow.focus();
+      // Jika website sudah terbuka, arahkan tab tersebut
+      // ke dashboard admin lalu fokuskan tab-nya.
+      for (const client of windows) {
+        if (new URL(client.url).origin === self.location.origin) {
+          try {
+            await client.navigate(ADMIN_URL);
+            return await client.focus();
+          } catch (error) {
+            // Jika tab yang ada gagal dinavigasi,
+            // lanjutkan dengan membuka tab dashboard baru.
+            break;
+          }
         }
+      }
 
-        return clients.openWindow(targetUrl);
-      }),
+      // Jika belum ada tab website yang bisa digunakan,
+      // buka dashboard admin di tab baru.
+      return self.clients.openWindow(ADMIN_URL);
+    })(),
   );
 });

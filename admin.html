@@ -2,19 +2,16 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0a0a0c" />
-    <meta
-      name="description"
-      content="Enmax House Admin Dashboard — Kelola booking dan inventaris kamera rental Bali."
-    />
+    <meta name="description" content="Enmax House Admin Dashboard" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="manifest.json" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
+    <link rel="manifest" href="/manifest.json" />
     <link
       rel="icon"
       type="image/png"
@@ -22,94 +19,52 @@
       href="/assets/icon-192.png"
     />
     <link rel="apple-touch-icon" href="/assets/icon-192.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/assets/icon-192.png" />
-
     <title>Admin Dashboard | Enmax House</title>
 
     <style>
-      /* =========================================================
-         ENMAX HOUSE — ADMIN DASHBOARD
-         Visual identity shared with index.html
-         ========================================================= */
-
-      /* 01. DESIGN SYSTEM */
       :root {
         color-scheme: dark;
-
-        --bg-main: #0a0a0c;
-        --bg-surface: #121216;
-        --bg-elevated: #1a1a22;
-        --bg-hover: #22222d;
-        --bg-input: #0d0d12;
-
-        --pink: #ff00a8;
-        --pink-hover: #e60098;
-        --pink-dim: rgba(255, 0, 168, 0.12);
-        --pink-glow: rgba(255, 0, 168, 0.2);
-
-        --text: #f4f4f6;
-        --muted: #9393a2;
-        --text-dark: #0a0a0c;
-
-        --border: rgba(255, 255, 255, 0.08);
-        --border-medium: rgba(255, 255, 255, 0.15);
-        --border-pink: rgba(255, 0, 168, 0.4);
-
-        --success: #34d399;
-        --warning: #fbbf24;
-        --danger: #fb7185;
-        --info: #93c5fd;
-
-        --font:
-          system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
-
-        --radius-sm: 6px;
-        --radius-md: 12px;
-        --radius-lg: 20px;
-        --radius-full: 9999px;
-
-        --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
-        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
-        --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
-
-        --transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        --max-width: 1240px;
-        --header-height: 76px;
+        --bg: #09090d;
+        --surface: #121218;
+        --surface2: #191920;
+        --pink: #ff2aa6;
+        --pink-dim: rgba(255, 42, 166, 0.11);
+        --text: #f5f5f7;
+        --muted: #92929f;
+        --border: rgba(255, 255, 255, 0.09);
+        --green: #34d399;
+        --yellow: #fbbf24;
+        --red: #fb7185;
+        --radius: 13px;
       }
 
-      /* 02. RESET */
-      *,
-      *::before,
-      *::after {
+      * {
         box-sizing: border-box;
       }
 
       html {
-        min-height: 100%;
         scroll-behavior: smooth;
-        scroll-padding-top: calc(var(--header-height) + 24px);
-        background: var(--bg-main);
+        background: var(--bg);
       }
 
       body {
-        min-height: 100vh;
         margin: 0;
-        overflow-x: hidden;
+        min-height: 100vh;
         background:
           radial-gradient(
             ellipse at 85% 0%,
-            rgba(255, 0, 168, 0.065),
-            transparent 36rem
+            rgba(255, 42, 166, 0.06),
+            transparent 35rem
           ),
-          var(--bg-main);
+          var(--bg);
         color: var(--text);
-        font-family: var(--font);
-        font-size: 14px;
-        line-height: 1.65;
+        font:
+          13px/1.5 system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
         -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
       }
 
       button,
@@ -118,9 +73,47 @@
       textarea {
         font: inherit;
       }
-
       button {
+        cursor: pointer;
         color: inherit;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .muted,
+      p {
+        color: var(--muted);
+      }
+      p {
+        margin: 5px 0;
+        overflow-wrap: anywhere;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(20px, 3vw, 27px);
+      }
+      h2 {
+        font-size: 16px;
+      }
+      h3 {
+        font-size: 13px;
+      }
+      label {
+        display: block;
+        margin: 10px 0 5px;
+        color: #c9c9d2;
+        font-size: 12px;
+        font-weight: 600;
       }
 
       button:focus-visible,
@@ -128,264 +121,85 @@
       select:focus-visible,
       textarea:focus-visible {
         outline: 2px solid var(--pink);
-        outline-offset: 3px;
+        outline-offset: 2px;
       }
 
-      button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none !important;
-        box-shadow: none !important;
-      }
-
-      h1,
-      h2,
-      h3,
-      h4 {
-        color: var(--text);
-        font-weight: 700;
-        line-height: 1.2;
-        letter-spacing: -0.025em;
-      }
-
-      h1 {
-        margin: 0 0 12px;
-        font-size: clamp(1.7rem, 3vw, 2.3rem);
-      }
-
-      h2 {
-        margin: 0 0 10px;
-        font-size: 1.2rem;
-      }
-
-      h3 {
-        margin: 0 0 10px;
-        font-size: 1rem;
-      }
-
-      p {
-        margin: 8px 0;
-        color: var(--muted);
-        line-height: 1.7;
-      }
-
-      strong {
-        font-weight: 700;
-      }
-
-      .hidden {
-        display: none !important;
-      }
-
-      .muted {
-        color: var(--muted) !important;
-      }
-
-      /* 03. TOP NAVIGATION */
       header {
+        height: 57px;
         position: sticky;
         top: 0;
         z-index: 100;
         display: flex;
-        min-height: var(--header-height);
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
-        padding: 14px max(24px, calc((100% - var(--max-width)) / 2));
+        gap: 12px;
+        padding: 0 max(15px, calc((100% - 1200px) / 2));
+        background: rgba(9, 9, 13, 0.92);
         border-bottom: 1px solid var(--border);
-        background: rgba(10, 10, 12, 0.88);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(16px);
       }
 
-      header strong {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        font-size: 1.12rem;
-        font-weight: 850;
+      .brand {
+        font-weight: 900;
         letter-spacing: 0.09em;
+        font-size: 15px;
         white-space: nowrap;
       }
 
-      header strong::before {
-        content: "";
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--pink);
-        box-shadow: 0 0 13px var(--pink);
-      }
-
-      header span {
+      .brand span {
         color: var(--pink);
       }
 
-      /* 04. MAIN LAYOUT */
       main {
-        position: relative;
-        width: min(var(--max-width), calc(100% - 48px));
-        margin: 38px auto 80px;
+        width: min(1200px, calc(100% - 30px));
+        margin: 20px auto 50px;
       }
 
-      #dashboard {
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-      }
-
-      #dashboard.hidden {
-        display: none !important;
-      }
-
-      /* 05. PANELS */
       .panel {
-        position: relative;
         min-width: 0;
-        padding: clamp(22px, 3vw, 32px);
-        margin-bottom: 0;
-        overflow: hidden;
+        padding: 16px;
         background: linear-gradient(
           145deg,
-          rgba(26, 26, 34, 0.92),
-          rgba(18, 18, 22, 0.98) 65%
+          rgba(26, 26, 34, 0.95),
+          rgba(17, 17, 22, 0.98)
         );
         border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        transition:
-          border-color var(--transition),
-          box-shadow var(--transition);
+        border-radius: var(--radius);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.13);
       }
 
-      #dashboard > .panel:hover {
-        border-color: rgba(255, 255, 255, 0.13);
-      }
-
-      /* Dashboard welcome panel */
-      #dashboard > .panel:first-child {
-        padding: clamp(28px, 4vw, 42px);
-        background:
-          radial-gradient(
-            ellipse at 95% 10%,
-            rgba(255, 0, 168, 0.12),
-            transparent 42%
-          ),
-          linear-gradient(135deg, #17171e, #101014);
-        border-color: rgba(255, 0, 168, 0.18);
-      }
-
-      #dashboard > .panel:first-child h1 {
-        margin-bottom: 10px;
-      }
-
-      #adminEmail {
-        display: inline-flex;
-        max-width: 100%;
-        align-items: center;
-        gap: 8px;
-        margin-top: 14px;
-        padding: 6px 12px;
-        overflow-wrap: anywhere;
-        background: rgba(255, 255, 255, 0.035);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-full);
-        font-size: 0.82rem;
-      }
-
-      #adminEmail:empty {
-        display: none;
-      }
-
-      /* Section title accent */
-      #dashboard > .panel:not(:first-child) > h2,
-      .notification-heading h2 {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      #dashboard > .panel:not(:first-child) > h2::before {
-        content: "";
-        flex: 0 0 4px;
-        width: 4px;
-        height: 21px;
-        border-radius: var(--radius-full);
-        background: var(--pink);
-        box-shadow: 0 0 12px var(--pink-glow);
-      }
-
-      /* 06. LOGIN */
       #loginPanel {
-        width: min(100%, 470px);
-        margin: clamp(30px, 8vh, 90px) auto;
-        padding: clamp(28px, 5vw, 42px);
-        background:
-          radial-gradient(
-            ellipse at 100% 0%,
-            rgba(255, 0, 168, 0.1),
-            transparent 50%
-          ),
-          var(--bg-surface);
-        border-color: rgba(255, 0, 168, 0.18);
-        box-shadow: var(--shadow-lg);
+        width: min(100%, 410px);
+        margin: 7vh auto;
+        padding: 24px;
+        border-color: rgba(255, 42, 166, 0.2);
       }
 
       #loginPanel h1 {
-        margin-bottom: 12px;
+        margin-bottom: 8px;
       }
-
-      #loginPanel form {
-        margin-top: 26px;
+      #loginForm {
+        margin-top: 18px;
       }
-
-      #loginPanel button[type="submit"] {
+      #loginBtn {
         width: 100%;
-        margin-top: 4px;
+        margin-top: 15px;
       }
-
       #loginMessage {
-        min-height: 1.5em;
-      }
-
-      /* 07. FORMS */
-      label {
-        display: block;
-        margin: 17px 0 8px;
-        color: #c7c7d1;
-        font-size: 0.82rem;
-        font-weight: 650;
-        letter-spacing: 0.015em;
+        overflow-wrap: anywhere;
       }
 
       input,
       select,
       textarea {
-        display: block;
         width: 100%;
         min-width: 0;
-        padding: 12px 14px;
+        min-height: 38px;
+        padding: 9px 10px;
         color: var(--text);
-        background: var(--bg-input);
-        border: 1px solid var(--border-medium);
-        border-radius: var(--radius-md);
-        font-size: 0.92rem;
-        transition:
-          border-color var(--transition),
-          box-shadow var(--transition),
-          background var(--transition);
-      }
-
-      input::placeholder,
-      textarea::placeholder {
-        color: #686875;
-        opacity: 1;
-      }
-
-      input:hover,
-      select:hover,
-      textarea:hover {
-        border-color: rgba(255, 255, 255, 0.24);
+        background: #0c0c11;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 9px;
       }
 
       input:focus,
@@ -393,502 +207,474 @@
       textarea:focus {
         outline: none;
         border-color: var(--pink);
-        background: #101015;
         box-shadow: 0 0 0 3px var(--pink-dim);
       }
 
-      input[type="checkbox"] {
+      textarea {
+        resize: vertical;
+        min-height: 75px;
+      }
+
+      button {
+        min-height: 35px;
+        padding: 8px 12px;
+        border: 1px solid var(--pink);
+        border-radius: 9px;
+        background: var(--pink);
+        color: white;
+        font-weight: 700;
+        font-size: 12px;
+        transition: 0.15s ease;
+      }
+
+      button:hover:not(:disabled) {
+        filter: brightness(1.08);
+      }
+      button.secondary {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.13);
+        color: #e8e8ef;
+      }
+      button.danger {
+        background: rgba(251, 113, 133, 0.12);
+        border-color: rgba(251, 113, 133, 0.35);
+        color: #ff9aaa;
+      }
+
+      #logoutBtn {
+        min-height: 32px;
+      }
+      #dashboard {
+        display: block;
+      }
+      #dashboard.hidden {
+        display: none !important;
+      }
+
+      .welcome {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 19px;
+        margin-bottom: 14px;
+        background:
+          radial-gradient(
+            ellipse at 95% 0%,
+            rgba(255, 42, 166, 0.12),
+            transparent 45%
+          ),
+          var(--surface);
+        border: 1px solid rgba(255, 42, 166, 0.2);
+        border-radius: var(--radius);
+      }
+
+      .welcome p {
+        margin-top: 5px;
+        font-size: 12px;
+      }
+      #adminEmail {
         display: inline-block;
-        width: 16px;
-        height: 16px;
-        min-width: 16px;
-        accent-color: var(--pink);
-        vertical-align: middle;
+        margin-top: 7px;
+        padding: 3px 8px;
+        border: 1px solid var(--border);
+        border-radius: 99px;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+      }
+      #adminEmail:empty {
+        display: none;
       }
 
-      input[type="datetime-local"] {
-        color-scheme: dark;
+      /* Live statistics */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
       }
 
-      input[type="number"] {
+      .stat-card {
+        min-width: 0;
+        padding: 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .stat-number {
+        display: block;
+        margin-top: 5px;
+        font-size: clamp(23px, 3vw, 30px);
+        line-height: 1.1;
+        font-weight: 800;
         font-variant-numeric: tabular-nums;
       }
-
-      select {
-        cursor: pointer;
+      .stat-card.pending {
+        border-top: 2px solid var(--yellow);
+      }
+      .stat-card.confirmed {
+        border-top: 2px solid var(--green);
+      }
+      .stat-card.rejected {
+        border-top: 2px solid var(--red);
+      }
+      .stat-card.total {
+        border-top: 2px solid var(--pink);
+      }
+      .stat-card.pending .stat-number {
+        color: var(--yellow);
+      }
+      .stat-card.confirmed .stat-number {
+        color: var(--green);
+      }
+      .stat-card.rejected .stat-number {
+        color: var(--red);
+      }
+      .stat-card.total .stat-number {
+        color: var(--pink);
       }
 
-      select option {
+      /* Navigation */
+      .admin-nav {
+        position: sticky;
+        top: 57px;
+        z-index: 50;
+        display: flex;
+        gap: 6px;
+        margin-bottom: 13px;
+        padding: 7px;
+        overflow-x: auto;
+        background: rgba(18, 18, 24, 0.96);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        backdrop-filter: blur(14px);
+        scrollbar-width: none;
+      }
+
+      .admin-nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      .nav-btn {
+        flex: 1 0 auto;
+        min-height: 36px;
+        padding: 8px 13px;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+
+      .nav-btn:hover:not(:disabled) {
+        background: var(--pink-dim);
         color: var(--text);
-        background: var(--bg-surface);
+        filter: none;
       }
 
-      textarea {
-        min-height: 92px;
-        resize: vertical;
+      .nav-btn.active {
+        color: white;
+        background: var(--pink-dim);
+        border-color: rgba(255, 42, 166, 0.35);
+      }
+
+      .nav-count {
+        display: inline-flex;
+        min-width: 19px;
+        height: 19px;
+        align-items: center;
+        justify-content: center;
+        margin-left: 4px;
+        padding: 0 5px;
+        border-radius: 99px;
+        background: var(--pink);
+        color: white;
+        font-size: 10px;
+      }
+
+      .view-panel {
+        min-width: 0;
+      }
+      .section-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .section-heading p {
+        margin-top: 4px;
+        font-size: 12px;
+      }
+      .section-heading > button {
+        flex-shrink: 0;
+      }
+
+      .filter-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .filter-row label {
+        margin-top: 0;
+      }
+      .filter-row select {
+        max-width: 300px;
+      }
+
+      .message {
+        margin: 8px 0;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .message:empty {
+        display: none;
+      }
+
+      .booking-list,
+      .camera-list,
+      #notificationList {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        gap: 10px;
+      }
+
+      .booking,
+      .camera {
+        min-width: 0;
+        padding: 13px;
+        background: rgba(8, 8, 12, 0.55);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        overflow-wrap: anywhere;
+      }
+
+      .booking h3,
+      .camera h3 {
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+      .booking p,
+      .camera p {
+        margin: 5px 0;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .booking-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 11px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+      }
+      .booking-actions button {
+        flex: 1 1 100px;
+      }
+      .notes {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        padding: 8px;
+        margin-top: 6px;
+        background: #101016;
+        border-radius: 7px;
+        font-size: 12px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        color: var(--pink);
+        background: var(--pink-dim);
+        border: 1px solid rgba(255, 42, 166, 0.3);
+        border-radius: 99px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .realtime-indicator {
+        padding: 9px 10px;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .notification-card.unread {
+        border-color: rgba(255, 42, 166, 0.45);
+        box-shadow: inset 3px 0 var(--pink);
+      }
+
+      .notification-card button {
+        margin-top: 9px;
+      }
+      .notification-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 10px 0;
       }
 
       .form-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0 20px;
+        gap: 0 14px;
       }
-
       .form-full {
         grid-column: 1 / -1;
       }
-
       .form-help {
-        margin-top: 14px;
-        padding: 12px 14px;
-        color: var(--muted);
-        background: rgba(255, 255, 255, 0.025);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        font-size: 0.82rem;
-      }
-
-      /* 08. BUTTON SYSTEM */
-      button {
-        display: inline-flex;
-        min-height: 42px;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px 16px;
-        color: #fff;
-        background: var(--pink);
-        border: 1px solid var(--pink);
-        border-radius: var(--radius-md);
-        font-size: 0.86rem;
-        font-weight: 700;
-        line-height: 1.4;
-        text-align: center;
-        cursor: pointer;
-        transition:
-          color var(--transition),
-          background var(--transition),
-          border-color var(--transition),
-          box-shadow var(--transition),
-          transform var(--transition);
-      }
-
-      button:hover:not(:disabled) {
-        background: var(--pink-hover);
-        border-color: var(--pink-hover);
-        box-shadow: 0 5px 18px rgba(255, 0, 168, 0.2);
-        transform: translateY(-1px);
-      }
-
-      button:active:not(:disabled) {
-        transform: translateY(0);
-      }
-
-      button.secondary {
-        color: #e4e4eb;
-        background: rgba(255, 255, 255, 0.035);
-        border-color: var(--border-medium);
-        box-shadow: none;
-      }
-
-      button.secondary:hover:not(:disabled) {
-        color: var(--pink);
-        background: var(--pink-dim);
-        border-color: var(--border-pink);
-        box-shadow: none;
-      }
-
-      button.danger {
-        color: #fff;
-        background: rgba(251, 113, 133, 0.12);
-        border-color: rgba(251, 113, 133, 0.35);
-      }
-
-      button.danger:hover:not(:disabled) {
-        color: #fff;
-        background: #be3455;
-        border-color: #be3455;
-        box-shadow: 0 5px 18px rgba(251, 113, 133, 0.14);
-      }
-
-      #logoutBtn {
-        min-height: 38px;
-        padding: 8px 14px;
-      }
-
-      /* 09. STATUS & MESSAGES */
-      .status {
-        color: var(--pink);
-        font-weight: 750;
-      }
-
-      .status-badge {
-        display: inline-flex;
-        min-height: 27px;
-        align-items: center;
-        justify-content: center;
-        padding: 4px 10px;
-        color: var(--pink);
-        background: var(--pink-dim);
-        border: 1px solid var(--border-pink);
-        border-radius: var(--radius-full);
-        font-size: 0.75rem;
-        font-weight: 750;
-        line-height: 1.4;
-        white-space: nowrap;
-      }
-
-      .message {
-        min-height: 0;
-        margin-top: 14px;
-        overflow-wrap: anywhere;
-        font-size: 0.88rem;
-      }
-
-      .message:empty {
-        display: none;
-      }
-
-      .realtime-indicator {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
-        margin: 18px 0 0;
-        padding: 12px 14px;
-        overflow-wrap: anywhere;
-        background: rgba(255, 255, 255, 0.025);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        font-size: 0.84rem;
-      }
-
-      /* 10. NOTIFICATIONS */
-      #notificationPanel {
-        background:
-          radial-gradient(
-            ellipse at 100% 0%,
-            rgba(255, 0, 168, 0.055),
-            transparent 45%
-          ),
-          linear-gradient(145deg, #15151c, #111115);
-      }
-
-      .notification-heading {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-
-      .notification-heading h2 {
-        margin: 0;
-      }
-
-      .notification-tools {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 9px;
-        margin-top: 16px;
-      }
-
-      #notificationList {
-        margin-top: 16px;
-      }
-
-      .notification-card {
-        transition:
-          border-color var(--transition),
-          background var(--transition),
-          box-shadow var(--transition);
-      }
-
-      .notification-card.unread {
-        background: rgba(255, 0, 168, 0.045);
-        border-color: rgba(255, 0, 168, 0.48);
-        box-shadow: inset 3px 0 0 var(--pink);
-      }
-
-      /* 11. BOOKING & CAMERA LISTS */
-      .camera-list,
-      .booking-list {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: stretch;
-        gap: 16px;
-        margin-top: 18px;
-      }
-
-      .camera,
-      .booking {
-        min-width: 0;
-        padding: 20px;
-        overflow-wrap: anywhere;
-        background: rgba(10, 10, 12, 0.62);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        transition:
-          border-color var(--transition),
-          background var(--transition),
-          transform var(--transition);
-      }
-
-      .camera:hover,
-      .booking:hover {
-        background: rgba(22, 22, 29, 0.85);
-        border-color: var(--border-medium);
-      }
-
-      .camera h3,
-      .booking h3 {
-        margin: 0 0 12px;
-        overflow-wrap: anywhere;
-        font-size: 1rem;
-      }
-
-      .camera p,
-      .booking p {
-        margin: 8px 0;
-        overflow-wrap: anywhere;
-        font-size: 0.86rem;
-      }
-
-      .camera input {
-        margin-bottom: 10px;
-      }
-
-      .booking-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 18px;
-        padding-top: 14px;
-        border-top: 1px solid var(--border);
-      }
-
-      .booking-actions button {
-        flex: 1 1 110px;
-        min-width: 0;
-      }
-
-      .notes {
+        padding: 10px;
         margin-top: 12px;
-        padding: 12px 14px;
-        overflow-wrap: anywhere;
-        white-space: pre-wrap;
-        color: #c7c7d1;
-        background: rgba(255, 255, 255, 0.035);
+        background: rgba(255, 255, 255, 0.025);
         border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        font-size: 0.84rem;
+        border-radius: 9px;
+        font-size: 12px;
       }
-
-      /* 12. FILTERS */
-      .filter-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: end;
-        gap: 14px;
-        margin-top: 20px;
-      }
-
-      .filter-row label {
-        margin-top: 0;
-      }
-
-      .filter-row button {
-        min-width: 145px;
-      }
-
-      /* 13. FORM ACTIONS */
-      #manualBookingForm,
-      #addCameraForm {
-        margin-top: 20px;
-      }
-
       #manualBookingBtn,
       #addCameraBtn {
-        margin-top: 4px;
+        margin-top: 12px;
+      }
+      #addCameraForm {
+        max-width: 600px;
       }
 
-      #refreshBookingsBtn,
-      #refreshBtn {
-        white-space: nowrap;
-      }
-
-      /* 14. RESPONSIVE */
-      @media (min-width: 1000px) {
-        #dashboard > .panel:nth-child(2) .booking-list {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-
-      @media (max-width: 760px) {
-        :root {
-          --header-height: 68px;
-        }
-
-        header {
-          padding: 12px 20px;
-        }
-
+      @media (max-width: 700px) {
         main {
-          width: calc(100% - 32px);
-          margin-top: 24px;
+          width: calc(100% - 20px);
+          margin-top: 12px;
         }
-
-        #dashboard {
-          gap: 16px;
+        header {
+          height: 52px;
+          padding: 0 11px;
         }
-
+        .admin-nav {
+          top: 52px;
+          gap: 4px;
+          margin-bottom: 10px;
+          padding: 5px;
+        }
+        .nav-btn {
+          min-height: 35px;
+          padding: 7px 10px;
+          font-size: 11px;
+        }
+        .welcome {
+          padding: 14px;
+          margin-bottom: 10px;
+        }
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+        .stat-card {
+          padding: 11px;
+        }
+        .stat-number {
+          font-size: 25px;
+        }
         .panel {
-          padding: 22px;
-          border-radius: 16px;
+          padding: 12px;
+          border-radius: 11px;
         }
-
-        #dashboard > .panel:first-child {
-          padding: 28px 22px;
-        }
-
+        .booking-list,
         .camera-list,
-        .booking-list {
-          grid-template-columns: 1fr;
-          gap: 12px;
+        #notificationList {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 8px;
         }
-
+        .booking,
+        .camera {
+          padding: 11px;
+        }
+        .section-heading {
+          gap: 8px;
+        }
+        .section-heading h2 {
+          font-size: 15px;
+        }
+        .section-heading p {
+          font-size: 11px;
+        }
+        .filter-row {
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 7px;
+        }
+        .filter-row select {
+          width: 100%;
+        }
+        .filter-row button {
+          padding: 8px;
+        }
         .form-grid {
           grid-template-columns: minmax(0, 1fr);
         }
-
         .form-full {
           grid-column: auto;
         }
-
-        .filter-row {
-          grid-template-columns: 1fr;
-          gap: 12px;
+        #loginPanel {
+          padding: 20px;
+          margin-top: 5vh;
         }
+        .notification-tools button {
+          flex: 1 1 130px;
+        }
+      }
 
+      @media (max-width: 360px) {
+        main {
+          width: calc(100% - 14px);
+        }
+        .welcome {
+          padding: 12px;
+        }
+        .panel {
+          padding: 10px;
+        }
+        .filter-row {
+          grid-template-columns: minmax(0, 1fr);
+        }
         .filter-row button {
           width: 100%;
         }
-
-        .notification-tools {
-          display: grid;
-          grid-template-columns: 1fr;
-        }
-
-        .notification-tools button {
-          width: 100%;
-        }
-      }
-
-      @media (max-width: 480px) {
-        body {
-          font-size: 13px;
-        }
-
-        header {
-          padding-right: 16px;
-          padding-left: 16px;
-        }
-
-        header strong {
-          font-size: 1rem;
-        }
-
-        main {
-          width: calc(100% - 24px);
-          margin-top: 18px;
-          margin-bottom: 44px;
-        }
-
-        .panel {
-          padding: 18px;
-          border-radius: 14px;
-        }
-
-        #dashboard > .panel:first-child {
-          padding: 24px 18px;
-        }
-
-        #loginPanel {
-          margin-top: 34px;
-          padding: 24px 20px;
-        }
-
-        h1 {
-          font-size: 1.65rem;
-        }
-
-        h2 {
-          font-size: 1.08rem;
-        }
-
-        input,
-        select,
-        textarea {
-          padding: 12px;
-          font-size: 16px;
-        }
-
-        button {
-          min-height: 42px;
-          padding: 10px 12px;
-        }
-
-        .camera,
-        .booking {
-          padding: 16px;
-        }
-
         .booking-actions button {
           flex-basis: 100%;
         }
-
-        .notification-heading {
-          align-items: flex-start;
-        }
-
-        .status-badge {
-          white-space: normal;
-          text-align: center;
-        }
       }
 
-      /* 15. REDUCED MOTION */
       @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
         *::after {
           scroll-behavior: auto !important;
-          transition-duration: 0.01ms !important;
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
+          transition: none !important;
         }
       }
     </style>
   </head>
 
   <body>
-    <!-- HEADER -->
     <header>
-      <strong>ENMAX <span>HOUSE</span></strong>
-
+      <div class="brand">ENMAX <span>HOUSE</span></div>
       <button id="logoutBtn" class="secondary hidden" type="button">
         Logout
       </button>
     </header>
 
     <main>
-      <!-- LOGIN -->
       <section id="loginPanel" class="panel">
         <h1>Admin Login</h1>
-        <p>
-          Masuk untuk mengelola booking, inventaris, dan aktivitas rental kamera
-          Enmax House.
-        </p>
-
+        <p>Masuk untuk mengelola booking dan inventaris kamera Enmax House.</p>
         <form id="loginForm">
           <label for="email">Email admin</label>
           <input
@@ -898,7 +684,6 @@
             placeholder="Email owner"
             required
           />
-
           <label for="password">Password</label>
           <input
             id="password"
@@ -907,257 +692,277 @@
             placeholder="Password"
             required
           />
-
-          <br /><br />
-
           <button id="loginBtn" type="submit">Login</button>
         </form>
-
         <p id="loginMessage" class="message" role="status"></p>
       </section>
 
-      <!-- DASHBOARD -->
       <section id="dashboard" class="hidden">
-        <!-- WELCOME -->
-        <div class="panel">
-          <h1>Dashboard Admin</h1>
-          <p>Pusat kendali booking dan inventaris kamera Enmax House.</p>
-          <p id="adminEmail"></p>
-        </div>
-
-        <!-- BOOKING NOTIFICATIONS -->
-        <div class="panel" id="notificationPanel">
-          <div class="notification-heading">
-            <h2>🔔 Notifikasi Booking</h2>
-
-            <span id="notificationBadge" class="status-badge">
-              0 belum dibaca
-            </span>
-          </div>
-
-          <p>Pantau booking baru secara langsung saat dashboard admin aktif.</p>
-
-          <p id="realtimeStatus" class="realtime-indicator" role="status">
-            Menunggu sesi admin...
-          </p>
-
-          <div class="notification-tools">
-            <button
-              id="markNotificationsReadBtn"
-              class="secondary"
-              type="button"
-            >
-              Tandai semua dibaca
-            </button>
-
-            <button id="clearNotificationsBtn" class="secondary" type="button">
-              Bersihkan daftar
-            </button>
-          </div>
-
-          <div id="notificationList" class="booking-list" aria-live="polite">
-            <p class="muted">Belum ada notifikasi booking baru.</p>
+        <div class="welcome">
+          <div>
+            <h1>Dashboard Admin</h1>
+            <p>Kelola operasional rental Enmax House.</p>
+            <span id="adminEmail"></span>
           </div>
         </div>
 
-        <!-- CUSTOMER BOOKINGS -->
-        <div class="panel">
-          <h2>Booking Customer</h2>
+        <section class="stats" aria-label="Statistik booking">
+          <article class="stat-card total">
+            <div class="stat-label">Total Booking</div>
+            <strong id="statTotal" class="stat-number">0</strong>
+          </article>
+          <article class="stat-card pending">
+            <div class="stat-label">Pending</div>
+            <strong id="statPending" class="stat-number">0</strong>
+          </article>
+          <article class="stat-card confirmed">
+            <div class="stat-label">Disetujui</div>
+            <strong id="statConfirmed" class="stat-number">0</strong>
+          </article>
+          <article class="stat-card rejected">
+            <div class="stat-label">Ditolak</div>
+            <strong id="statRejected" class="stat-number">0</strong>
+          </article>
+        </section>
 
-          <p>
-            Lihat permintaan rental yang masuk dan kelola statusnya. Booking
-            dari website baru akan berstatus pending.
-          </p>
+        <nav class="admin-nav" aria-label="Navigasi admin">
+          <button
+            class="nav-btn active"
+            data-view-target="bookingsView"
+            type="button"
+          >
+            Booking
+          </button>
+          <button
+            class="nav-btn"
+            data-view-target="notificationsView"
+            type="button"
+          >
+            Notifikasi
+            <span id="navNotificationCount" class="nav-count hidden">0</span>
+          </button>
+          <button class="nav-btn" data-view-target="manualView" type="button">
+            Booking Manual
+          </button>
+          <button class="nav-btn" data-view-target="camerasView" type="button">
+            Inventaris
+          </button>
+        </nav>
 
-          <div class="filter-row">
-            <div>
-              <label for="bookingStatusFilter">Filter status</label>
-              <select id="bookingStatusFilter">
-                <option value="all">Semua status</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Disetujui</option>
-                <option value="rejected">Ditolak</option>
-              </select>
+        <section id="bookingsView" class="view-panel">
+          <div class="panel">
+            <div class="section-heading">
+              <div>
+                <h2>Booking Customer</h2>
+                <p>Kelola permintaan rental dan status booking.</p>
+              </div>
+              <button id="refreshBookingsBtn" class="secondary" type="button">
+                ↻ Refresh
+              </button>
             </div>
-
-            <button id="refreshBookingsBtn" class="secondary" type="button">
-              Refresh booking
-            </button>
-          </div>
-
-          <p id="bookingMessage" class="message" role="status"></p>
-          <div id="bookingList" class="booking-list"></div>
-        </div>
-
-        <!-- MANUAL BOOKING -->
-        <div class="panel">
-          <h2>Tambah Booking Manual</h2>
-
-          <p>
-            Catat rental yang diterima melalui WhatsApp atau di luar website.
-            Booking melalui formulir ini akan langsung berstatus disetujui.
-          </p>
-
-          <form id="manualBookingForm">
-            <div class="form-grid">
+            <div class="filter-row">
               <div>
-                <label for="manualCustomerName">Nama customer</label>
-                <input
-                  id="manualCustomerName"
-                  type="text"
-                  placeholder="Nama lengkap customer"
-                  autocomplete="name"
-                  required
-                />
-              </div>
-
-              <div>
-                <label for="manualCustomerPhone">Nomor WhatsApp</label>
-                <input
-                  id="manualCustomerPhone"
-                  type="tel"
-                  placeholder="Contoh: 628123456789"
-                  autocomplete="tel"
-                  required
-                />
-              </div>
-
-              <div>
-                <label for="manualCameraId">Kamera</label>
-                <select id="manualCameraId" required>
-                  <option value="">Pilih kamera</option>
+                <label for="bookingStatusFilter">Filter status</label>
+                <select id="bookingStatusFilter">
+                  <option value="all">Semua status</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Disetujui</option>
+                  <option value="rejected">Ditolak</option>
                 </select>
               </div>
+            </div>
+            <p id="bookingMessage" class="message" role="status"></p>
+            <div id="bookingList" class="booking-list"></div>
+          </div>
+        </section>
 
+        <section id="notificationsView" class="view-panel hidden">
+          <div id="notificationPanel" class="panel">
+            <div class="section-heading">
               <div>
-                <label for="manualQuantity">Jumlah unit</label>
-                <input
-                  id="manualQuantity"
-                  type="number"
-                  min="1"
-                  step="1"
-                  value="1"
-                  required
-                />
+                <h2>🔔 Notifikasi Booking</h2>
+                <p>Pantau booking baru saat dashboard aktif.</p>
               </div>
+              <span id="notificationBadge" class="status-badge"
+                >0 belum dibaca</span
+              >
+            </div>
+            <p id="realtimeStatus" class="realtime-indicator" role="status">
+              Menunggu sesi admin...
+            </p>
+            <div class="notification-tools">
+              <button
+                id="markNotificationsReadBtn"
+                class="secondary"
+                type="button"
+              >
+                Tandai semua dibaca
+              </button>
+              <button
+                id="clearNotificationsBtn"
+                class="secondary"
+                type="button"
+              >
+                Bersihkan daftar
+              </button>
+            </div>
+            <div id="notificationList" aria-live="polite">
+              <p class="muted">Belum ada notifikasi booking baru.</p>
+            </div>
+          </div>
+        </section>
 
+        <section id="manualView" class="view-panel hidden">
+          <div class="panel">
+            <div class="section-heading">
               <div>
-                <label for="manualPickupAt"> Tanggal dan waktu pickup </label>
-                <input id="manualPickupAt" type="datetime-local" required />
-              </div>
-
-              <div>
-                <label for="manualReturnAt"> Tanggal dan waktu return </label>
-                <input id="manualReturnAt" type="datetime-local" required />
-              </div>
-
-              <div class="form-full">
-                <label for="manualNotes">Catatan</label>
-                <textarea
-                  id="manualNotes"
-                  rows="3"
-                  placeholder="Contoh: booking via WhatsApp, DP sudah dibayar..."
-                ></textarea>
+                <h2>Tambah Booking Manual</h2>
+                <p>
+                  Catat rental yang diterima lewat WhatsApp atau di luar
+                  website.
+                </p>
               </div>
             </div>
+            <form id="manualBookingForm">
+              <div class="form-grid">
+                <div>
+                  <label for="manualCustomerName">Nama customer</label>
+                  <input
+                    id="manualCustomerName"
+                    type="text"
+                    placeholder="Nama lengkap"
+                    autocomplete="name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="manualCustomerPhone">Nomor WhatsApp</label>
+                  <input
+                    id="manualCustomerPhone"
+                    type="tel"
+                    placeholder="628123456789"
+                    autocomplete="tel"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="manualCameraId">Kamera</label>
+                  <select id="manualCameraId" required>
+                    <option value="">Pilih kamera</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="manualQuantity">Jumlah unit</label>
+                  <input
+                    id="manualQuantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="manualPickupAt">Tanggal dan waktu pickup</label>
+                  <input id="manualPickupAt" type="datetime-local" required />
+                </div>
+                <div>
+                  <label for="manualReturnAt">Tanggal dan waktu return</label>
+                  <input id="manualReturnAt" type="datetime-local" required />
+                </div>
+                <div class="form-full">
+                  <label for="manualNotes">Catatan</label>
+                  <textarea
+                    id="manualNotes"
+                    rows="3"
+                    placeholder="Contoh: DP sudah dibayar..."
+                  ></textarea>
+                </div>
+              </div>
+              <p class="form-help">
+                Booking manual langsung berstatus disetujui. Pastikan tanggal,
+                waktu, dan jumlah unit benar sebelum menyimpan.
+              </p>
+              <button id="manualBookingBtn" type="submit">
+                Simpan Booking Manual
+              </button>
+            </form>
+            <p
+              id="manualBookingMessage"
+              class="message"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
+        </section>
 
-            <p class="form-help">
-              Pastikan tanggal, waktu, dan jumlah unit benar sebelum menyimpan.
-              Form ini belum mengecek bentrok jadwal otomatis.
-            </p>
+        <section id="camerasView" class="view-panel hidden">
+          <div class="panel">
+            <div class="section-heading">
+              <div>
+                <h2>Inventaris Kamera</h2>
+                <p>Kelola jumlah unit dan harga harian.</p>
+              </div>
+              <button id="refreshBtn" class="secondary" type="button">
+                ↻ Refresh
+              </button>
+            </div>
+            <p id="cameraMessage" class="message" role="status"></p>
+            <div id="cameraList" class="camera-list"></div>
+          </div>
 
-            <br />
-
-            <button id="manualBookingBtn" type="submit">
-              Simpan Booking Manual
-            </button>
-          </form>
-
-          <p
-            id="manualBookingMessage"
-            class="message"
-            role="status"
-            aria-live="polite"
-          ></p>
-        </div>
-
-        <!-- CAMERA INVENTORY -->
-        <div class="panel">
-          <h2>Daftar Kamera</h2>
-
-          <p>
-            Kelola jumlah unit dan harga harian sesuai kondisi inventaris
-            aktual.
-          </p>
-
-          <button id="refreshBtn" class="secondary" type="button">
-            Refresh data kamera
-          </button>
-
-          <p id="cameraMessage" class="message" role="status"></p>
-          <div id="cameraList" class="camera-list"></div>
-        </div>
-
-        <!-- ADD CAMERA -->
-        <div class="panel">
-          <h2>Tambah Kamera</h2>
-
-          <p>Masukkan kamera baru ke inventaris Enmax House.</p>
-
-          <form id="addCameraForm">
-            <label for="cameraName">Nama kamera</label>
-            <input
-              id="cameraName"
-              type="text"
-              required
-              placeholder="Contoh: Canon EOS R50"
-            />
-
-            <label for="cameraQuantity">Jumlah unit</label>
-            <input
-              id="cameraQuantity"
-              type="number"
-              min="0"
-              step="1"
-              value="1"
-              required
-            />
-
-            <label for="cameraPrice">Harga per hari (Rp)</label>
-            <input
-              id="cameraPrice"
-              type="number"
-              min="0"
-              step="1000"
-              value="0"
-              required
-            />
-
-            <br /><br />
-
-            <button id="addCameraBtn" type="submit">Tambah kamera</button>
-          </form>
-        </div>
+          <div class="panel" style="margin-top: 12px">
+            <h2>Tambah Kamera</h2>
+            <form id="addCameraForm">
+              <label for="cameraName">Nama kamera</label>
+              <input
+                id="cameraName"
+                type="text"
+                required
+                placeholder="Contoh: Canon EOS R50"
+              />
+              <div class="form-grid">
+                <div>
+                  <label for="cameraQuantity">Jumlah unit</label>
+                  <input
+                    id="cameraQuantity"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="cameraPrice">Harga per hari (Rp)</label>
+                  <input
+                    id="cameraPrice"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value="0"
+                    required
+                  />
+                </div>
+              </div>
+              <button id="addCameraBtn" type="submit">Tambah Kamera</button>
+            </form>
+          </div>
+        </section>
       </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/admin.js"></script>
-
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker
             .register("/service-worker.js")
-            .then((registration) => {
-              console.log(
-                "Enmax Admin service worker aktif:",
-                registration.scope,
-              );
-            })
-            .catch((error) => {
-              console.error("Service worker gagal:", error);
-            });
+            .then((registration) =>
+              console.log("Service worker aktif:", registration.scope),
+            )
+            .catch((error) => console.error("Service worker gagal:", error));
         });
       }
     </script>

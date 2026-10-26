@@ -1,0 +1,12 @@
+{
+  "id": "/admin.html",
+  "name": "Enmax House Admin",
+  "short_name": "Enmax Admin",
+  "description": "Kelola booking dan inventaris kamera Enmax House.",
+  "lang": "id",
+  "start_url": "/admin.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c"
+}

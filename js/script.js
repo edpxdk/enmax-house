@@ -35,10 +35,10 @@ let cameras = [
     category: "Instantly Post Ready",
     description:
       "Powerful zoom in a compact body, made for travel and everyday moments.",
-    price: "Rp 100.000",
+    price: "Rp 150.000",
     dailyPrice: 180000,
-    rentalRates: { 6: 100000, 12: 150000, 24: 180000 },
-    durations: [6, 12, 24, "daily"],
+    rentalRates: { 12: 150000, 24: 180000 },
+    durations: [12, "daily"],
     image: "assets/cameras/camera-02.webp",
     gallery: [
       "assets/cameras/camera-02.webp",
@@ -53,10 +53,10 @@ let cameras = [
     category: "Feel Leica Quality",
     description:
       "Versatile zoom and compact design for travel and everyday shooting.",
-    price: "Rp 100.000",
+    price: "Rp 150.000",
     dailyPrice: 180000,
-    rentalRates: { 6: 100000, 12: 150000, 24: 180000 },
-    durations: [6, 12, 24, "daily"],
+    rentalRates: { 12: 150000, 24: 180000 },
+    durations: [12, "daily"],
     image: "assets/cameras/camera-03.webp",
     gallery: [
       "assets/cameras/camera-03.webp",
@@ -151,7 +151,6 @@ let availabilityRequestId = 0;
 /* RENTAL MODES */
 
 const RENTAL_MODE = {
-  SIX_HOURS: "6",
   TWELVE_HOURS: "12",
   DAILY: "daily",
 };
@@ -209,22 +208,12 @@ function getSelectedCamera() {
 function getPriceForRental(camera, mode, actualHours = null) {
   if (!camera) return { amount: 0, description: "-", days: 0 };
 
-  if (isFlexiblePriceCamera(camera)) {
-    if (mode === RENTAL_MODE.SIX_HOURS) {
-      return {
-        amount: Number(camera.rentalRates[6]) || 0,
-        description: "6 Hours",
-        days: 0,
-      };
-    }
-
-    if (mode === RENTAL_MODE.TWELVE_HOURS) {
-      return {
-        amount: Number(camera.rentalRates[12]) || 0,
-        description: "12 Hours",
-        days: 0,
-      };
-    }
+  if (isFlexiblePriceCamera(camera) && mode === RENTAL_MODE.TWELVE_HOURS) {
+    return {
+      amount: Number(camera.rentalRates?.[12]) || 0,
+      description: "12 Hours",
+      days: 0,
+    };
   }
 
   if (mode === RENTAL_MODE.DAILY) {
@@ -247,7 +236,13 @@ function getPriceForRental(camera, mode, actualHours = null) {
 
 function getCameraStartingPrice(camera) {
   if (!camera) return "-";
-  if (isFlexiblePriceCamera(camera)) return formatRupiah(camera.rentalRates[6]);
+
+  if (isFlexiblePriceCamera(camera)) {
+    return formatRupiah(
+      Number(camera.rentalRates?.[12]) || getCameraDailyPrice(camera),
+    );
+  }
+
   return formatRupiah(getCameraDailyPrice(camera));
 }
 
@@ -415,14 +410,13 @@ function setupOneDurationSelect(select) {
 
   if (isFlexiblePriceCamera(camera)) {
     select.innerHTML = `
-      <option value="6">6 Hours — ${formatRupiah(camera.rentalRates[6])}</option>
-      <option value="12">12 Hours — ${formatRupiah(camera.rentalRates[12])}</option>
+      <option value="12">12 Hours — ${formatRupiah(Number(camera.rentalRates?.[12]) || 0)}</option>
       <option value="daily">Daily Rental — ${formatRupiah(camera.dailyPrice)} / day</option>
     `;
 
-    select.value = ["6", "12", "daily"].includes(previousValue)
+    select.value = ["12", "daily"].includes(previousValue)
       ? previousValue
-      : "daily";
+      : "12";
   } else {
     select.innerHTML = `
       <option value="daily">Daily Rental — ${
@@ -463,16 +457,17 @@ function getSelectedRentalMode() {
 
 function getSelectedDurationHours() {
   const mode = getSelectedRentalMode();
-  if (mode === RENTAL_MODE.SIX_HOURS) return 6;
+
   if (mode === RENTAL_MODE.TWELVE_HOURS) return 12;
   if (mode === RENTAL_MODE.DAILY) return getRentalDurationDifference();
+
   return null;
 }
 
 function formatDuration(hours) {
   if (!Number.isFinite(hours) || hours <= 0) return "-";
-  if (hours === 6) return "6 Hours";
   if (hours === 12) return "12 Hours";
+
   const days = Math.ceil(hours / 24);
   return `${days} ${days === 1 ? "Day" : "Days"}`;
 }
@@ -600,8 +595,8 @@ modalBookButton?.addEventListener("click", () => {
 
   const camera = cameras.find((item) => item.id === cameraId);
   rentalDuration.value =
-    isFlexiblePriceCamera(camera) && ["6", "12"].includes(selectedMode)
-      ? selectedMode
+    isFlexiblePriceCamera(camera) && selectedMode === RENTAL_MODE.TWELVE_HOURS
+      ? RENTAL_MODE.TWELVE_HOURS
       : RENTAL_MODE.DAILY;
 
   updateDurationFieldState(rentalDuration);
@@ -776,16 +771,16 @@ function syncReturnDateTime() {
   const mode = getSelectedRentalMode();
   const camera = getSelectedCamera();
 
-  if (
-    isFlexiblePriceCamera(camera) &&
-    [RENTAL_MODE.SIX_HOURS, RENTAL_MODE.TWELVE_HOURS].includes(mode)
-  ) {
-    const returned = new Date(pickup.getTime() + Number(mode) * 60 * 60 * 1000);
+  if (isFlexiblePriceCamera(camera) && mode === RENTAL_MODE.TWELVE_HOURS) {
+    const returned = new Date(pickup.getTime() + 12 * 60 * 60 * 1000);
+
     if (endDate) {
       endDate.value = toLocalDateString(returned);
       endDate.min = startDate?.value || getTodayString();
     }
+
     if (endTime) endTime.value = toLocalTimeString(returned);
+
     updateBookingSummary();
     scheduleAvailabilityCheck();
     return;
@@ -1133,7 +1128,7 @@ function selectCalendarDate(date) {
 
   /*
    * For daily rentals, the customer can select a return date manually.
-   * For 6/12-hour rentals, return date/time are calculated automatically.
+   * For 12-hour rentals, return date/time are calculated automatically.
    */
   if (
     getSelectedRentalMode() === RENTAL_MODE.DAILY &&
@@ -1407,9 +1402,7 @@ function updateBookingSummary() {
   if (summaryCamera) summaryCamera.textContent = camera ? camera.name : "-";
 
   if (summaryDuration) {
-    if (mode === RENTAL_MODE.SIX_HOURS) {
-      summaryDuration.textContent = `6 Hours — ${formatRupiah(getPriceForRental(camera, mode, actualHours).amount)}`;
-    } else if (mode === RENTAL_MODE.TWELVE_HOURS) {
+    if (mode === RENTAL_MODE.TWELVE_HOURS) {
       summaryDuration.textContent = `12 Hours — ${formatRupiah(getPriceForRental(camera, mode, actualHours).amount)}`;
     } else {
       const days = getChargeableDays(actualHours);
@@ -1548,9 +1541,9 @@ function validateBookingForm() {
       isValid = false;
     }
 
-    if ([RENTAL_MODE.SIX_HOURS, RENTAL_MODE.TWELVE_HOURS].includes(mode)) {
+    if (mode === RENTAL_MODE.TWELVE_HOURS) {
       const actualHours = (returned - pickup) / (60 * 60 * 1000);
-      if (Math.abs(actualHours - Number(mode)) > 0.001) {
+      if (Math.abs(actualHours - 12) > 0.001) {
         showFieldError(
           endTime || endDate,
           "Return time does not match the selected duration.",
@@ -1813,9 +1806,9 @@ function createWhatsAppMessage() {
   const actualHours = getRentalDurationDifference();
 
   let rentalDurationText = "-";
-  if (mode === RENTAL_MODE.SIX_HOURS) rentalDurationText = "6 Hours";
-  else if (mode === RENTAL_MODE.TWELVE_HOURS) rentalDurationText = "12 Hours";
-  else if (actualHours && actualHours > 0) {
+  if (mode === RENTAL_MODE.TWELVE_HOURS) {
+    rentalDurationText = "12 Hours";
+  } else if (actualHours && actualHours > 0) {
     const days = getChargeableDays(actualHours);
     rentalDurationText = `${days} ${days === 1 ? "Day" : "Days"}`;
   }

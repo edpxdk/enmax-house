@@ -270,50 +270,66 @@ async function loadCamerasFromSupabase() {
 
     if (error) throw error;
 
-    if (!data?.length) {
-      cameras = localCameras;
-      console.warn("No active cameras found in Supabase. Using local catalog.");
+    // Database kosong berarti katalog juga kosong.
+    if (!data || data.length === 0) {
+      cameras = [];
+      console.info("Belum ada kamera aktif di Supabase.");
       return;
     }
 
+    // Cocokkan metadata kamera lama berdasarkan nama.
+    const metadataMap = new Map(
+      localCameras.map((camera) => [camera.name.trim().toLowerCase(), camera]),
+    );
+
     cameras = data.map((row) => {
-      const existing = localCameras.find(
-        (camera) =>
-          camera.name.trim().toLowerCase() ===
-          String(row.name || "")
-            .trim()
-            .toLowerCase(),
+      const existing = metadataMap.get(
+        String(row.name || "")
+          .trim()
+          .toLowerCase(),
       );
 
       const dailyPrice = Number(row.daily_price) || 0;
 
       return {
         ...(existing || {}),
+
         id: String(row.id),
         name: row.name,
         quantity: Number(row.quantity) || 0,
         dailyPrice,
         price: formatRupiah(dailyPrice),
         active: row.active,
+
         category: existing?.category || "Camera Rental",
+
         description:
           existing?.description || "Contact Enmax House for camera details.",
+
         image: existing?.image || "",
+
         gallery: existing?.gallery?.length
           ? [...existing.gallery]
           : existing?.image
             ? [existing.image]
             : [],
+
         durations: existing?.durations || ["daily"],
+
         rentalRates: existing?.rentalRates
           ? { ...existing.rentalRates }
           : undefined,
       };
     });
 
-    console.log("Camera catalog loaded:", cameras);
+    console.info(
+      `Berhasil memuat ${cameras.length} kamera dari Supabase.`,
+      cameras,
+    );
   } catch (error) {
-    console.error("Failed to load camera catalog:", error);
+    console.error("Gagal memuat kamera dari Supabase:", error);
+
+    // Fallback apabila koneksi database bermasalah.
     cameras = localCameras;
   }
 }

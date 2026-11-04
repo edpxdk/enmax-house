@@ -99,6 +99,23 @@ let cameras = [
       "assets/cameras/camera-05-3.jpg",
     ],
   },
+  {
+    id: "camera-06",
+    name: "Canon IXUS 285 HS A",
+    category: "Zoom Your Daily World",
+    description:
+      "Travel and vacation, compact and lightweight, easy to carry anywhere",
+    price: "Rp 180.000",
+    dailyPrice: 180000,
+    durations: ["daily"],
+    image: "assets/cameras/camera-06.WEBP",
+    gallery: [
+      "assets/cameras/camera-06.WEBP",
+      "assets/cameras/camera-06-1.jpg",
+      "assets/cameras/camera-06-2.jpg",
+      "assets/cameras/camera-06-3.jpg",
+    ],
+  },
 ];
 
 /* DOM HELPERS AND ELEMENTS */

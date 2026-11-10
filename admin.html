@@ -2,57 +2,71 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101014" />
-    <!-- PWA CONFIGURATION -->
-    <link rel="manifest" href="/manifest.json" />
-
-    <link rel="apple-touch-icon" href="/assets/icon-192.png" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0a0c" />
+    <meta name="description" content="Enmax House Admin Dashboard" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Enmax Admin" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <title>Admin Dashboard | Enmax House</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="manifest" href="/manifest.json" />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/assets/icon-192.png"
     />
+    <link rel="apple-touch-icon" href="/assets/icon-192.png" />
+    <title>Admin Dashboard | Enmax House</title>
 
     <style>
       :root {
-        --bg: #101014;
-        --surface: #17171e;
-        --surface-2: #1e1e27;
-        --surface-3: #252530;
-        --border: rgba(255, 255, 255, 0.075);
+        color-scheme: dark;
+        --bg: #09090d;
+        --surface: #121218;
+        --surface2: #191920;
+        --pink: #ff2aa6;
+        --pink-dim: rgba(255, 42, 166, 0.11);
         --text: #f5f5f7;
         --muted: #92929f;
-        --pink: #ff2aa6;
-        --pink-soft: rgba(255, 42, 166, 0.12);
-        --green: #36d399;
-        --yellow: #f5bd4f;
+        --border: rgba(255, 255, 255, 0.09);
+        --green: #34d399;
+        --yellow: #fbbf24;
         --red: #fb7185;
-        --radius: 16px;
-        --sidebar: 250px;
+        --radius: 13px;
       }
 
       * {
         box-sizing: border-box;
       }
+
+      html {
+        scroll-behavior: smooth;
+        background: var(--bg);
+      }
+
       body {
         margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: "DM Sans", sans-serif;
         min-height: 100vh;
+        background:
+          radial-gradient(
+            ellipse at 85% 0%,
+            rgba(255, 42, 166, 0.06),
+            transparent 35rem
+          ),
+          var(--bg);
+        color: var(--text);
+        font:
+          13px/1.5 system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
+
       button,
       input,
       select,
@@ -61,1000 +75,865 @@
       }
       button {
         cursor: pointer;
+        color: inherit;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
       .hidden {
         display: none !important;
       }
+      .muted,
+      p {
+        color: var(--muted);
+      }
+      p {
+        margin: 5px 0;
+        overflow-wrap: anywhere;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(20px, 3vw, 27px);
+      }
+      h2 {
+        font-size: 16px;
+      }
+      h3 {
+        font-size: 13px;
+      }
+      label {
+        display: block;
+        margin: 10px 0 5px;
+        color: #c9c9d2;
+        font-size: 12px;
+        font-weight: 600;
+      }
 
-      /* LOGIN */
-      #loginPanel {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 24px;
-        background:
-          radial-gradient(
-            ellipse at 50% 30%,
-            rgba(255, 42, 166, 0.11),
-            transparent 55%
-          ),
-          var(--bg);
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--pink);
+        outline-offset: 2px;
       }
-      .login-card {
-        width: 100%;
-        max-width: 420px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 24px;
-        padding: 36px;
-        box-shadow: 0 24px 80px #0005;
+
+      header {
+        height: 57px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 max(15px, calc((100% - 1200px) / 2));
+        background: rgba(9, 9, 13, 0.92);
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(16px);
       }
+
       .brand {
-        font-family: Manrope, sans-serif;
-        font-size: 23px;
-        font-weight: 800;
-        letter-spacing: 1px;
+        font-weight: 900;
+        letter-spacing: 0.09em;
+        font-size: 15px;
+        white-space: nowrap;
       }
+
       .brand span {
         color: var(--pink);
       }
-      .login-card h1 {
-        font:
-          700 25px Manrope,
-          sans-serif;
-        margin: 35px 0 8px;
-      }
-      .muted {
-        color: var(--muted);
-      }
-      .login-card > p {
-        font-size: 13px;
-        margin: 0 0 28px;
+
+      main {
+        width: min(1200px, calc(100% - 30px));
+        margin: 20px auto 50px;
       }
 
-      /* GENERAL INPUT */
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 17px;
+      .panel {
+        min-width: 0;
+        padding: 16px;
+        background: linear-gradient(
+          145deg,
+          rgba(26, 26, 34, 0.95),
+          rgba(17, 17, 22, 0.98)
+        );
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.13);
       }
-      .field label,
-      .camera label {
-        font-size: 12px;
-        color: #c4c4ce;
-        font-weight: 600;
+
+      #loginPanel {
+        width: min(100%, 410px);
+        margin: 7vh auto;
+        padding: 24px;
+        border-color: rgba(255, 42, 166, 0.2);
       }
+
+      #loginPanel h1 {
+        margin-bottom: 8px;
+      }
+      #loginForm {
+        margin-top: 18px;
+      }
+      #loginBtn {
+        width: 100%;
+        margin-top: 15px;
+      }
+      #loginMessage {
+        overflow-wrap: anywhere;
+      }
+
       input,
       select,
       textarea {
         width: 100%;
+        min-width: 0;
+        min-height: 38px;
+        padding: 9px 10px;
         color: var(--text);
-        background: #111117;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 12px 13px;
-        outline: none;
-        transition: 0.2s;
+        background: #0c0c11;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 9px;
       }
+
       input:focus,
       select:focus,
       textarea:focus {
+        outline: none;
         border-color: var(--pink);
-        box-shadow: 0 0 0 3px var(--pink-soft);
+        box-shadow: 0 0 0 3px var(--pink-dim);
       }
-      input::placeholder,
-      textarea::placeholder {
-        color: #666674;
-      }
-      select option {
-        background: #17171e;
-      }
+
       textarea {
-        min-height: 90px;
         resize: vertical;
+        min-height: 75px;
       }
 
-      /* BUTTONS */
-      .btn {
-        border: 0;
-        border-radius: 10px;
-        padding: 11px 16px;
-        font-size: 13px;
+      button {
+        min-height: 35px;
+        padding: 8px 12px;
+        border: 1px solid var(--pink);
+        border-radius: 9px;
+        background: var(--pink);
+        color: white;
         font-weight: 700;
-        transition: 0.2s;
-        background: var(--pink);
-        color: white;
-      }
-      .btn:hover {
-        filter: brightness(1.12);
-        transform: translateY(-1px);
-      }
-      .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-      }
-      .btn-secondary {
-        background: var(--surface-3);
-        border: 1px solid var(--border);
-        color: var(--text);
-      }
-      .btn-danger {
-        background: rgba(251, 113, 133, 0.15);
-        color: #ff8c9d;
-      }
-      .btn-full {
-        width: 100%;
-      }
-      .icon-btn {
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        color: var(--text);
-        border-radius: 10px;
-        padding: 10px 13px;
+        font-size: 12px;
+        transition: 0.15s ease;
       }
 
-      /* APP SHELL */
+      button:hover:not(:disabled) {
+        filter: brightness(1.08);
+      }
+      button.secondary {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.13);
+        color: #e8e8ef;
+      }
+      button.danger {
+        background: rgba(251, 113, 133, 0.12);
+        border-color: rgba(251, 113, 133, 0.35);
+        color: #ff9aaa;
+      }
+
+      #logoutBtn {
+        min-height: 32px;
+      }
       #dashboard {
-        min-height: 100vh;
-      }
-      .sidebar {
-        width: var(--sidebar);
-        position: fixed;
-        inset: 0 auto 0 0;
-        background: #141419;
-        border-right: 1px solid var(--border);
-        padding: 25px 17px;
-        display: flex;
-        flex-direction: column;
-        z-index: 20;
-      }
-      .sidebar-brand {
-        padding: 4px 12px 30px;
-      }
-      .sidebar-label {
-        padding: 0 12px;
-        margin: 18px 0 9px;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: #666674;
-        font-weight: 800;
-      }
-      .nav-list {
-        display: grid;
-        gap: 5px;
-      }
-      .nav-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        width: 100%;
-        padding: 12px;
-        border: 1px solid transparent;
-        background: transparent;
-        color: #a5a5b1;
-        border-radius: 10px;
-        text-align: left;
-        font-size: 13px;
-        font-weight: 600;
-        transition: 0.2s;
-      }
-      .nav-item:hover {
-        background: var(--surface-2);
-        color: white;
-      }
-      .nav-item.active {
-        background: var(--pink-soft);
-        color: #ff6cbe;
-        border-color: rgba(255, 42, 166, 0.16);
-      }
-      .nav-icon {
-        width: 19px;
-        text-align: center;
-        font-size: 16px;
-      }
-      .nav-count {
-        margin-left: auto;
-        background: var(--pink);
-        color: white;
-        border-radius: 20px;
-        padding: 2px 7px;
-        font-size: 10px;
-      }
-      .sidebar-bottom {
-        margin-top: auto;
-      }
-      .admin-profile {
-        border-top: 1px solid var(--border);
-        padding: 17px 10px 0;
-        margin-top: 20px;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        min-width: 0;
-      }
-      .avatar {
-        width: 36px;
-        height: 36px;
-        flex: none;
-        display: grid;
-        place-items: center;
-        background: var(--pink-soft);
-        color: #ff6cbe;
-        border-radius: 11px;
-        font-weight: 800;
-      }
-      .profile-info {
-        min-width: 0;
-        flex: 1;
-      }
-      .profile-info strong {
         display: block;
-        font-size: 12px;
       }
-      .profile-info small {
-        display: block;
-        font-size: 10px;
-        color: var(--muted);
-        overflow: hidden;
-        text-overflow: ellipsis;
+      #dashboard.hidden {
+        display: none !important;
       }
 
-      /* MAIN */
-      .main {
-        margin-left: var(--sidebar);
-        min-height: 100vh;
-        padding: 30px 34px 60px;
-        max-width: 1800px;
-      }
-      .topbar {
+      .welcome {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        gap: 15px;
-        margin-bottom: 30px;
-      }
-      .eyebrow {
-        color: var(--pink);
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        font-size: 10px;
-        font-weight: 800;
-      }
-      .page-heading {
-        font:
-          800 25px Manrope,
-          sans-serif;
-        margin: 5px 0 0;
-      }
-      .top-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-      }
-      .date-label {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .view-heading {
-        display: flex;
-        align-items: flex-end;
         justify-content: space-between;
-        gap: 15px;
-        margin-bottom: 22px;
-      }
-      .view-heading h2 {
-        font:
-          800 20px Manrope,
-          sans-serif;
-        margin: 0 0 6px;
-      }
-      .view-heading p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      /* STATS */
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 15px;
-        margin-bottom: 25px;
-      }
-      .stat-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
+        gap: 14px;
+        padding: 19px;
+        margin-bottom: 14px;
+        background:
+          radial-gradient(
+            ellipse at 95% 0%,
+            rgba(255, 42, 166, 0.12),
+            transparent 45%
+          ),
+          var(--surface);
+        border: 1px solid rgba(255, 42, 166, 0.2);
         border-radius: var(--radius);
-        padding: 20px;
-        position: relative;
-        overflow: hidden;
       }
-      .stat-card::after {
-        content: "";
-        position: absolute;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: var(--pink-soft);
-        right: -30px;
-        top: -35px;
-      }
-      .stat-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .stat-icon {
-        font-size: 17px;
-      }
-      .stat-value {
-        font:
-          800 30px Manrope,
-          sans-serif;
-        margin-top: 17px;
-        letter-spacing: -1px;
-      }
-      .stat-foot {
-        color: var(--muted);
-        font-size: 10px;
+
+      .welcome p {
         margin-top: 5px;
-      }
-
-      /* PANELS */
-      .panel {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 21px;
-        margin-bottom: 20px;
-        min-width: 0;
-      }
-      .panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 18px;
-      }
-      .panel-header h3 {
-        font:
-          700 14px Manrope,
-          sans-serif;
-        margin: 0;
-      }
-      .panel-header p {
-        color: var(--muted);
-        font-size: 11px;
-        margin: 5px 0 0;
-      }
-      .panel-tools {
-        display: flex;
-        gap: 9px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-
-      .content-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.5fr) minmax(250px, 0.8fr);
-        gap: 18px;
-      }
-
-      /* BOOKING */
-      .toolbar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 17px;
-      }
-      .toolbar input {
-        flex: 1;
-        min-width: 180px;
-      }
-      .toolbar select {
-        width: auto;
-        min-width: 145px;
-      }
-      #bookingList {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 13px;
-      }
-      .booking,
-      .camera,
-      .notification-card {
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        border-radius: 13px;
-        padding: 17px;
-        min-width: 0;
-      }
-      .booking h3,
-      .camera h3,
-      .notification-card h3 {
-        font:
-          700 14px Manrope,
-          sans-serif;
-        margin: 0 0 12px;
-      }
-      .booking p,
-      .notification-card p {
         font-size: 12px;
-        line-height: 1.6;
-        color: #b6b6c1;
-        margin: 5px 0;
+      }
+      #adminEmail {
+        display: inline-block;
+        margin-top: 7px;
+        padding: 3px 8px;
+        border: 1px solid var(--border);
+        border-radius: 99px;
+        font-size: 11px;
         overflow-wrap: anywhere;
       }
-      .status-badge {
-        display: inline-flex;
-        border-radius: 20px;
-        padding: 5px 10px;
-        background: var(--surface-3);
-        color: var(--yellow);
-        font-size: 10px;
+      #adminEmail:empty {
+        display: none;
+      }
+
+      /* Live statistics */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .stat-card {
+        min-width: 0;
+        padding: 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .stat-number {
+        display: block;
+        margin-top: 5px;
+        font-size: clamp(23px, 3vw, 30px);
+        line-height: 1.1;
         font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat-card.pending {
+        border-top: 2px solid var(--yellow);
+      }
+      .stat-card.confirmed {
+        border-top: 2px solid var(--green);
+      }
+      .stat-card.rejected {
+        border-top: 2px solid var(--red);
+      }
+      .stat-card.total {
+        border-top: 2px solid var(--pink);
+      }
+      .stat-card.pending .stat-number {
+        color: var(--yellow);
+      }
+      .stat-card.confirmed .stat-number {
+        color: var(--green);
+      }
+      .stat-card.rejected .stat-number {
+        color: var(--red);
+      }
+      .stat-card.total .stat-number {
+        color: var(--pink);
+      }
+
+      /* Navigation */
+      .admin-nav {
+        position: sticky;
+        top: 57px;
+        z-index: 50;
+        display: flex;
+        gap: 6px;
+        margin-bottom: 13px;
+        padding: 7px;
+        overflow-x: auto;
+        background: rgba(18, 18, 24, 0.96);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        backdrop-filter: blur(14px);
+        scrollbar-width: none;
+      }
+
+      .admin-nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      .nav-btn {
+        flex: 1 0 auto;
+        min-height: 36px;
+        padding: 8px 13px;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+
+      .nav-btn:hover:not(:disabled) {
+        background: var(--pink-dim);
+        color: var(--text);
+        filter: none;
+      }
+
+      .nav-btn.active {
+        color: white;
+        background: var(--pink-dim);
+        border-color: rgba(255, 42, 166, 0.35);
+      }
+
+      .nav-count {
+        display: inline-flex;
+        min-width: 19px;
+        height: 19px;
+        align-items: center;
+        justify-content: center;
+        margin-left: 4px;
+        padding: 0 5px;
+        border-radius: 99px;
+        background: var(--pink);
+        color: white;
+        font-size: 10px;
+      }
+
+      .view-panel {
+        min-width: 0;
+      }
+      .section-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .section-heading p {
+        margin-top: 4px;
+        font-size: 12px;
+      }
+      .section-heading > button {
+        flex-shrink: 0;
+      }
+
+      .filter-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .filter-row label {
+        margin-top: 0;
+      }
+      .filter-row select {
+        max-width: 300px;
+      }
+
+      .message {
+        margin: 8px 0;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .message:empty {
+        display: none;
+      }
+
+      .booking-list,
+      .camera-list,
+      #notificationList {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        gap: 10px;
+      }
+
+      .booking,
+      .camera {
+        min-width: 0;
+        padding: 13px;
+        background: rgba(8, 8, 12, 0.55);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        overflow-wrap: anywhere;
+      }
+
+      .booking h3,
+      .camera h3 {
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+      .booking p,
+      .camera p {
+        margin: 5px 0;
+        font-size: 12px;
+        line-height: 1.45;
       }
       .booking-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 15px;
+        gap: 6px;
+        margin-top: 11px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
       }
       .booking-actions button {
-        flex: 1;
-        min-width: 100px;
+        flex: 1 1 100px;
       }
       .notes {
-        padding: 10px;
-        background: #141419;
-        border-radius: 8px;
-        color: #c7c7d0;
-        font-size: 12px;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        padding: 8px;
+        margin-top: 6px;
+        background: #101016;
+        border-radius: 7px;
+        font-size: 12px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        color: var(--pink);
+        background: var(--pink-dim);
+        border: 1px solid rgba(255, 42, 166, 0.3);
+        border-radius: 99px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .realtime-indicator {
+        padding: 9px 10px;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        font-size: 12px;
         overflow-wrap: anywhere;
       }
 
-      /* NOTIFICATIONS */
-      #notificationList {
-        display: grid;
-        gap: 12px;
-      }
       .notification-card.unread {
         border-color: rgba(255, 42, 166, 0.45);
-      }
-      .notification-card button {
-        margin-top: 12px;
-      }
-      #notificationBadge {
-        font-size: 11px;
-        color: var(--pink);
-      }
-      #realtimeStatus {
-        font-size: 11px;
-        color: var(--green);
+        box-shadow: inset 3px 0 var(--pink);
       }
 
-      /* FORMS */
+      .notification-card button {
+        margin-top: 9px;
+      }
+      .notification-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 10px 0;
+      }
+
       .form-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0 15px;
+        gap: 0 14px;
       }
-      .form-grid .field.full {
-        grid-column: 1/-1;
+      .form-full {
+        grid-column: 1 / -1;
       }
-      .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 5px;
-      }
-      .camera-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 13px;
-      }
-      .camera {
-        display: flex;
-        flex-direction: column;
-        gap: 11px;
-      }
-      .camera input {
+      .form-help {
         padding: 10px;
-      }
-      .camera label {
-        margin-bottom: -7px;
-      }
-
-      /* EMPTY / MESSAGE */
-      #loginMessage,
-      #bookingMessage,
-      #cameraMessage,
-      #manualBookingMessage {
-        font-size: 12px;
         margin-top: 12px;
-        min-height: 16px;
-      }
-      .empty-state {
-        border: 1px dashed var(--border);
-        border-radius: 12px;
-        padding: 35px 15px;
-        text-align: center;
-        color: var(--muted);
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid var(--border);
+        border-radius: 9px;
         font-size: 12px;
-        grid-column: 1/-1;
       }
-      .section-note {
-        color: var(--muted);
-        font-size: 11px;
-        line-height: 1.6;
+      #manualBookingBtn,
+      #addCameraBtn {
+        margin-top: 12px;
+      }
+      #addCameraForm {
+        max-width: 600px;
       }
 
-      /* RESPONSIVE */
-      @media (max-width: 1100px) {
-        .stats-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+      @media (max-width: 700px) {
+        main {
+          width: calc(100% - 20px);
+          margin-top: 12px;
         }
-        .camera-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        header {
+          height: 52px;
+          padding: 0 11px;
         }
-        .content-grid {
-          grid-template-columns: 1fr;
+        .admin-nav {
+          top: 52px;
+          gap: 4px;
+          margin-bottom: 10px;
+          padding: 5px;
         }
-      }
-      @media (max-width: 760px) {
-        :root {
-          --sidebar: 0px;
-        }
-        .sidebar {
-          position: sticky;
-          top: 0;
-          width: 100%;
-          height: auto;
-          padding: 12px 14px;
-          border-right: 0;
-          border-bottom: 1px solid var(--border);
-          background: rgba(20, 20, 25, 0.96);
-          backdrop-filter: blur(16px);
-        }
-        .sidebar-brand {
-          padding: 0 3px 12px;
-        }
-        .sidebar-brand .brand {
-          font-size: 19px;
-        }
-        .sidebar-label,
-        .sidebar-bottom {
-          display: none;
-        }
-        .nav-list {
-          display: flex;
-          overflow-x: auto;
-          gap: 6px;
-          padding-bottom: 2px;
-        }
-        .nav-item {
-          width: auto;
-          flex: none;
-          padding: 9px 11px;
+        .nav-btn {
+          min-height: 35px;
+          padding: 7px 10px;
           font-size: 11px;
-          white-space: nowrap;
         }
-        .nav-icon {
-          width: auto;
+        .welcome {
+          padding: 14px;
+          margin-bottom: 10px;
         }
-        .main {
-          margin: 0;
-          padding: 22px 15px 45px;
-        }
-        .topbar {
-          margin-bottom: 24px;
-        }
-        .page-heading {
-          font-size: 21px;
-        }
-        .date-label {
-          display: none;
-        }
-        #bookingList {
-          grid-template-columns: 1fr;
-        }
-        .camera-grid {
-          grid-template-columns: 1fr;
-        }
-        .view-heading {
-          align-items: flex-start;
-        }
-        .panel {
-          padding: 16px;
-        }
-      }
-      @media (max-width: 420px) {
-        .stats-grid {
-          gap: 9px;
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          margin-bottom: 10px;
         }
         .stat-card {
-          padding: 14px;
+          padding: 11px;
         }
-        .stat-value {
+        .stat-number {
           font-size: 25px;
         }
-        .stat-top {
-          font-size: 10px;
+        .panel {
+          padding: 12px;
+          border-radius: 11px;
+        }
+        .booking-list,
+        .camera-list,
+        #notificationList {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 8px;
+        }
+        .booking,
+        .camera {
+          padding: 11px;
+        }
+        .section-heading {
+          gap: 8px;
+        }
+        .section-heading h2 {
+          font-size: 15px;
+        }
+        .section-heading p {
+          font-size: 11px;
+        }
+        .filter-row {
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 7px;
+        }
+        .filter-row select {
+          width: 100%;
+        }
+        .filter-row button {
+          padding: 8px;
         }
         .form-grid {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
-        .form-grid .field.full {
+        .form-full {
           grid-column: auto;
         }
-        .login-card {
-          padding: 26px 21px;
+        #loginPanel {
+          padding: 20px;
+          margin-top: 5vh;
         }
-        .toolbar select {
+        .notification-tools button {
+          flex: 1 1 130px;
+        }
+      }
+
+      @media (max-width: 360px) {
+        main {
+          width: calc(100% - 14px);
+        }
+        .welcome {
+          padding: 12px;
+        }
+        .panel {
+          padding: 10px;
+        }
+        .filter-row {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .filter-row button {
           width: 100%;
+        }
+        .booking-actions button {
+          flex-basis: 100%;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition: none !important;
         }
       }
     </style>
   </head>
 
   <body>
-    <!-- LOGIN -->
-    <section id="loginPanel">
-      <div class="login-card">
-        <div class="brand">ENMAX <span>HOUSE.</span></div>
-        <h1>Welcome back.</h1>
-        <p class="muted">Masuk untuk mengelola operasional rental kamera.</p>
+    <header>
+      <div class="brand">ENMAX <span>HOUSE</span></div>
+      <button id="logoutBtn" class="secondary hidden" type="button">
+        Logout
+      </button>
+    </header>
 
+    <main>
+      <section id="loginPanel" class="panel">
+        <h1>Admin Login</h1>
+        <p>Masuk untuk mengelola booking dan inventaris kamera Enmax House.</p>
         <form id="loginForm">
-          <div class="field">
-            <label for="email">Email admin</label>
-            <input
-              id="email"
-              type="email"
-              placeholder="admin@email.com"
-              autocomplete="username"
-              required
-            />
-          </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Masukkan password"
-              autocomplete="current-password"
-              required
-            />
-          </div>
-          <button class="btn btn-full" id="loginBtn" type="submit">
-            Masuk ke Dashboard
-          </button>
-          <p id="loginMessage"></p>
+          <label for="email">Email admin</label>
+          <input
+            id="email"
+            type="email"
+            autocomplete="username"
+            placeholder="Email owner"
+            required
+          />
+          <label for="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Password"
+            required
+          />
+          <button id="loginBtn" type="submit">Login</button>
         </form>
-      </div>
-    </section>
+        <p id="loginMessage" class="message" role="status"></p>
+      </section>
 
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="hidden">
-      <aside class="sidebar">
-        <div class="sidebar-brand">
-          <div class="brand">ENMAX <span>HOUSE.</span></div>
+      <section id="dashboard" class="hidden">
+        <div class="welcome">
+          <div>
+            <h1>Dashboard Admin</h1>
+            <p>Kelola operasional rental Enmax House.</p>
+            <span id="adminEmail"></span>
+          </div>
         </div>
 
-        <div class="sidebar-label">Workspace</div>
-        <nav class="nav-list">
-          <button class="nav-item active" data-view-target="bookingsView">
-            <span class="nav-icon">▦</span> Overview & Booking
+        <section class="stats" aria-label="Statistik booking">
+          <article class="stat-card total">
+            <div class="stat-label">Total Booking</div>
+            <strong id="statTotal" class="stat-number">0</strong>
+          </article>
+          <article class="stat-card pending">
+            <div class="stat-label">Pending</div>
+            <strong id="statPending" class="stat-number">0</strong>
+          </article>
+          <article class="stat-card confirmed">
+            <div class="stat-label">Disetujui</div>
+            <strong id="statConfirmed" class="stat-number">0</strong>
+          </article>
+          <article class="stat-card rejected">
+            <div class="stat-label">Ditolak</div>
+            <strong id="statRejected" class="stat-number">0</strong>
+          </article>
+        </section>
+
+        <nav class="admin-nav" aria-label="Navigasi admin">
+          <button
+            class="nav-btn active"
+            data-view-target="bookingsView"
+            type="button"
+          >
+            Booking
           </button>
-          <button class="nav-item" data-view-target="notificationsView">
-            <span class="nav-icon">♧</span> Notifications
+          <button
+            class="nav-btn"
+            data-view-target="notificationsView"
+            type="button"
+          >
+            Notifikasi
             <span id="navNotificationCount" class="nav-count hidden">0</span>
           </button>
-          <button class="nav-item" data-view-target="manualView">
-            <span class="nav-icon">＋</span> Manual Booking
+          <button class="nav-btn" data-view-target="manualView" type="button">
+            Booking Manual
           </button>
-          <button class="nav-item" data-view-target="camerasView">
-            <span class="nav-icon">▣</span> Camera Inventory
+          <button class="nav-btn" data-view-target="camerasView" type="button">
+            Inventaris
           </button>
         </nav>
 
-        <div class="sidebar-bottom">
-          <div class="sidebar-label">Account</div>
-          <button id="logoutBtn" class="nav-item" type="button">
-            <span class="nav-icon">↪</span> Logout
-          </button>
-          <div class="admin-profile">
-            <div class="avatar">E</div>
-            <div class="profile-info">
-              <strong>Administrator</strong>
-              <small id="adminEmail">Admin</small>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <main class="main">
-        <header class="topbar">
-          <div>
-            <div class="eyebrow">Enmax House / Management</div>
-            <h1 class="page-heading">Dashboard</h1>
-          </div>
-          <div class="top-actions">
-            <span class="date-label" id="currentDate"></span>
-            <button
-              id="refreshBookingsBtn"
-              class="icon-btn"
-              type="button"
-              title="Refresh booking"
-            >
-              ↻ Refresh
-            </button>
-          </div>
-        </header>
-
-        <!-- BOOKING / OVERVIEW -->
-        <section id="bookingsView">
-          <div class="view-heading">
-            <div>
-              <h2>Overview</h2>
-              <p>Pantau aktivitas dan booking rental kamera.</p>
-            </div>
-            <span id="realtimeStatus">● Realtime menunggu koneksi</span>
-          </div>
-
-          <div class="stats-grid">
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>Total Booking</span><span class="stat-icon">▦</span>
-              </div>
-              <div class="stat-value" id="statTotal">0</div>
-              <div class="stat-foot">Seluruh booking tercatat</div>
-            </article>
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>Menunggu</span><span class="stat-icon">◷</span>
-              </div>
-              <div
-                class="stat-value"
-                id="statPending"
-                style="color: var(--yellow)"
-              >
-                0
-              </div>
-              <div class="stat-foot">Perlu tindakan admin</div>
-            </article>
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>Disetujui</span><span class="stat-icon">✓</span>
-              </div>
-              <div
-                class="stat-value"
-                id="statConfirmed"
-                style="color: var(--green)"
-              >
-                0
-              </div>
-              <div class="stat-foot">Booking terkonfirmasi</div>
-            </article>
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>Ditolak</span><span class="stat-icon">×</span>
-              </div>
-              <div
-                class="stat-value"
-                id="statRejected"
-                style="color: var(--red)"
-              >
-                0
-              </div>
-              <div class="stat-foot">Booking tidak disetujui</div>
-            </article>
-          </div>
-
-          <section class="panel">
-            <div class="panel-header">
+        <section id="bookingsView" class="view-panel">
+          <div class="panel">
+            <div class="section-heading">
               <div>
-                <h3>Booking Management</h3>
+                <h2>Booking Customer</h2>
                 <p>Kelola permintaan rental dan status booking.</p>
               </div>
-              <button
-                id="refreshBookingsBtn"
-                class="btn btn-secondary"
-                type="button"
-              >
+              <button id="refreshBookingsBtn" class="secondary" type="button">
                 ↻ Refresh
               </button>
             </div>
-
-            <div class="toolbar">
-              <input
-                id="bookingSearch"
-                type="search"
-                placeholder="Cari nama, ID booking, atau nomor telepon..."
-              />
-              <select id="bookingStatusFilter">
-                <option value="all">Semua status</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Disetujui</option>
-                <option value="rejected">Ditolak</option>
-              </select>
+            <div class="filter-row">
+              <div>
+                <label for="bookingStatusFilter">Filter status</label>
+                <select id="bookingStatusFilter">
+                  <option value="all">Semua status</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Disetujui</option>
+                  <option value="rejected">Ditolak</option>
+                </select>
+              </div>
             </div>
-
-            <p id="bookingMessage"></p>
-            <div id="bookingList">
-              <div class="empty-state">Booking akan ditampilkan di sini.</div>
-            </div>
-          </section>
+            <p id="bookingMessage" class="message" role="status"></p>
+            <div id="bookingList" class="booking-list"></div>
+          </div>
         </section>
 
-        <!-- NOTIFICATIONS -->
-        <section id="notificationsView" class="hidden">
-          <div class="view-heading">
-            <div>
-              <h2>Notifications</h2>
-              <p>Aktivitas booking terbaru secara real-time.</p>
-            </div>
-            <span id="notificationBadge">0 belum dibaca</span>
-          </div>
-
-          <section class="panel">
-            <div class="panel-header">
+        <section id="notificationsView" class="view-panel hidden">
+          <div id="notificationPanel" class="panel">
+            <div class="section-heading">
               <div>
-                <h3>Booking Notifications</h3>
-                <p>Notifikasi masuk selama sesi admin aktif.</p>
+                <h2>🔔 Notifikasi Booking</h2>
+                <p>Pantau booking baru saat dashboard aktif.</p>
               </div>
-              <div class="panel-tools">
-                <button
-                  id="markNotificationsReadBtn"
-                  class="btn btn-secondary"
-                  type="button"
-                >
-                  Tandai dibaca
-                </button>
-                <button
-                  id="clearNotificationsBtn"
-                  class="btn btn-danger"
-                  type="button"
-                >
-                  Hapus semua
-                </button>
-              </div>
+              <span id="notificationBadge" class="status-badge"
+                >0 belum dibaca</span
+              >
             </div>
-            <div id="notificationList">
-              <div class="empty-state">Belum ada notifikasi booking.</div>
+            <p id="realtimeStatus" class="realtime-indicator" role="status">
+              Menunggu sesi admin...
+            </p>
+            <div class="notification-tools">
+              <button
+                id="markNotificationsReadBtn"
+                class="secondary"
+                type="button"
+              >
+                Tandai semua dibaca
+              </button>
+              <button
+                id="clearNotificationsBtn"
+                class="secondary"
+                type="button"
+              >
+                Bersihkan daftar
+              </button>
             </div>
-          </section>
+            <div id="notificationList" aria-live="polite">
+              <p class="muted">Belum ada notifikasi booking baru.</p>
+            </div>
+          </div>
         </section>
 
-        <!-- MANUAL BOOKING -->
-        <section id="manualView" class="hidden">
-          <div class="view-heading">
-            <div>
-              <h2>Manual Booking</h2>
-              <p>
-                Catat pesanan customer dari WhatsApp atau pemesanan langsung.
-              </p>
-            </div>
-          </div>
-
-          <section class="panel">
-            <div class="panel-header">
+        <section id="manualView" class="view-panel hidden">
+          <div class="panel">
+            <div class="section-heading">
               <div>
-                <h3>Tambah Booking Baru</h3>
-                <p>Booking manual akan tersimpan dengan status disetujui.</p>
+                <h2>Tambah Booking Manual</h2>
+                <p>
+                  Catat rental yang diterima lewat WhatsApp atau di luar
+                  website.
+                </p>
               </div>
             </div>
-
             <form id="manualBookingForm">
               <div class="form-grid">
-                <div class="field">
+                <div>
                   <label for="manualCustomerName">Nama customer</label>
                   <input
                     id="manualCustomerName"
                     type="text"
                     placeholder="Nama lengkap"
+                    autocomplete="name"
                     required
                   />
                 </div>
-                <div class="field">
+                <div>
                   <label for="manualCustomerPhone">Nomor WhatsApp</label>
                   <input
                     id="manualCustomerPhone"
                     type="tel"
-                    placeholder="08xxxxxxxxxx"
+                    placeholder="628123456789"
+                    autocomplete="tel"
                     required
                   />
                 </div>
-                <div class="field">
-                  <label for="manualCameraId">Pilih kamera</label>
+                <div>
+                  <label for="manualCameraId">Kamera</label>
                   <select id="manualCameraId" required>
                     <option value="">Pilih kamera</option>
                   </select>
                 </div>
-                <div class="field">
+                <div>
                   <label for="manualQuantity">Jumlah unit</label>
                   <input
                     id="manualQuantity"
                     type="number"
                     min="1"
+                    step="1"
                     value="1"
                     required
                   />
                 </div>
-                <div class="field">
-                  <label for="manualPickupAt">Tanggal & waktu pickup</label>
+                <div>
+                  <label for="manualPickupAt">Tanggal dan waktu pickup</label>
                   <input id="manualPickupAt" type="datetime-local" required />
                 </div>
-                <div class="field">
-                  <label for="manualReturnAt">Tanggal & waktu return</label>
+                <div>
+                  <label for="manualReturnAt">Tanggal dan waktu return</label>
                   <input id="manualReturnAt" type="datetime-local" required />
                 </div>
-                <div class="field full">
-                  <label for="manualNotes">Catatan tambahan</label>
+                <div class="form-full">
+                  <label for="manualNotes">Catatan</label>
                   <textarea
                     id="manualNotes"
-                    placeholder="Catatan pesanan, lokasi, atau informasi lainnya..."
+                    rows="3"
+                    placeholder="Contoh: DP sudah dibayar..."
                   ></textarea>
                 </div>
               </div>
-              <div class="form-actions">
-                <button id="manualBookingBtn" class="btn" type="submit">
-                  Simpan Booking
-                </button>
-              </div>
-              <p id="manualBookingMessage"></p>
+              <p class="form-help">
+                Booking manual langsung berstatus disetujui. Pastikan tanggal,
+                waktu, dan jumlah unit benar sebelum menyimpan.
+              </p>
+              <button id="manualBookingBtn" type="submit">
+                Simpan Booking Manual
+              </button>
             </form>
-          </section>
+            <p
+              id="manualBookingMessage"
+              class="message"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
         </section>
 
-        <!-- CAMERA INVENTORY -->
-        <section id="camerasView" class="hidden">
-          <div class="view-heading">
-            <div>
-              <h2>Camera Inventory</h2>
-              <p>Kelola stok dan harga rental kamera.</p>
+        <section id="camerasView" class="view-panel hidden">
+          <div class="panel">
+            <div class="section-heading">
+              <div>
+                <h2>Inventaris Kamera</h2>
+                <p>Kelola jumlah unit dan harga harian.</p>
+              </div>
+              <button id="refreshBtn" class="secondary" type="button">
+                ↻ Refresh
+              </button>
             </div>
-            <button id="refreshBtn" class="btn btn-secondary" type="button">
-              ↻ Refresh
-            </button>
+            <p id="cameraMessage" class="message" role="status"></p>
+            <div id="cameraList" class="camera-list"></div>
           </div>
 
-          <section class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Tambah Kamera</h3>
-                <p>Tambahkan jenis kamera baru ke inventaris.</p>
-              </div>
-            </div>
+          <div class="panel" style="margin-top: 12px">
+            <h2>Tambah Kamera</h2>
             <form id="addCameraForm">
+              <label for="cameraName">Nama kamera</label>
+              <input
+                id="cameraName"
+                type="text"
+                required
+                placeholder="Contoh: Canon EOS R50"
+              />
               <div class="form-grid">
-                <div class="field">
-                  <label for="cameraName">Nama kamera</label>
-                  <input
-                    id="cameraName"
-                    type="text"
-                    placeholder="Contoh: Canon G7X Mark II"
-                    required
-                  />
-                </div>
-                <div class="field">
+                <div>
                   <label for="cameraQuantity">Jumlah unit</label>
                   <input
                     id="cameraQuantity"
                     type="number"
                     min="0"
+                    step="1"
                     value="1"
                     required
                   />
                 </div>
-                <div class="field">
+                <div>
                   <label for="cameraPrice">Harga per hari (Rp)</label>
                   <input
                     id="cameraPrice"
@@ -1066,55 +945,25 @@
                   />
                 </div>
               </div>
-              <button id="addCameraBtn" class="btn" type="submit">
-                ＋ Tambahkan Kamera
-              </button>
+              <button id="addCameraBtn" type="submit">Tambah Kamera</button>
             </form>
-            <p class="section-note">
-              Perubahan stok dan harga akan memengaruhi data inventaris yang
-              tersimpan di Supabase.
-            </p>
-            <p id="cameraMessage"></p>
-          </section>
-
-          <div class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Daftar Kamera</h3>
-                <p>Atur jumlah unit dan harga rental.</p>
-              </div>
-            </div>
-            <div id="cameraList" class="camera-grid">
-              <div class="empty-state">
-                Daftar kamera akan ditampilkan di sini.
-              </div>
-            </div>
           </div>
         </section>
-
-        <footer
-          style="
-            padding: 20px 0;
-            text-align: center;
-            color: #62626e;
-            font-size: 10px;
-          "
-        >
-          ENMAX HOUSE · ADMIN MANAGEMENT SYSTEM
-        </footer>
-      </main>
-    </div>
+      </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/admin.js"></script>
-
     <script>
-      const dateElement = document.getElementById("currentDate");
-      if (dateElement) {
-        dateElement.textContent = new Intl.DateTimeFormat("id-ID", {
-          dateStyle: "full",
-          timeZone: "Asia/Makassar",
-        }).format(new Date());
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .then((registration) =>
+              console.log("Service worker aktif:", registration.scope),
+            )
+            .catch((error) => console.error("Service worker gagal:", error));
+        });
       }
     </script>
   </body>

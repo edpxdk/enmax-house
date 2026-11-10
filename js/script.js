@@ -377,6 +377,10 @@ function renderCameraCards() {
         <span class="camera-category">${escapeHTML(camera.category)}</span>
         <h3>${escapeHTML(camera.name)}</h3>
         <p>${escapeHTML(camera.description)}</p>
+        <div class="camera-stock-row">
+          <span class="camera-stock-label">Total camera units</span>
+          <strong class="camera-stock-value ${camera.quantity !== undefined && Number(camera.quantity) <= 0 ? "is-out" : ""}">${camera.quantity !== undefined ? `${Number(camera.quantity) || 0} ${Number(camera.quantity) === 1 ? "unit" : "units"}` : "Check availability"}</strong>
+        </div>
         <div class="camera-card-footer">
           <div class="camera-price-block">
             <span class="camera-price-label">${escapeHTML(getCameraPriceLabel(camera))}</span>
@@ -386,6 +390,15 @@ function renderCameraCards() {
             data-camera-id="${escapeHTML(camera.id)}">View Camera →</button>
         </div>
       </div>
+      <section class="camera-availability" aria-label="${escapeHTML(camera.name)} booking calendar">
+        <div class="camera-availability-heading">
+          <strong>Booking calendar</strong>
+          <small>Tap a date to start booking</small>
+        </div>
+        <div class="camera-calendar" id="cameraCalendar-${escapeHTML(camera.id)}">
+          <p class="camera-calendar-note">Loading schedule...</p>
+        </div>
+      </section>
     `;
 
     cameraGrid.appendChild(card);
@@ -421,7 +434,6 @@ function populateCameraSelect() {
     setupRentalDurationOptions();
     syncReturnDateTime();
     updateBookingSummary();
-    syncCalendarCameraFromBooking();
     scheduleAvailabilityCheck();
   });
 }
@@ -889,303 +901,203 @@ function setupBookingListeners() {
    NEW: AVAILABILITY CALENDAR
    ========================================================= */
 
-const calendarState = {
-  year: new Date().getFullYear(),
-  month: new Date().getMonth(),
-  cameraId: "",
-  bookings: [],
-  selectedDate: "",
-  loading: false,
-  requestId: 0,
-};
+const cameraCalendarStates = new Map();
 
 function setupAvailabilityCalendar() {
-  const calendarSelect = $("calendarCameraSelect");
-  const calendarContainer = $("availabilityCalendar");
-  const openButton = $("openAvailabilityCalendar");
-
-  if (!calendarSelect || !calendarContainer) return;
-
-  calendarSelect.innerHTML = `<option value="">Select a camera</option>`;
-
+  cameraCalendarStates.clear();
   cameras.forEach((camera) => {
-    const option = document.createElement("option");
-    option.value = camera.id;
-    option.textContent = camera.name;
-    calendarSelect.appendChild(option);
+    const state = {
+      year: new Date().getFullYear(),
+      month: new Date().getMonth(),
+      bookings: [],
+      loading: false,
+      requestId: 0,
+      error: false,
+    };
+    cameraCalendarStates.set(String(camera.id), state);
+    renderCameraAvailabilityCalendar(camera.id);
+    loadCameraCalendarBookings(camera.id);
   });
 
-  calendarSelect.addEventListener("change", () => {
-    calendarState.cameraId = calendarSelect.value;
-    if (cameraSelect && cameraSelect.value !== calendarSelect.value) {
-      cameraSelect.value = calendarSelect.value;
-      selectedCameraId = calendarSelect.value || null;
-      setupRentalDurationOptions();
-      syncReturnDateTime();
-      updateBookingSummary();
+  // One delegated listener handles month navigation and date selection
+  // for every camera card, including cards re-rendered after navigation.
+  cameraGrid?.addEventListener("click", (event) => {
+    const monthButton = event.target.closest("[data-calendar-month]");
+    if (monthButton) {
+      const cameraId = monthButton.dataset.cameraId;
+      const state = cameraCalendarStates.get(String(cameraId));
+      if (!state) return;
+      state.month += Number(monthButton.dataset.calendarMonth);
+      if (state.month < 0) {
+        state.month = 11;
+        state.year--;
+      }
+      if (state.month > 11) {
+        state.month = 0;
+        state.year++;
+      }
+      loadCameraCalendarBookings(cameraId);
+      return;
     }
-    loadCalendarBookings();
+
+    const dateButton = event.target.closest("[data-calendar-date]");
+    if (dateButton && !dateButton.disabled) {
+      selectCalendarDate(
+        dateButton.dataset.calendarDate,
+        dateButton.dataset.cameraId,
+      );
+    }
   });
-
-  cameraSelect?.addEventListener("change", () => {
-    syncCalendarCameraFromBooking();
-  });
-
-  openButton?.addEventListener("click", () => {
-    syncCalendarCameraFromBooking();
-    $("availabilityCalendarSection")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  });
-
-  calendarState.cameraId = cameraSelect?.value || "";
-  calendarSelect.value = calendarState.cameraId;
-
-  renderAvailabilityCalendar();
-
-  if (calendarState.cameraId) {
-    loadCalendarBookings();
-  } else {
-    showCalendarMessage("Select a camera to view its schedule.");
-  }
 }
 
-function syncCalendarCameraFromBooking() {
-  const calendarSelect = $("calendarCameraSelect");
-  if (!calendarSelect || !cameraSelect) return;
-
-  if (calendarSelect.value !== cameraSelect.value) {
-    calendarSelect.value = cameraSelect.value;
-  }
-
-  calendarState.cameraId = cameraSelect.value || "";
-
-  if (calendarState.cameraId) {
-    loadCalendarBookings();
-  } else {
-    calendarState.bookings = [];
-    renderAvailabilityCalendar();
-    showCalendarMessage("Select a camera to view its schedule.");
-  }
+function getCameraCalendarMonthStart(state) {
+  return `${state.year}-${String(state.month + 1).padStart(2, "0")}-01`;
 }
 
-function showCalendarMessage(message, isError = false) {
-  const note = $("availabilityCalendarNote");
-  if (!note) return;
-  note.textContent = message;
-  note.style.color = isError ? "#ff7777" : "";
-}
-
-function getCalendarMonthStart() {
-  return `${calendarState.year}-${String(calendarState.month + 1).padStart(2, "0")}-01`;
-}
-
-function getCalendarMonthEnd() {
-  const nextMonth = new Date(calendarState.year, calendarState.month + 1, 1);
+function getCameraCalendarMonthEnd(state) {
+  const nextMonth = new Date(state.year, state.month + 1, 1);
   return `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
-async function loadCalendarBookings() {
-  const cameraId = calendarState.cameraId;
-  if (
-    !cameraId ||
-    !Number.isSafeInteger(Number(cameraId)) ||
-    Number(cameraId) <= 0
-  ) {
-    calendarState.bookings = [];
-    renderAvailabilityCalendar();
-    showCalendarMessage("Select a camera to view its schedule.");
+async function loadCameraCalendarBookings(cameraId) {
+  const id = String(cameraId);
+  const state = cameraCalendarStates.get(id);
+  const container = $(`cameraCalendar-${id}`);
+  if (!state || !container) return;
+
+  if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) {
+    state.bookings = [];
+    state.error = true;
+    renderCameraAvailabilityCalendar(id);
     return;
   }
 
-  const requestId = ++calendarState.requestId;
-  calendarState.loading = true;
-  renderAvailabilityCalendar();
-  showCalendarMessage("Loading camera schedule...");
+  const requestId = ++state.requestId;
+  state.loading = true;
+  state.error = false;
+  renderCameraAvailabilityCalendar(id);
 
   try {
     const { data, error } = await supabaseClient.rpc(
       "get_public_camera_bookings",
       {
-        p_camera_id: Number(cameraId),
-        p_month_start: getCalendarMonthStart(),
-        p_month_end: getCalendarMonthEnd(),
+        p_camera_id: Number(id),
+        p_month_start: getCameraCalendarMonthStart(state),
+        p_month_end: getCameraCalendarMonthEnd(state),
       },
     );
-
     if (error) throw error;
-    if (requestId !== calendarState.requestId) return;
-
-    calendarState.bookings = Array.isArray(data) ? data : [];
-    calendarState.loading = false;
-    renderAvailabilityCalendar();
-
-    const camera = cameras.find((item) => item.id === cameraId);
-    showCalendarMessage(
-      `${camera?.name || "Selected camera"} schedule loaded. Dates marked “Booked” have at least one pending or confirmed booking. Remaining stock depends on the exact rental times and quantity.`,
-    );
+    if (requestId !== state.requestId) return;
+    state.bookings = Array.isArray(data) ? data : [];
+    state.loading = false;
+    renderCameraAvailabilityCalendar(id);
   } catch (error) {
-    console.error("Failed to load calendar bookings:", error);
-    if (requestId !== calendarState.requestId) return;
-
-    calendarState.bookings = [];
-    calendarState.loading = false;
-    renderAvailabilityCalendar();
-    showCalendarMessage(
-      "Unable to load the calendar schedule. Check that the Supabase RPC get_public_camera_bookings exists and is accessible.",
-      true,
-    );
+    console.error(`Failed to load ${id} booking calendar:`, error);
+    if (requestId !== state.requestId) return;
+    state.bookings = [];
+    state.loading = false;
+    state.error = true;
+    renderCameraAvailabilityCalendar(id);
   }
 }
 
-function calendarDateHasBooking(year, month, day) {
+function cameraCalendarDateHasBooking(state, year, month, day) {
   const dayStart = new Date(year, month, day, 0, 0, 0, 0);
   const dayEnd = new Date(year, month, day + 1, 0, 0, 0, 0);
-
-  return calendarState.bookings.some((booking) => {
+  return state.bookings.some((booking) => {
     const pickup = new Date(booking.pickup_at);
     const returned = new Date(booking.return_at);
-    return pickup < dayEnd && returned > dayStart;
+    return (
+      Number.isFinite(pickup.getTime()) &&
+      Number.isFinite(returned.getTime()) &&
+      pickup < dayEnd &&
+      returned > dayStart
+    );
   });
 }
 
-function renderAvailabilityCalendar() {
-  const container = $("availabilityCalendar");
-  if (!container) return;
+function renderCameraAvailabilityCalendar(cameraId) {
+  const id = String(cameraId);
+  const state = cameraCalendarStates.get(id);
+  const container = $(`cameraCalendar-${id}`);
+  if (!state || !container) return;
 
-  const monthName = new Date(
-    calendarState.year,
-    calendarState.month,
-    1,
-  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-
-  const firstWeekday = new Date(
-    calendarState.year,
-    calendarState.month,
-    1,
-  ).getDay();
-  const daysInMonth = new Date(
-    calendarState.year,
-    calendarState.month + 1,
-    0,
-  ).getDate();
+  const monthName = new Date(state.year, state.month, 1).toLocaleDateString(
+    "en-US",
+    { month: "short", year: "numeric" },
+  );
+  const firstWeekday = new Date(state.year, state.month, 1).getDay();
+  const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
   const today = getTodayString();
-
-  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
+  const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
   let html = `
-    <div class="availability-calendar-toolbar">
-      <button type="button" id="calendarPreviousMonth" aria-label="Previous month">←</button>
+    <div class="camera-calendar-toolbar">
+      <button type="button" data-calendar-month="-1" data-camera-id="${escapeHTML(id)}" aria-label="Previous month">‹</button>
       <strong>${escapeHTML(monthName)}</strong>
-      <button type="button" id="calendarNextMonth" aria-label="Next month">→</button>
+      <button type="button" data-calendar-month="1" data-camera-id="${escapeHTML(id)}" aria-label="Next month">›</button>
     </div>
-    <div class="availability-calendar-grid">
-      ${weekdays.map((day) => `<div class="calendar-weekday">${day}</div>`).join("")}
+    <div class="camera-calendar-grid">
+      ${weekdays.map((day) => `<div class="camera-calendar-weekday">${day}</div>`).join("")}
   `;
-
-  for (let i = 0; i < firstWeekday; i++) {
-    html += `<div aria-hidden="true"></div>`;
-  }
+  for (let i = 0; i < firstWeekday; i++)
+    html += `<span aria-hidden="true"></span>`;
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const date = `${calendarState.year}-${String(calendarState.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const hasBooking = calendarDateHasBooking(
-      calendarState.year,
-      calendarState.month,
+    const date = `${state.year}-${String(state.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const booked = cameraCalendarDateHasBooking(
+      state,
+      state.year,
+      state.month,
       day,
     );
     const isPast = date < today;
     const isToday = date === today;
-    const isSelected = date === calendarState.selectedDate;
-
     const classes = [
-      "calendar-date-button",
-      hasBooking ? "has-booking" : "",
+      "camera-calendar-day",
+      booked ? "is-booked" : "",
       isToday ? "is-today" : "",
-      isSelected ? "is-selected" : "",
     ]
       .filter(Boolean)
       .join(" ");
-
-    html += `
-      <button type="button" class="${classes}" data-calendar-date="${date}"
-        ${isPast ? "disabled" : ""} aria-label="${date}${hasBooking ? ", existing booking" : ""}">
-        <span class="calendar-date-number">${day}</span>
-        <span class="calendar-date-status">${hasBooking ? "Booked" : ""}</span>
-      </button>
-    `;
+    html += `<button type="button" class="${classes}" data-calendar-date="${date}" data-camera-id="${escapeHTML(id)}" ${isPast || state.loading || state.error ? "disabled" : ""} aria-label="${date}${booked ? ", has booking" : ", no booking listed"}">${day}</button>`;
   }
-
-  html += `</div>`;
+  html += `</div>
+    <div class="camera-calendar-legend">
+      <span><i class="camera-calendar-dot"></i> No booking listed</span>
+      <span><i class="camera-calendar-dot booked"></i> Has booking</span>
+    </div>
+    <p class="camera-calendar-note ${state.error ? "is-error" : ""}">${state.loading ? "Loading schedule…" : state.error ? "Schedule unavailable. Please check again later." : "Marked dates have a pending or confirmed booking. Final stock is checked for your exact rental time."}</p>`;
   container.innerHTML = html;
-
-  $("calendarPreviousMonth")?.addEventListener("click", () => {
-    calendarState.month--;
-    if (calendarState.month < 0) {
-      calendarState.month = 11;
-      calendarState.year--;
-    }
-    loadCalendarBookings();
-  });
-
-  $("calendarNextMonth")?.addEventListener("click", () => {
-    calendarState.month++;
-    if (calendarState.month > 11) {
-      calendarState.month = 0;
-      calendarState.year++;
-    }
-    loadCalendarBookings();
-  });
-
-  container.querySelectorAll("[data-calendar-date]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectCalendarDate(button.dataset.calendarDate);
-    });
-  });
 }
 
-function selectCalendarDate(date) {
-  if (!date) return;
-
-  const today = getTodayString();
-  if (date < today) return;
-
-  calendarState.selectedDate = date;
-
+function selectCalendarDate(date, cameraId) {
+  if (!date || date < getTodayString()) return;
+  const id = String(cameraId);
+  if (cameraSelect && cameraSelect.value !== id) {
+    cameraSelect.value = id;
+    cameraSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  selectedCameraId = id;
   if (startDate) {
     startDate.value = date;
     startDate.dispatchEvent(new Event("input", { bubbles: true }));
     startDate.dispatchEvent(new Event("change", { bubbles: true }));
   }
-
-  /*
-   * For daily rentals, the customer can select a return date manually.
-   * For 12-hour rentals, return date/time are calculated automatically.
-   */
   if (
     getSelectedRentalMode() === RENTAL_MODE.DAILY &&
     endDate &&
     !endDate.readOnly
   ) {
-    if (!endDate.value || endDate.value < date) {
-      endDate.value = date;
-    }
+    if (!endDate.value || endDate.value < date) endDate.value = date;
     endDate.min = date;
   }
-
   syncReturnDateTime();
   updateBookingSummary();
   scheduleAvailabilityCheck();
-  renderAvailabilityCalendar();
-
-  $("bookingForm")?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-
-  showCalendarMessage(
-    `Pickup date set to ${date}. Choose the pickup time and check the exact availability before submitting.`,
+  $("bookingForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  showAvailabilityMessage(
+    `Camera selected. Pickup date set to ${date}. Choose the pickup time and verify the exact availability.`,
+    "info",
   );
 }
 

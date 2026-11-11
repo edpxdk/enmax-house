@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,7 +8,7 @@
       content="Enmax House — Camera rental in Bali for travel, content, events, photography, and videography."
     />
 
-    <meta property="og=:type" content="website" />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="Enmax House — Camera Rental" />
     <meta
       property="og:description"
@@ -39,210 +39,6 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css"
     />
-
-    <style>
-      /* ================= AVAILABILITY CALENDAR ================= */
-      .availability-calendar-section {
-        margin: 0 0 36px;
-        padding: 24px;
-        border: 1px solid rgba(255, 42, 166, 0.25);
-        border-radius: 16px;
-        background: rgba(15, 15, 19, 0.92);
-        color: #f5f5f5;
-      }
-
-      .availability-calendar-heading h3 {
-        margin: 0 0 8px;
-        font-size: 1.35rem;
-      }
-
-      .availability-calendar-heading p,
-      .availability-calendar-note {
-        color: #b9b9c2;
-        line-height: 1.6;
-        font-size: 0.92rem;
-      }
-
-      .availability-calendar-controls {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: end;
-        gap: 12px;
-        margin: 18px 0;
-      }
-
-      .availability-calendar-controls .form-group {
-        flex: 1 1 220px;
-        margin: 0;
-      }
-
-      .availability-calendar-controls select {
-        width: 100%;
-        min-height: 44px;
-      }
-
-      .availability-calendar-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        margin: 18px 0 14px;
-      }
-
-      .availability-calendar-toolbar strong {
-        text-align: center;
-      }
-
-      .availability-calendar-toolbar button,
-      .calendar-date-button {
-        font: inherit;
-      }
-
-      .availability-calendar-toolbar button {
-        min-width: 40px;
-        min-height: 38px;
-        padding: 6px 12px;
-        border: 1px solid rgba(255, 42, 166, 0.45);
-        border-radius: 8px;
-        background: #18181e;
-        color: #fff;
-        cursor: pointer;
-      }
-
-      .availability-calendar-toolbar button:hover {
-        border-color: #ff2aa6;
-        color: #ff2aa6;
-      }
-
-      .availability-calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 7px;
-      }
-
-      .calendar-weekday {
-        padding: 8px 2px;
-        text-align: center;
-        color: #aaaab5;
-        font-size: 0.76rem;
-        font-weight: 700;
-      }
-
-      .calendar-date-button {
-        display: flex;
-        min-width: 0;
-        min-height: 68px;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        padding: 5px 2px;
-        border: 1px solid #303039;
-        border-radius: 9px;
-        background: #19191f;
-        color: #fff;
-        cursor: pointer;
-      }
-
-      .calendar-date-button:hover:not(:disabled) {
-        border-color: #ff2aa6;
-      }
-
-      .calendar-date-button:disabled {
-        cursor: not-allowed;
-        opacity: 0.32;
-      }
-
-      .calendar-date-button.is-today {
-        box-shadow: inset 0 0 0 1px #ff2aa6;
-      }
-
-      .calendar-date-button.has-booking {
-        border-color: rgba(255, 177, 66, 0.85);
-        background: rgba(255, 177, 66, 0.09);
-      }
-
-      .calendar-date-button.is-selected {
-        border-color: #ff2aa6;
-        background: rgba(255, 42, 166, 0.2);
-        box-shadow: inset 0 0 0 1px #ff2aa6;
-      }
-
-      .calendar-date-number {
-        font-size: 0.95rem;
-        font-weight: 700;
-      }
-
-      .calendar-date-status {
-        font-size: 0.62rem;
-        color: #ffcf85;
-        text-align: center;
-        line-height: 1.15;
-      }
-
-      .calendar-date-button.is-selected .calendar-date-status {
-        color: #ff8bd0;
-      }
-
-      .availability-calendar-legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px 18px;
-        margin-top: 18px;
-        color: #c4c4ce;
-        font-size: 0.82rem;
-      }
-
-      .calendar-legend-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-      }
-
-      .calendar-legend-dot {
-        width: 10px;
-        height: 10px;
-        display: inline-block;
-        border-radius: 50%;
-        background: #55555f;
-      }
-
-      .calendar-legend-dot.booked {
-        background: #ffb142;
-      }
-
-      .calendar-legend-dot.selected {
-        background: #ff2aa6;
-      }
-
-      .calendar-open-button {
-        width: 100%;
-        margin-bottom: 16px;
-      }
-
-      @media (max-width: 600px) {
-        .availability-calendar-section {
-          padding: 15px;
-        }
-
-        .availability-calendar-grid {
-          gap: 4px;
-        }
-
-        .calendar-date-button {
-          min-height: 54px;
-          border-radius: 6px;
-        }
-
-        .calendar-date-status {
-          font-size: 0.53rem;
-        }
-
-        .calendar-weekday {
-          font-size: 0.68rem;
-        }
-      }
-    </style>
   </head>
 
   <body>
@@ -276,40 +72,93 @@
     <main>
       <!-- HERO -->
       <section class="hero" id="home">
-        <div class="hero-cat" aria-hidden="true">
-          <img src="assets/cat-enmax-house.png" alt="" />
-        </div>
-
-        <div class="hero-content">
-          <span class="hero-label">CAMERA RENTAL • BALI</span>
-          <h1>Capture the moment.<br /><span>Rent the camera.</span></h1>
-          <p>
-            Professional cameras for travel, content, events, photography, and
-            videography.
-          </p>
-
-          <div class="hero-actions">
-            <a href="#cameras" class="btn btn-primary">Explore Cameras</a>
-            <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+        <div class="hero-inner">
+          <div class="hero-content">
+            <span class="hero-label"
+              ><span class="status-dot"></span> CAMERA RENTAL · BALI</span
+            >
+            <p class="hero-eyebrow">YOUR NEXT STORY STARTS HERE</p>
+            <h1>Make every moment <span>worth keeping.</span></h1>
+            <p class="hero-description">
+              Find the right camera for your Bali trip, creative project, event,
+              or everyday story. Pick your gear, check the dates, and book in a
+              few simple steps.
+            </p>
+            <div class="hero-actions">
+              <a href="#cameras" class="btn btn-primary"
+                >Explore cameras <span aria-hidden="true">↗</span></a
+              >
+              <a href="#how-it-works" class="btn btn-secondary">How it works</a>
+            </div>
+            <div class="hero-proof">
+              <span><strong>01</strong> Choose your camera</span>
+              <span class="proof-divider" aria-hidden="true"></span>
+              <span><strong>02</strong> Check availability</span>
+              <span class="proof-divider" aria-hidden="true"></span>
+              <span><strong>03</strong> Send your request</span>
+            </div>
           </div>
+          <div class="hero-visual" aria-hidden="true">
+            <div class="hero-visual-glow"></div>
+            <div class="hero-image-frame">
+              <img class="hero-cat" src="assets/cat-enmax-house.png" alt="" />
+            </div>
+            <div class="hero-float-card hero-float-top">
+              <span class="float-icon">✦</span
+              ><span
+                ><strong>Find your angle.</strong
+                ><small>Make it memorable.</small></span
+              >
+            </div>
+            <div class="hero-float-card hero-float-bottom">
+              <span class="float-live"></span
+              ><span
+                ><strong>Ready when you are</strong
+                ><small>Camera rental in Bali</small></span
+              >
+            </div>
+            <span class="hero-visual-index">ENMAX HOUSE / 001</span>
+          </div>
+        </div>
+        <div class="hero-bottom-line">
+          <span>CAMERA RENTAL, MADE SIMPLE</span
+          ><span>DENPASAR · BALI · INDONESIA</span>
         </div>
       </section>
 
       <!-- CAMERAS -->
       <section class="section cameras-section" id="cameras">
-        <div class="section-heading">
-          <span class="section-label">OUR COLLECTION</span>
-          <h2>Pick your <span>camera.</span></h2>
-          <p>Choose the camera that fits your next story.</p>
+        <div class="catalog-heading-row">
+          <div class="section-heading">
+            <span class="section-label">THE COLLECTION / 01</span>
+            <h2>Find your <span>camera.</span></h2>
+            <p>
+              Good gear makes room for great stories. Explore the collection and
+              check each camera’s availability.
+            </p>
+          </div>
+          <div class="catalog-side-note">
+            <span class="catalog-side-mark">✳</span
+            ><span
+              >CURATED CAMERA GEAR<br /><strong
+                >FOR YOUR NEXT STORY</strong
+              ></span
+            >
+          </div>
+        </div>
+        <div class="catalog-toolbar">
+          <span><i class="toolbar-dot"></i> AVAILABLE COLLECTION</span
+          ><span>LIVE STOCK &amp; BOOKING CALENDAR</span>
         </div>
         <div class="camera-grid" id="cameraGrid"></div>
       </section>
 
       <!-- HOW IT WORKS -->
       <section class="section how-section" id="how-it-works">
-        <div class="section-heading">
-          <span class="section-label">SIMPLE PROCESS</span>
-          <h2>How it <span>works.</span></h2>
+        <div class="section-heading section-heading-left">
+          <span class="section-label">NO COMPLICATED STEPS / 02</span>
+          <h2>From browsing to <span>shooting.</span></h2>
+          <p>Everything you need to get your camera rental request moving.</p>
         </div>
 
         <div class="steps-grid">
@@ -341,18 +190,27 @@
 
       <!-- BOOKING -->
       <section class="section booking-section" id="booking">
-        <div class="section-heading">
-          <span class="section-label">BOOKING REQUEST</span>
-          <h2>Reserve your <span>camera.</span></h2>
-          <p>
-            Fill in your details below. Your request will be continued through
-            WhatsApp.
-          </p>
+        <div class="booking-heading">
+          <div class="section-heading section-heading-left">
+            <span class="section-label">LET’S MAKE IT OFFICIAL / 03</span>
+            <h2>Book your <span>next shot.</span></h2>
+            <p>
+              Share a few details and our team will help arrange the rest. Your
+              request continues securely through WhatsApp.
+            </p>
+          </div>
+          <div class="booking-heading-note">
+            <span class="booking-note-icon">↗</span
+            ><span
+              ><strong>Booking request</strong
+              ><small>Not confirmed until our team replies.</small></span
+            >
+          </div>
         </div>
 
         <!-- Availability calendars are displayed inside each camera card. -->
 
-        <form id="bookingForm" novalidate>
+        <form id="bookingForm" class="booking-form-panel" novalidate>
           <!-- RENTER INFORMATION -->
           <div class="form-section">
             <div class="form-section-heading">
@@ -670,10 +528,13 @@
 
       <!-- CUSTOMER COMMENTS -->
       <section class="section comments-section" id="comments-section">
-        <div class="section-heading">
-          <span class="section-label">CUSTOMER NOTES</span>
-          <h2>What customers <span>say.</span></h2>
-          <p>Share your experience with Enmax House.</p>
+        <div class="section-heading section-heading-left">
+          <span class="section-label">REAL EXPERIENCES / 04</span>
+          <h2>Stories from the <span>community.</span></h2>
+          <p>
+            Have rented with us? Leave a note and help the next person find
+            their gear.
+          </p>
         </div>
 
         <form id="commentForm" class="comment-form">

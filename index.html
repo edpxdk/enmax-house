@@ -8,7 +8,7 @@
       content="Enmax House — Camera rental in Bali for travel, content, events, photography, and videography."
     />
 
-    <meta property="og:type" content="website" />
+    <meta property="og=:type" content="website" />
     <meta property="og:title" content="Enmax House — Camera Rental" />
     <meta
       property="og:description"
@@ -250,7 +250,7 @@
     <header class="navbar" id="navbar">
       <div class="nav-container">
         <a href="#home" class="logo">
-          <img src="assets/logo.webp" alt="Enmax House" />
+          <img src="assets/logo.png" alt="Enmax House" />
         </a>
 
         <nav class="nav-menu" id="navMenu">
@@ -277,9 +277,7 @@
       <!-- HERO -->
       <section class="hero" id="home">
         <div class="hero-cat" aria-hidden="true">
-          <video autoplay muted loop playsinline>
-            <source src="assets/cat-video.mp4" type="video/webm" />
-          </video>
+          <img src="assets/cat-enmax-house.png" alt="" />
         </div>
 
         <div class="hero-content">
@@ -323,7 +321,7 @@
           <div class="step-card">
             <span class="step-number">02</span>
             <h3>Select Rental Duration</h3>
-            <p>Choose a 6-hour, 12-hour, or daily rental period.</p>
+            <p>Choose an available rental duration for your camera.</p>
           </div>
           <div class="step-card">
             <span class="step-number">03</span>
@@ -352,60 +350,7 @@
           </p>
         </div>
 
-        <!-- NEW: AVAILABILITY CALENDAR -->
-        <section
-          class="availability-calendar-section"
-          id="availabilityCalendarSection"
-          aria-labelledby="availabilityCalendarTitle"
-        >
-          <div class="availability-calendar-heading">
-            <h3 id="availabilityCalendarTitle">Camera Availability</h3>
-            <p>
-              Select a camera to view dates with existing bookings. A date with
-              a booking may still have units available, depending on the rental
-              time and quantity.
-            </p>
-          </div>
-
-          <div class="availability-calendar-controls">
-            <div class="form-group">
-              <label for="calendarCameraSelect">Select Camera</label>
-              <select id="calendarCameraSelect">
-                <option value="">Select a camera</option>
-              </select>
-            </div>
-          </div>
-
-          <div id="availabilityCalendar">
-            <p class="availability-calendar-note">
-              Select a camera to view its schedule.
-            </p>
-          </div>
-
-          <div class="availability-calendar-legend">
-            <span class="calendar-legend-item">
-              <span class="calendar-legend-dot"></span>
-              No booking listed
-            </span>
-            <span class="calendar-legend-item">
-              <span class="calendar-legend-dot booked"></span>
-              Existing booking
-            </span>
-            <span class="calendar-legend-item">
-              <span class="calendar-legend-dot selected"></span>
-              Selected date
-            </span>
-          </div>
-
-          <p
-            class="availability-calendar-note"
-            id="availabilityCalendarNote"
-            aria-live="polite"
-          >
-            Calendar information is indicative. Final availability is checked
-            when you submit a booking request.
-          </p>
-        </section>
+        <!-- Availability calendars are displayed inside each camera card. -->
 
         <form id="bookingForm" novalidate>
           <!-- RENTER INFORMATION -->
@@ -548,17 +493,6 @@
                   required
                 />
                 <small class="error-message"></small>
-              </div>
-
-              <!-- NEW: QUICK ACCESS TO CALENDAR -->
-              <div class="form-group full-width">
-                <button
-                  type="button"
-                  class="btn btn-secondary calendar-open-button"
-                  id="openAvailabilityCalendar"
-                >
-                  View Camera Availability
-                </button>
               </div>
 
               <div class="form-group">
@@ -864,7 +798,7 @@
     <footer class="footer">
       <div class="footer-container">
         <div class="footer-brand">
-          <img src="assets/logo.webp" alt="Enmax House" />
+          <img src="assets/logo.png" alt="Enmax House" />
           <p>Camera rental for your next story.</p>
         </div>
 

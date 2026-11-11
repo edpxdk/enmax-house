@@ -1659,3 +1659,558 @@ h4 {
     top: -23px;
   }
 }
+
+/* ======================================================================
+   ENMAX HOUSE — CATALOGUE AVAILABILITY + RESPONSIVE REFINEMENT
+   ====================================================================== */
+:root {
+  --bg-main: #0b0b0e;
+  --bg-surface: #141419;
+  --bg-surface-elevated: #1b1b22;
+  --accent-pink: #ff2aa6;
+  --accent-pink-hover: #ed1592;
+  --text-muted: #a3a3ae;
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-medium: rgba(255, 255, 255, 0.14);
+  --radius-lg: 16px;
+  --max-width: 1160px;
+  --header-height: 72px;
+}
+
+html {
+  scroll-padding-top: calc(var(--header-height) + 18px);
+}
+.section {
+  padding-top: clamp(58px, 7vw, 84px);
+  padding-bottom: clamp(58px, 7vw, 84px);
+}
+.section-heading {
+  margin-bottom: clamp(28px, 4vw, 42px);
+}
+.section-heading h2 {
+  font-size: clamp(1.85rem, 3.4vw, 2.55rem);
+}
+.section-heading p {
+  font-size: 1rem;
+}
+.nav-container {
+  padding-inline: clamp(16px, 3vw, 28px);
+}
+.nav-menu {
+  gap: clamp(16px, 2.4vw, 28px);
+}
+.hero {
+  min-height: min(760px, 82vh);
+  padding-top: calc(var(--header-height) + 48px);
+  padding-bottom: 64px;
+}
+.hero-content h1 {
+  font-size: clamp(2.5rem, 5.3vw, 3.8rem);
+}
+.hero-content p {
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
+}
+
+.camera-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+.camera-card {
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+.camera-card:hover {
+  transform: translateY(-3px);
+}
+.camera-card-image {
+  aspect-ratio: 4 / 3;
+}
+.camera-card-image img {
+  object-fit: cover;
+}
+.camera-card-content {
+  padding: 19px;
+}
+.camera-card-content h3 {
+  font-size: 1.16rem;
+}
+.camera-card-content p {
+  font-size: 0.87rem;
+  margin-bottom: 14px;
+}
+.camera-card-footer {
+  gap: 10px;
+  padding-top: 14px;
+}
+.camera-price {
+  font-size: 1.1rem;
+}
+.camera-view-button {
+  font-size: 0.82rem;
+}
+
+.camera-stock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 14px;
+  padding: 10px 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.camera-stock-label {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+.camera-stock-value {
+  color: #f4f4f6;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.camera-stock-value.is-out {
+  color: #ff7777;
+}
+.camera-availability {
+  margin-top: 15px;
+  padding: 13px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+.camera-availability-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.camera-availability-heading strong {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.camera-availability-heading small {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+.camera-calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+.camera-calendar-toolbar strong {
+  font-size: 0.78rem;
+}
+.camera-calendar-toolbar button {
+  width: 29px;
+  height: 29px;
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+}
+.camera-calendar-toolbar button:hover {
+  border-color: var(--accent-pink);
+  color: var(--accent-pink);
+}
+.camera-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.camera-calendar-weekday {
+  padding: 4px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+.camera-calendar-day {
+  min-width: 0;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #e8e8ed;
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.camera-calendar-day:hover:not(:disabled) {
+  border-color: var(--accent-pink);
+}
+.camera-calendar-day.is-booked {
+  color: #ffc46b;
+  background: rgba(255, 177, 66, 0.11);
+  border-color: rgba(255, 177, 66, 0.25);
+}
+.camera-calendar-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--accent-pink);
+}
+.camera-calendar-day.is-selected {
+  color: white;
+  background: rgba(255, 42, 166, 0.23);
+  border-color: var(--accent-pink);
+}
+.camera-calendar-day:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+.camera-calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 13px;
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+}
+.camera-calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.camera-calendar-dot {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #777;
+}
+.camera-calendar-dot.booked {
+  background: #ffb142;
+}
+.camera-calendar-note {
+  min-height: 18px;
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.67rem;
+  line-height: 1.4;
+}
+.camera-calendar-note.is-error {
+  color: #ff8585;
+}
+
+.booking-section {
+  padding: clamp(26px, 4vw, 46px);
+  margin-top: 20px;
+  margin-bottom: 56px;
+}
+.booking-section .section-heading {
+  margin-bottom: 30px;
+}
+.form-section {
+  margin-bottom: 30px;
+  padding-bottom: 25px;
+}
+.form-grid {
+  gap: 16px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  min-height: 46px;
+  padding: 11px 13px;
+}
+.btn {
+  padding: 12px 22px;
+}
+
+@media (max-width: 1024px) {
+  .camera-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .hero {
+    min-height: 660px;
+  }
+  .hero-cat {
+    width: min(32vw, 320px);
+  }
+  .section {
+    padding-inline: 22px;
+  }
+}
+@media (max-width: 768px) {
+  :root {
+    --header-height: 64px;
+  }
+  .section {
+    padding: 54px 20px;
+  }
+  .section-heading {
+    margin-bottom: 28px;
+  }
+  .section-heading h2 {
+    font-size: 2rem;
+  }
+  .section-heading p {
+    font-size: 0.92rem;
+  }
+  .nav-container {
+    padding-inline: 18px;
+  }
+  .logo img {
+    height: 32px;
+  }
+  .hero {
+    min-height: 620px;
+    padding: calc(var(--header-height) + 52px) 20px 54px;
+    align-items: flex-start;
+  }
+  .hero-content {
+    max-width: 590px;
+  }
+  .hero-content h1 {
+    font-size: clamp(2.35rem, 7vw, 3.15rem);
+    margin: 14px 0 16px;
+  }
+  .hero-content p {
+    max-width: 440px;
+    margin-bottom: 25px;
+    font-size: 0.98rem;
+  }
+  .hero-actions {
+    gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .hero-actions .btn {
+    width: auto;
+  }
+  .camera-grid {
+    gap: 16px;
+  }
+  .camera-card-content {
+    padding: 16px;
+  }
+  .camera-availability {
+    padding: 11px;
+  }
+  .camera-calendar-day {
+    min-height: 30px;
+  }
+  .booking-section {
+    padding: 28px 22px;
+  }
+  .steps-grid {
+    gap: 15px;
+  }
+  .step-card {
+    padding: 25px 20px;
+  }
+}
+@media (max-width: 560px) {
+  .section {
+    padding: 46px 16px;
+  }
+  .section-heading {
+    text-align: left;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .section-heading h2 {
+    font-size: 1.8rem;
+  }
+  .section-heading p {
+    font-size: 0.88rem;
+  }
+  .hero {
+    min-height: 570px;
+    padding: calc(var(--header-height) + 38px) 16px 42px;
+  }
+  .hero-content h1 {
+    font-size: 2.25rem;
+  }
+  .hero-content p {
+    font-size: 0.9rem;
+    max-width: 330px;
+  }
+  .hero-cat {
+    width: 150px;
+    height: 150px;
+    right: -12px;
+    bottom: 2px;
+    opacity: 0.48;
+  }
+  .hero-actions {
+    max-width: 340px;
+  }
+  .hero-actions .btn {
+    min-height: 42px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+  }
+  .camera-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .camera-card {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .camera-card-image {
+    aspect-ratio: auto;
+    min-height: 100%;
+  }
+  .camera-card-image img {
+    height: 100%;
+    min-height: 100%;
+    object-fit: cover;
+  }
+  .camera-card-content {
+    min-width: 0;
+    padding: 13px;
+  }
+  .camera-category {
+    font-size: 0.62rem;
+    margin-bottom: 5px;
+  }
+  .camera-card-content h3 {
+    font-size: 0.98rem;
+    line-height: 1.25;
+    margin-bottom: 5px;
+  }
+  .camera-card-content p {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    margin-bottom: 9px;
+  }
+  .camera-stock-row {
+    padding: 7px 8px;
+    margin: 0 0 9px;
+  }
+  .camera-stock-label,
+  .camera-stock-value {
+    font-size: 0.68rem;
+  }
+  .camera-card-footer {
+    padding-top: 9px;
+    gap: 7px;
+    align-items: flex-end;
+  }
+  .camera-price {
+    font-size: 0.88rem;
+  }
+  .camera-price-label {
+    font-size: 0.65rem;
+  }
+  .camera-view-button {
+    padding: 7px 9px;
+    font-size: 0.7rem;
+  }
+  .camera-availability {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 12px;
+    border-radius: 0 0 14px 14px;
+    border-top: 0;
+  }
+  .camera-calendar-day {
+    min-height: 34px;
+    font-size: 0.72rem;
+  }
+  .camera-calendar-weekday {
+    font-size: 0.65rem;
+  }
+  .camera-availability-heading strong {
+    font-size: 0.78rem;
+  }
+  .camera-calendar-note {
+    font-size: 0.68rem;
+  }
+  .steps-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .step-card {
+    padding: 18px 14px;
+  }
+  .step-number {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+  .step-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 7px;
+  }
+  .step-card p {
+    font-size: 0.78rem;
+  }
+  .booking-section {
+    padding: 24px 16px;
+    margin-bottom: 38px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+  .form-group.full-width {
+    grid-column: span 1;
+  }
+  .form-section-heading {
+    gap: 11px;
+    margin-bottom: 18px;
+  }
+  .form-section-heading h3 {
+    font-size: 1.08rem;
+  }
+  .form-section-heading p {
+    font-size: 0.78rem;
+  }
+  .form-group label {
+    font-size: 0.76rem;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    min-height: 44px;
+    font-size: 0.9rem;
+  }
+  .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+  .modal-content {
+    width: calc(100% - 20px);
+    max-height: 92dvh;
+  }
+  .modal-gallery,
+  .modal-image-wrapper {
+    height: 240px;
+    min-height: 240px;
+  }
+  .modal-details {
+    padding: 20px 16px;
+  }
+}
+@media (max-width: 380px) {
+  .camera-card {
+    grid-template-columns: 94px minmax(0, 1fr);
+  }
+  .camera-card-content {
+    padding: 10px;
+  }
+  .camera-card-content h3 {
+    font-size: 0.9rem;
+  }
+  .camera-card-content p {
+    font-size: 0.7rem;
+  }
+  .camera-view-button {
+    font-size: 0.65rem;
+    padding: 6px 7px;
+  }
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+}

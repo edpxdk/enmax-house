@@ -74,9 +74,9 @@
       <section class="hero" id="home">
         <div class="hero-inner">
           <div class="hero-content">
-            <span class="hero-label"
-              ><span class="status-dot"></span> CAMERA RENTAL · BALI</span
-            >
+            <span class="hero-label">
+              <span class="status-dot"></span> CAMERA RENTAL · BALI
+            </span>
             <p class="hero-eyebrow">YOUR NEXT STORY STARTS HERE</p>
             <h1>Make every moment <span>worth keeping.</span></h1>
             <p class="hero-description">
@@ -85,10 +85,12 @@
               few simple steps.
             </p>
             <div class="hero-actions">
-              <a href="#cameras" class="btn btn-primary"
-                >Explore cameras <span aria-hidden="true">↗</span></a
-              >
-              <a href="#how-it-works" class="btn btn-secondary">How it works</a>
+              <a href="#cameras" class="btn btn-primary">
+                Explore cameras <span aria-hidden="true">↗</span>
+              </a>
+              <a href="#how-it-works" class="btn btn-secondary">
+                How it works
+              </a>
             </div>
             <div class="hero-proof">
               <span><strong>01</strong> Choose your camera</span>
@@ -98,31 +100,33 @@
               <span><strong>03</strong> Send your request</span>
             </div>
           </div>
+
           <div class="hero-visual" aria-hidden="true">
             <div class="hero-visual-glow"></div>
             <div class="hero-image-frame">
               <img class="hero-cat" src="assets/cat-enmax-house.png" alt="" />
             </div>
             <div class="hero-float-card hero-float-top">
-              <span class="float-icon">✦</span
-              ><span
-                ><strong>Find your angle.</strong
-                ><small>Make it memorable.</small></span
-              >
+              <span class="float-icon">✦</span>
+              <span>
+                <strong>Find your angle.</strong>
+                <small>Make it memorable.</small>
+              </span>
             </div>
             <div class="hero-float-card hero-float-bottom">
-              <span class="float-live"></span
-              ><span
-                ><strong>Ready when you are</strong
-                ><small>Camera rental in Bali</small></span
-              >
+              <span class="float-live"></span>
+              <span>
+                <strong>Ready when you are</strong>
+                <small>Camera rental in Bali</small>
+              </span>
             </div>
             <span class="hero-visual-index">ENMAX HOUSE / 001</span>
           </div>
         </div>
+
         <div class="hero-bottom-line">
-          <span>CAMERA RENTAL, MADE SIMPLE</span
-          ><span>DENPASAR · BALI · INDONESIA</span>
+          <span>CAMERA RENTAL, MADE SIMPLE</span>
+          <span>DENPASAR · BALI · INDONESIA</span>
         </div>
       </section>
 
@@ -138,18 +142,19 @@
             </p>
           </div>
           <div class="catalog-side-note">
-            <span class="catalog-side-mark">✳</span
-            ><span
-              >CURATED CAMERA GEAR<br /><strong
-                >FOR YOUR NEXT STORY</strong
-              ></span
-            >
+            <span class="catalog-side-mark">✳</span>
+            <span>
+              CURATED CAMERA GEAR<br />
+              <strong>FOR YOUR NEXT STORY</strong>
+            </span>
           </div>
         </div>
+
         <div class="catalog-toolbar">
-          <span><i class="toolbar-dot"></i> AVAILABLE COLLECTION</span
-          ><span>LIVE STOCK &amp; BOOKING CALENDAR</span>
+          <span><i class="toolbar-dot"></i> AVAILABLE COLLECTION</span>
+          <span>LIVE STOCK &amp; BOOKING CALENDAR</span>
         </div>
+
         <div class="camera-grid" id="cameraGrid"></div>
       </section>
 
@@ -200,11 +205,11 @@
             </p>
           </div>
           <div class="booking-heading-note">
-            <span class="booking-note-icon">↗</span
-            ><span
-              ><strong>Booking request</strong
-              ><small>Not confirmed until our team replies.</small></span
-            >
+            <span class="booking-note-icon">↗</span>
+            <span>
+              <strong>Booking request</strong>
+              <small>Not confirmed until our team replies.</small>
+            </span>
           </div>
         </div>
 
@@ -273,9 +278,9 @@
               </div>
 
               <div class="form-group">
-                <label for="emergencyContact"
-                  >Emergency Contact <span>*</span></label
-                >
+                <label for="emergencyContact">
+                  Emergency Contact <span>*</span>
+                </label>
                 <input
                   type="tel"
                   id="emergencyContact"
@@ -321,9 +326,9 @@
               </div>
 
               <div class="form-group">
-                <label for="rentalDuration"
-                  >Rental Duration <span>*</span></label
-                >
+                <label for="rentalDuration">
+                  Rental Duration <span>*</span>
+                </label>
                 <select id="rentalDuration" name="rentalDuration" required>
                   <option value="">Select duration</option>
                   <option value="6">6 hours</option>
@@ -338,9 +343,9 @@
               </div>
 
               <div class="form-group">
-                <label for="cameraQuantity"
-                  >Number of Units <span>*</span></label
-                >
+                <label for="cameraQuantity">
+                  Number of Units <span>*</span>
+                </label>
                 <input
                   type="number"
                   id="cameraQuantity"
@@ -377,32 +382,90 @@
                 <small class="error-message"></small>
               </div>
 
-              <div class="form-group">
-                <label for="pickupLocation"
-                  >Pickup Location <span>*</span></label
-                >
-                <input
-                  type="text"
-                  id="pickupLocation"
-                  name="pickupLocation"
-                  placeholder="Pickup location"
-                  required
-                />
+              <!-- PICKUP LOCATION -->
+              <div class="form-group full-width">
+                <label for="pickupLocation">
+                  Pickup Location <span>*</span>
+                </label>
+
+                <select id="pickupLocation" name="pickupLocation" required>
+                  <option value="">Select pickup location</option>
+                  <option value="office">
+                    Office Enmax House — Free Delivery
+                  </option>
+                  <option value="personal">
+                    Personal Location — Additional Fee
+                  </option>
+                </select>
+
                 <small class="error-message"></small>
+
+                <div
+                  class="location-address-group"
+                  id="pickupAddressGroup"
+                  hidden
+                >
+                  <label for="pickupAddress">
+                    Pickup Address <span>*</span>
+                  </label>
+                  <textarea
+                    id="pickupAddress"
+                    name="pickupAddress"
+                    rows="3"
+                    placeholder="Enter your complete pickup address"
+                  ></textarea>
+                  <small class="error-message"></small>
+                </div>
+
+                <small class="form-note">
+                  Office pickup is free. If you choose a personal location, our
+                  team will deliver the camera to your address. Additional fees
+                  apply based on distance and will be confirmed by our admin
+                  team.
+                </small>
               </div>
 
-              <div class="form-group">
-                <label for="returnLocation"
-                  >Return Location <span>*</span></label
-                >
-                <input
-                  type="text"
-                  id="returnLocation"
-                  name="returnLocation"
-                  placeholder="Return location"
-                  required
-                />
+              <!-- RETURN LOCATION -->
+              <div class="form-group full-width">
+                <label for="returnLocation">
+                  Return Location <span>*</span>
+                </label>
+
+                <select id="returnLocation" name="returnLocation" required>
+                  <option value="">Select return location</option>
+                  <option value="office">
+                    Office Enmax House — Free Delivery
+                  </option>
+                  <option value="personal">
+                    Personal Location — Additional Fee
+                  </option>
+                </select>
+
                 <small class="error-message"></small>
+
+                <div
+                  class="location-address-group"
+                  id="returnAddressGroup"
+                  hidden
+                >
+                  <label for="returnAddress">
+                    Return Address <span>*</span>
+                  </label>
+                  <textarea
+                    id="returnAddress"
+                    name="returnAddress"
+                    rows="3"
+                    placeholder="Enter your complete return address"
+                  ></textarea>
+                  <small class="error-message"></small>
+                </div>
+
+                <small class="form-note">
+                  Office return is free. If you choose a personal location, our
+                  team will collect the camera from your address. Additional
+                  fees apply based on distance and will be confirmed by our
+                  admin team.
+                </small>
               </div>
             </div>
 
@@ -482,7 +545,7 @@
             </div>
 
             <div class="form-group">
-              <label for="comments">Notes <small>(optional)</small></label>
+              <label for="comments"> Notes <small>(optional)</small> </label>
               <textarea
                 id="comments"
                 name="comments"

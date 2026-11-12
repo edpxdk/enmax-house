@@ -156,6 +156,15 @@ const commentForm = $("commentForm");
 const commentsList = $("commentsList");
 const currentYear = $("currentYear");
 
+/* PICKUP AND RETURN LOCATION ELEMENTS */
+
+const pickupLocation = $("pickupLocation");
+const returnLocation = $("returnLocation");
+const pickupAddressGroup = $("pickupAddressGroup");
+const returnAddressGroup = $("returnAddressGroup");
+const pickupAddress = $("pickupAddress");
+const returnAddress = $("returnAddress");
+
 let selectedCameraId = null;
 let currentGalleryIndex = 0;
 const phoneInputs = {};
@@ -185,6 +194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupGalleryControls();
   setupPhotoLightbox();
   setupPhoneInputs();
+  setupLocationOptions();
   setupBookingListeners();
   setupDurationSynchronization();
   setupAvailabilityChecker();
@@ -193,6 +203,64 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadComments();
   updateCurrentYear();
 });
+
+/* =========================================================
+   PICKUP AND RETURN LOCATION
+   ========================================================= */
+
+function setupLocationOptions() {
+  function updateLocation(type) {
+    const isPickup = type === "pickup";
+
+    const locationSelect = isPickup ? pickupLocation : returnLocation;
+    const addressGroup = isPickup ? pickupAddressGroup : returnAddressGroup;
+    const addressInput = isPickup ? pickupAddress : returnAddress;
+
+    if (!locationSelect || !addressGroup) return;
+
+    const isPersonal = locationSelect.value === "personal";
+
+    addressGroup.hidden = !isPersonal;
+
+    if (addressInput) {
+      addressInput.required = isPersonal;
+
+      if (!isPersonal) {
+        addressInput.value = "";
+        addressInput.classList.remove("input-error");
+
+        const error = addressInput
+          .closest(".form-group")
+          ?.querySelector(".error-message");
+
+        if (error) error.textContent = "";
+      }
+    }
+  }
+
+  pickupLocation?.addEventListener("change", () => {
+    updateLocation("pickup");
+  });
+
+  returnLocation?.addEventListener("change", () => {
+    updateLocation("return");
+  });
+
+  updateLocation("pickup");
+  updateLocation("return");
+}
+
+function getLocationLabel(location) {
+  if (location === "office") {
+    return "Enmax House Office (Free)";
+  }
+
+  if (location === "personal") {
+    return "Personal Location (Additional Fee)";
+  }
+
+  return "-";
+}
 
 /* =========================================================
    PRICE HELPERS
@@ -287,14 +355,12 @@ async function loadCamerasFromSupabase() {
 
     if (error) throw error;
 
-    // Database kosong berarti katalog juga kosong.
     if (!data || data.length === 0) {
       cameras = [];
       console.info("Belum ada kamera aktif di Supabase.");
       return;
     }
 
-    // Cocokkan metadata kamera lama berdasarkan nama.
     const metadataMap = new Map(
       localCameras.map((camera) => [camera.name.trim().toLowerCase(), camera]),
     );
@@ -345,8 +411,6 @@ async function loadCamerasFromSupabase() {
     );
   } catch (error) {
     console.error("Gagal memuat kamera dari Supabase:", error);
-
-    // Fallback apabila koneksi database bermasalah.
     cameras = localCameras;
   }
 }
@@ -919,8 +983,6 @@ function setupAvailabilityCalendar() {
     loadCameraCalendarBookings(camera.id);
   });
 
-  // One delegated listener handles month navigation and date selection
-  // for every camera card, including cards re-rendered after navigation.
   cameraGrid?.addEventListener("click", (event) => {
     const monthButton = event.target.closest("[data-calendar-month]");
     if (monthButton) {
@@ -1167,16 +1229,10 @@ async function checkCameraAvailability(options = {}) {
     !Number.isInteger(quantity) ||
     quantity < 1
   ) {
-    if (forSubmit) {
-      showAvailabilityMessage(
-        "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
-        "error",
-      );
-    } else {
-      showAvailabilityMessage(
-        "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
-      );
-    }
+    showAvailabilityMessage(
+      "Pilih kamera, tanggal, jam, dan jumlah unit untuk mengecek ketersediaan.",
+      forSubmit ? "error" : "info",
+    );
     return null;
   }
 
@@ -1198,8 +1254,6 @@ async function checkCameraAvailability(options = {}) {
 
     if (error) throw error;
 
-    // Pengecekan otomatis boleh diabaikan jika ada permintaan yang lebih baru.
-    // Pengecekan saat submit harus tetap mendapatkan hasilnya sendiri.
     if (!forSubmit && requestId !== availabilityRequestId) {
       return null;
     }
@@ -1434,6 +1488,17 @@ function validateBookingForm() {
     }
   });
 
+  // Address wajib diisi hanya jika memilih Personal Location.
+  if (pickupLocation?.value === "personal" && !pickupAddress?.value.trim()) {
+    showFieldError(pickupAddress, "Pickup address is required.");
+    isValid = false;
+  }
+
+  if (returnLocation?.value === "personal" && !returnAddress?.value.trim()) {
+    showFieldError(returnAddress, "Return address is required.");
+    isValid = false;
+  }
+
   const selectedCamera = cameras.find(
     (item) => item.id === cameraSelect?.value,
   );
@@ -1594,8 +1659,20 @@ if (bookingForm) {
     const occupation = $("occupation")?.value.trim() || "";
     const workplace = $("workplace")?.value.trim() || "";
     const instagram = $("instagram")?.value.trim() || "";
-    const pickupLocation = $("pickupLocation")?.value.trim() || "";
-    const returnLocation = $("returnLocation")?.value.trim() || "";
+
+    const pickupLocationType = $("pickupLocation")?.value || "";
+    const returnLocationType = $("returnLocation")?.value || "";
+
+    const pickupAddressValue =
+      pickupLocationType === "personal"
+        ? $("pickupAddress")?.value.trim() || ""
+        : "";
+
+    const returnAddressValue =
+      returnLocationType === "personal"
+        ? $("returnAddress")?.value.trim() || ""
+        : "";
+
     const comments = $("comments")?.value.trim() || "";
 
     const mode = getSelectedRentalMode();
@@ -1609,8 +1686,11 @@ if (bookingForm) {
       `Workplace: ${workplace}`,
       `Emergency contact: ${emergencyContact}`,
       `Instagram: ${instagram}`,
-      `Pickup location: ${pickupLocation}`,
-      `Return location: ${returnLocation}`,
+      `Pickup method: ${getLocationLabel(pickupLocationType)}`,
+      `Pickup address: ${pickupAddressValue || (pickupLocationType === "office" ? "Enmax House Office" : "-")}`,
+      `Return method: ${getLocationLabel(returnLocationType)}`,
+      `Return address: ${returnAddressValue || (returnLocationType === "office" ? "Enmax House Office" : "-")}`,
+      `Delivery / collection fee: To be confirmed by Enmax House admin`,
       `ID/passport prepared: ${$("ktpCheck")?.checked ? "Yes" : "No"}`,
       `Hotel confirmation: ${$("hotelCheck")?.checked ? "Yes" : "No"}`,
       `Flight details: ${$("flightCheck")?.checked ? "Yes" : "No"}`,
@@ -1741,8 +1821,20 @@ function createWhatsAppMessage() {
   const whatsapp = getInternationalNumber("whatsapp");
   const emergencyContact = getInternationalNumber("emergencyContact");
   const instagram = $("instagram")?.value.trim() || "";
-  const pickupLocation = $("pickupLocation")?.value.trim() || "";
-  const returnLocation = $("returnLocation")?.value.trim() || "";
+
+  const pickupLocationType = $("pickupLocation")?.value || "";
+  const returnLocationType = $("returnLocation")?.value || "";
+
+  const pickupAddressValue =
+    pickupLocationType === "personal"
+      ? $("pickupAddress")?.value.trim() || ""
+      : "";
+
+  const returnAddressValue =
+    returnLocationType === "personal"
+      ? $("returnAddress")?.value.trim() || ""
+      : "";
+
   const comments = $("comments")?.value.trim() || "";
   const quantity = Math.max(1, Number(cameraQuantity?.value) || 1);
   const pickup = getPickupDateTime();
@@ -1781,8 +1873,16 @@ Actual Rental Time: ${actualHours && actualHours > 0 ? `${actualHours.toFixed(2)
 Chargeable Days: ${mode === RENTAL_MODE.DAILY && priceInfo.days ? `${priceInfo.days} ${priceInfo.days === 1 ? "day" : "days"}` : "-"}
 Pickup: ${formatDateTimeIndonesia(pickup)}
 Return: ${formatDateTimeIndonesia(returned)}
-Pickup Location: ${pickupLocation}
-Return Location: ${returnLocation}
+
+PICKUP ARRANGEMENT
+Method: ${getLocationLabel(pickupLocationType)}
+Address: ${pickupAddressValue || (pickupLocationType === "office" ? "Enmax House Office" : "-")}
+
+RETURN ARRANGEMENT
+Method: ${getLocationLabel(returnLocationType)}
+Address: ${returnAddressValue || (returnLocationType === "office" ? "Enmax House Office" : "-")}
+
+Delivery / Collection Fee: To be confirmed by Enmax House admin.
 
 RENTER INFORMATION
 Full Name: ${fullName}
